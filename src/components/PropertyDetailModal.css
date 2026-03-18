@@ -1,0 +1,328 @@
+.property-detail-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.property-detail-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  max-height: calc(100vh - 2rem);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.property-detail-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.property-detail-modal__close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.property-detail-modal__loading,
+.property-detail-modal__error {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.property-detail-modal__error p {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+.property-detail-modal__body {
+  padding: 1.5rem 1.5rem 2rem;
+  overflow-y: auto;
+}
+
+.property-detail-modal__head {
+  margin-bottom: 1rem;
+  padding-right: 2.5rem;
+}
+
+.property-detail-modal__badge {
+  display: inline-block;
+  font-size: 0.8125rem;
+  color: var(--green-strong);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.property-detail-modal__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.property-detail-modal__location {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem 0;
+}
+
+.property-detail-modal__price {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--green-strong);
+  margin: 0;
+}
+
+.property-detail-modal__gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.property-detail-modal__gallery-item {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: var(--bone-dark);
+  position: relative;
+}
+
+.property-detail-modal__gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.property-detail-modal__gallery-item::after {
+  content: "";
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: 72px;
+  max-width: 35%;
+  aspect-ratio: 4 / 1;
+  background-image: url("/logoLRV.webp");
+  background-repeat: no-repeat;
+  background-position: center right;
+  background-size: contain;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.property-detail-modal__info {
+  margin-bottom: 1rem;
+}
+
+.property-detail-modal__info h3,
+.property-detail-modal__info h4 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.property-detail-modal__info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.property-detail-modal__info li {
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--bone-border);
+  font-size: 0.9375rem;
+}
+
+.property-detail-modal__description {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+}
+
+.property-detail-modal__map {
+  margin-bottom: 1.25rem;
+}
+
+.property-detail-modal__map h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.property-detail-modal__consult {
+  border-top: 1px solid var(--bone-border);
+  padding-top: 1.25rem;
+}
+
+.property-detail-modal__consult h3 {
+  font-size: 1.125rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.property-detail-modal__consult-hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem 0;
+}
+
+.property-detail-modal__whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  background: #25d366;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.property-detail-modal__whatsapp:hover {
+  background: #20bd5a;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.property-detail-modal__whatsapp-icon {
+  font-size: 1.125rem;
+}
+
+.property-detail-modal__success {
+  padding: 1rem;
+  background: var(--green-strong-light);
+  border-radius: var(--radius);
+  color: var(--green-strong-hover);
+}
+
+.property-detail-modal__success p {
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+}
+
+.property-detail-modal__form label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.property-detail-modal__form input,
+.property-detail-modal__form textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--bone-border);
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+  margin-top: 0.25rem;
+}
+
+.property-detail-modal__form-error {
+  color: #c00;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.property-detail-modal__calendar-section {
+  margin-bottom: 0.75rem;
+}
+
+.property-detail-modal__time-label {
+  margin-top: 0.5rem;
+}
+
+.property-detail-modal__time-input {
+  max-width: 120px;
+}
+
+.property-detail-modal__form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.property-detail-modal__lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.property-detail-modal__lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.property-detail-modal__lightbox::after {
+  content: "";
+  position: absolute;
+  right: 2rem;
+  bottom: 1.5rem;
+  width: 128px;
+  max-width: 35%;
+  aspect-ratio: 4 / 1;
+  background-image: url("/logoLRV.webp");
+  background-repeat: no-repeat;
+  background-position: center right;
+  background-size: contain;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.property-detail-modal__lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .property-detail-modal__gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,0 +1,112 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1rem 0;
+  transition:
+    background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.header--scrolled {
+  background-color: rgba(250, 248, 245, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header__logo {
+  display: flex;
+  align-items: center;
+}
+
+.header__logo-img {
+  height: 44px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.header__link {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+  transition: color var(--transition);
+}
+
+.header__link:hover {
+  color: var(--green-strong);
+}
+
+.header__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.header__burger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition:
+    transform var(--transition),
+    opacity var(--transition);
+}
+
+.header__burger[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.header__burger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.header__burger[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  .header__nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(280px, 85vw);
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+    background: var(--bone);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+    transform: translateX(100%);
+    transition: transform var(--transition);
+  }
+
+  .header__nav--open {
+    transform: translateX(0);
+  }
+
+  .header__burger {
+    display: flex;
+  }
+}

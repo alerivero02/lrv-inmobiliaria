@@ -1,0 +1,119 @@
+.admin {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bone);
+}
+
+.admin__sidebar {
+  width: 240px;
+  background: var(--white);
+  border-right: 1px solid var(--bone-border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+}
+
+.admin__brand {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid var(--bone-border);
+  margin-bottom: 1rem;
+}
+
+.admin__brand a {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--green-strong);
+}
+
+.admin__notifications {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 1rem 1rem;
+  border-bottom: 1px solid var(--bone-border);
+  margin-bottom: 0.5rem;
+}
+
+.admin__bell {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin__bell:hover {
+  background: var(--green-strong-light);
+  color: var(--green-strong);
+}
+
+.admin__badge {
+  background: #d97706;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.admin__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+}
+
+.admin__nav a {
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.admin__nav a:hover {
+  background: var(--green-strong-light);
+  color: var(--green-strong);
+}
+
+.admin__nav a.active {
+  background: var(--green-strong-light);
+  color: var(--green-strong);
+}
+
+.admin__footer {
+  margin-top: auto;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--bone-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin__footer a {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.admin__logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: left;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.admin__logout:hover {
+  color: var(--text);
+}
+
+.admin__main {
+  flex: 1;
+  padding: 2rem;
+  overflow: auto;
+}

@@ -1,0 +1,19 @@
+# Caddyfile (producción)
+# Reemplazá example.com por tu dominio real.
+
+example.com {
+  encode zstd gzip
+
+  # Frontend (Vite build)
+  root * /var/www/lrv/frontend/dist
+  file_server
+
+  # Backend API
+  handle_path /api/* {
+    reverse_proxy 127.0.0.1:4000
+  }
+
+  # Uploads (servidos por backend, pero si preferís servir directo:
+  # handle_path /uploads/* { root * /var/www/lrv/backend/uploads; file_server }
+}
+

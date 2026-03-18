@@ -1,0 +1,102 @@
+.request-visit-page {
+  padding: 2rem 0 4rem;
+}
+
+.request-visit-page__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.request-visit-page__subtitle {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.request-visit-page__form {
+  max-width: 520px;
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.request-visit-page__form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.request-visit-page__form input,
+.request-visit-page__form textarea {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--bone-border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  margin-top: 0.25rem;
+}
+
+.request-visit-page__date-trigger {
+  cursor: pointer;
+  background-color: var(--white);
+}
+.request-visit-page__date-trigger:focus {
+  outline: 2px solid var(--green-strong);
+  outline-offset: 2px;
+}
+
+.request-visit-page__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.request-visit-page__calendar-section {
+  margin-bottom: 1rem;
+}
+
+.request-visit-page__calendar-section .calendar-inline__label {
+  margin-bottom: 0.5rem;
+}
+
+.request-visit-page__time-label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+.request-visit-page__time-label .request-visit-page__time-input {
+  margin-top: 0.25rem;
+  max-width: 140px;
+}
+
+.request-visit-page__error {
+  color: #c00;
+  margin-bottom: 1rem;
+}
+
+.request-visit-page__actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.request-visit-page__card {
+  max-width: 480px;
+  text-align: center;
+  padding: 2rem;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.request-visit-page__card h1 {
+  font-family: var(--font-display);
+  margin-bottom: 1rem;
+}
+
+.request-visit-page__card p {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+}

@@ -1,0 +1,51 @@
+/* Visitas admin - MUI + paleta LRV */
+.visits-admin {
+  --calendar-pending: #fef3c7;
+  --calendar-cancelled: #fee2e2;
+}
+
+.visits-admin__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.visits-admin__table th,
+.visits-admin__table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--bone-border, #e8e2d9);
+}
+
+.visits-admin__table th {
+  font-weight: 600;
+  background: var(--bone-dark, #f0ebe3);
+}
+
+.visits-admin__table a {
+  color: var(--green-strong, #00a86b);
+}
+
+.visits-admin__status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.visits-admin__status--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.visits-admin__status--confirmed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.visits-admin__status--rejected,
+.visits-admin__status--cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
