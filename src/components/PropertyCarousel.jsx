@@ -72,7 +72,7 @@ export default function PropertyCarousel({ onSelectListing }) {
             Propiedades destacadas
           </h2>
           <p className="section-subtitle">
-            Una selección de opciones en venta. Contactanos para ver el listado completo.
+            Una selección de propiedades en venta y alquiler. Contactanos para ver el listado completo.
           </p>
         </header>
 

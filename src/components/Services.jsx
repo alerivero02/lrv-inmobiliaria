@@ -6,20 +6,20 @@ const services = [
     icon: "🏠",
     title: "Casas",
     description:
-      "Venta de casas en barrios residenciales, con opciones para familias y profesionales.",
+      "Venta y alquiler de casas en barrios residenciales, con opciones para familias y profesionales.",
   },
   {
     id: "departamentos",
     icon: "🏢",
     title: "Departamentos",
     description:
-      "Departamentos en zonas céntricas y residenciales de La Rioja capital y alrededores.",
+      "Departamentos en zonas céntricas y residenciales de La Rioja capital y alrededores, para venta y alquiler.",
   },
   {
     id: "terrenos",
     icon: "📐",
     title: "Terrenos",
-    description: "Lotes y terrenos para construir o invertir, con documentación en regla.",
+    description: "Lotes, terrenos, fincas productivas y campos ganaderos para invertir o habitar, con documentación en regla.",
   },
 ];
 
@@ -32,7 +32,7 @@ export default function Services() {
             Qué ofrecemos
           </h2>
           <p className="section-subtitle">
-            Nos dedicamos exclusivamente a la venta. Sin alquileres: compra y venta de inmuebles.
+            Venta y alquiler en La Rioja: casas, departamentos, terrenos, fincas y campos.
           </p>
         </header>
         <div className="services__grid" role="list">

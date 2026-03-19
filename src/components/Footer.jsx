@@ -12,7 +12,8 @@ export default function Footer() {
             <span className="footer__logo-text">Inmobiliaria</span>
           </a>
           <p className="footer__tagline">
-            Venta de casas, departamentos y terrenos en La Rioja, Argentina.
+            Venta y alquiler de casas, departamentos, terrenos, fincas y campos en La Rioja,
+            Argentina.
           </p>
         </div>
         <div className="footer__links">

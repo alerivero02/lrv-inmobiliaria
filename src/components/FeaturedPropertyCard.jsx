@@ -52,7 +52,15 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
         >
           <div className="property-card__image img-placeholder">
             {imageUrl ? (
-              <img src={imageUrl} alt="" className="property-card__img" />
+              <img
+                src={imageUrl}
+                alt=""
+                className="property-card__img"
+                width="800"
+                height="600"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <span>Sin imagen</span>
             )}

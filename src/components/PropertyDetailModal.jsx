@@ -132,7 +132,14 @@ export default function PropertyDetailModal({ listingId, onClose }) {
                     className="property-detail-modal__gallery-item"
                     onClick={() => setLightboxIndex(i)}
                   >
-                    <img src={url} alt="" />
+                    <img
+                      src={url}
+                      alt=""
+                      width="800"
+                      height="600"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </button>
                 ))}
               </div>
@@ -238,7 +245,15 @@ export default function PropertyDetailModal({ listingId, onClose }) {
             >
               ×
             </button>
-            <img src={images[lightboxIndex]} alt="" onClick={(e) => e.stopPropagation()} />
+            <img
+              src={images[lightboxIndex]}
+              alt=""
+              width="1200"
+              height="900"
+              loading="eager"
+              decoding="async"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
       </div>

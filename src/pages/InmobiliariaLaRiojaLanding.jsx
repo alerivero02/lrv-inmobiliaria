@@ -1,5 +1,7 @@
-import InmobiliariaLaRioja from "../../inmobiliaria-larioja.jsx";
+import LandingPage from "./LandingPage";
 
 export default function InmobiliariaLaRiojaLanding() {
-  return <InmobiliariaLaRioja />;
+  // Reutilizamos la landing principal compuesta por secciones/componentes.
+  // Esto mejora mantenibilidad y evita cargar el archivo monolítico anterior.
+  return <LandingPage />;
 }

@@ -1,34 +1,39 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import Header from "../components/Header";
-import Hero from "../components/Hero";
-import StatsBand from "../components/StatsBand";
-import About from "../components/About";
-import Services from "../components/Services";
-import PropertyCarousel from "../components/PropertyCarousel";
-import PropertyDetailModal from "../components/PropertyDetailModal";
-import Contact from "../components/Contact";
 import Footer from "../components/Footer";
+import HeroSection from "../landing/sections/HeroSection";
+import StatsSection from "../landing/sections/StatsSection";
+import AboutSection from "../landing/sections/AboutSection";
+import ServicesSection from "../landing/sections/ServicesSection";
+import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
+import ProfessionalExcellenceSection from "../landing/sections/ProfessionalExcellenceSection";
+import ContactSection from "../landing/sections/ContactSection";
 
 export default function LandingPage() {
   const [selectedListingId, setSelectedListingId] = useState(null);
+
+  const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal"));
 
   return (
     <>
       <Header />
       <main>
-        <Hero />
-        <StatsBand />
-        <About />
-        <Services />
-        <PropertyCarousel onSelectListing={setSelectedListingId} />
-        <Contact />
+        <HeroSection />
+        <StatsSection />
+        <AboutSection />
+        <ServicesSection />
+        <FeaturedPropertiesSection onSelectListing={setSelectedListingId} />
+        <ProfessionalExcellenceSection />
+        <ContactSection />
       </main>
       <Footer />
       {selectedListingId != null && (
-        <PropertyDetailModal
-          listingId={selectedListingId}
-          onClose={() => setSelectedListingId(null)}
-        />
+        <Suspense fallback={null}>
+          <PropertyDetailModal
+            listingId={selectedListingId}
+            onClose={() => setSelectedListingId(null)}
+          />
+        </Suspense>
       )}
     </>
   );

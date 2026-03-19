@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import "./StatsBand.css";
 
 const STATS = [
-  { val: 350, suf: "+", label: "Propiedades vendidas" },
-  { val: 8, suf: "", label: "Años de experiencia" },
-  { val: 98, suf: "%", label: "Clientes satisfechos" },
-  { val: 12, suf: "", label: "Departamentos" },
+  { val: 350, suf: "+", label: "Operaciones en venta y alquiler" },
+  { val: 11, suf: "", label: "Años de experiencia" },
+  { val: 99.9, suf: "%", label: "Clientes satisfechos" },
+  { val: 12, suf: "", label: "Fincas y campos" },
 ];
 
 function Counter({ val, suf, label }) {
@@ -35,11 +35,18 @@ function Counter({ val, suf, label }) {
     return () => ob.disconnect();
   }, [val]);
 
+  const displayN =
+    typeof n === "number" && Number.isFinite(n)
+      ? n.toString().includes(".")
+        ? n.toString().replace(".", ",")
+        : n.toString()
+      : String(n);
+
   return (
     <div ref={ref} className="stats-band__item">
       <span className="stats-band__accent" aria-hidden="true" />
       <div className="stats-band__number">
-        {n}
+        {displayN}
         {suf}
       </div>
       <div className="stats-band__label">{label}</div>
