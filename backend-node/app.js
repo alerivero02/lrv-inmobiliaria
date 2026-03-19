@@ -79,6 +79,16 @@ export function createApp() {
     res.json({ status: "ok", timestamp: new Date().toISOString() }),
   );
 
+  // Healthcheck genérico (útil para plataformas que consultan `/`).
+  app.get("/", (_req, res) =>
+    res.json({
+      ok: true,
+      service: "lrv-backend",
+      health: "/api/health",
+      timestamp: new Date().toISOString(),
+    }),
+  );
+
   // 404 genérico
   app.use((_req, res) => res.status(404).json({ detail: "Ruta no encontrada" }));
 
