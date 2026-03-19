@@ -6,7 +6,6 @@ import StatsSection from "../landing/sections/StatsSection";
 import AboutSection from "../landing/sections/AboutSection";
 import ServicesSection from "../landing/sections/ServicesSection";
 import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
-import ProfessionalExcellenceSection from "../landing/sections/ProfessionalExcellenceSection";
 import ContactSection from "../landing/sections/ContactSection";
 
 export default function LandingPage() {
@@ -23,7 +22,6 @@ export default function LandingPage() {
         <AboutSection />
         <ServicesSection />
         <FeaturedPropertiesSection onSelectListing={setSelectedListingId} />
-        <ProfessionalExcellenceSection />
         <ContactSection />
       </main>
       <Footer />
