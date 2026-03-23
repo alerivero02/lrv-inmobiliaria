@@ -1,32 +1,27 @@
 /**
  * seed.js — Crea el admin y propiedades demo si no existen.
- * Ejecutar desde d:\Programacion\LRV\backend-node\:
- *   node scripts/seed.js
+ * Requiere DATABASE_URL (PostgreSQL).
  */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import db, { migrate } from "../db.js";
+import { migrate, get, run } from "../db.js";
 
-migrate();
+await migrate();
 
-// ── Admin ─────────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@lrv.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin123!";
 
-const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(ADMIN_EMAIL);
+const existing = await get("SELECT id FROM users WHERE email = ?", ADMIN_EMAIL);
 if (!existing) {
   const hash = bcrypt.hashSync(ADMIN_PASSWORD, 12);
-  db.prepare("INSERT INTO users (email, hashed_password, role) VALUES (?, ?, 'admin')").run(
-    ADMIN_EMAIL,
-    hash,
-  );
+  await run("INSERT INTO users (email, hashed_password, role) VALUES (?, ?, 'admin') RETURNING id", ADMIN_EMAIL, hash);
   console.log(`✅  Admin creado: ${ADMIN_EMAIL}  /  ${ADMIN_PASSWORD}`);
 } else {
   console.log(`ℹ️   Admin ya existe: ${ADMIN_EMAIL}`);
 }
 
-// ── Propiedades demo ──────────────────────────────────────────────────────────
-const count = db.prepare("SELECT COUNT(*) n FROM listings").get().n;
+const countRow = await get("SELECT COUNT(*)::int AS n FROM listings");
+const count = countRow?.n ?? 0;
 
 if (count === 0) {
   const demos = [
@@ -86,16 +81,16 @@ if (count === 0) {
     },
   ];
 
-  const stmt = db.prepare(`
+  for (const d of demos) {
+    await run(
+      `
     INSERT INTO listings
     (title,description,property_type,status,operation,
      city,address,area_sqm,rooms,price,currency,
      has_garage,has_garden,has_pool,extras_note,images)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'[]')
-  `);
-
-  for (const d of demos) {
-    stmt.run(
+    RETURNING id
+  `,
       d.title,
       d.description,
       d.property_type,
@@ -118,5 +113,5 @@ if (count === 0) {
   console.log(`ℹ️   Ya existen ${count} propiedad(es), no se agregaron demos`);
 }
 
-console.log("\n🚀  Seed completado. Iniciá el servidor con:  node server.js\n");
+console.log("\n🚀  Seed completado. Iniciá el servidor con:  npm start\n");
 process.exit(0);

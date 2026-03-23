@@ -3,7 +3,7 @@
 Stack:
 - **Frontend**: React + Vite
 - **Backend**: Node + Express
-- **DB**: SQLite (archivo)
+- **DB**: PostgreSQL (`DATABASE_URL`)
 
 ## Desarrollo
 ### Frontend
@@ -13,6 +13,8 @@ npm run dev
 ```
 
 ### Backend
+Necesitás PostgreSQL y `DATABASE_URL` en el entorno (o un archivo `.env` en `backend-node`).
+
 ```bash
 cd backend-node
 npm install

@@ -17,8 +17,8 @@ const calendarTheme = createTheme({
 });
 
 export default function CalendarInline({ value, minDate, onChange, label }) {
-  const dateValue = value ? new Date(value + "T12:00:00") : null;
-  const minDateObj = minDate ? new Date(minDate) : null;
+  const dateValue = value ? new Date(`${value}T12:00:00`) : null;
+  const minDateObj = minDate ? new Date(`${minDate}T12:00:00`) : null;
 
   return (
     <ThemeProvider theme={calendarTheme}>

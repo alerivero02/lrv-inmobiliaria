@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
-import db from "../db.js";
+import { get, all, run } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
 import { isAllowedImageMime, optimizeImageToFile } from "../utils/images.js";
 
@@ -64,23 +64,17 @@ const ORDER_MAP = {
   views: "view_count DESC, updated_at DESC",
   consults: "consult_count DESC, updated_at DESC",
   destacadas: "(view_count + consult_count * 2) DESC, updated_at DESC",
-  price_asc: "price ASC",
-  price_desc: "price DESC",
+  price_asc: "price ASC NULLS LAST",
+  price_desc: "price DESC NULLS LAST",
   updated: "updated_at DESC",
 };
-
-// Wrapper para .run() que devuelve lastInsertRowid como Number
-function run(stmt, ...params) {
-  const r = stmt.run(...params);
-  return { changes: r.changes, lastInsertRowid: Number(r.lastInsertRowid) };
-}
 
 const router = Router();
 
 // ─── PUBLIC ───────────────────────────────────────────────────────────────────
 // IMPORTANTE: rutas estáticas antes de /:id
 
-router.get("/public", (req, res) => {
+router.get("/public", async (req, res) => {
   const {
     min_price,
     max_price,
@@ -113,7 +107,7 @@ router.get("/public", (req, res) => {
     params.push(operation);
   }
   if (city) {
-    conds.push("(city LIKE ? OR address LIKE ?)");
+    conds.push("(LOWER(city) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))");
     params.push(`%${city}%`, `%${city}%`);
   }
   if (bedrooms) {
@@ -134,7 +128,9 @@ router.get("/public", (req, res) => {
     conds.push("has_pool = 1");
   }
   if (req.query.search) {
-    conds.push("(title LIKE ? OR description LIKE ? OR city LIKE ?)");
+    conds.push(
+      "(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(city) LIKE LOWER(?))",
+    );
     params.push(`%${req.query.search}%`, `%${req.query.search}%`, `%${req.query.search}%`);
   }
 
@@ -144,10 +140,14 @@ router.get("/public", (req, res) => {
   const pageN = Math.max(Number(page) || 1, 1);
   const offset = (pageN - 1) * limitN;
 
-  const total = db.prepare(`SELECT COUNT(*) n FROM listings ${where}`).get(...params).n;
-  const rows = db
-    .prepare(`SELECT * FROM listings ${where} ORDER BY ${orderSql} LIMIT ? OFFSET ?`)
-    .all(...params, limitN, offset);
+  const totalRow = await get(`SELECT COUNT(*)::int AS n FROM listings ${where}`, ...params);
+  const total = Number(totalRow?.n ?? 0);
+  const rows = await all(
+    `SELECT * FROM listings ${where} ORDER BY ${orderSql} LIMIT ? OFFSET ?`,
+    ...params,
+    limitN,
+    offset,
+  );
 
   return res.json({
     items: rows.map(parseListing),
@@ -157,12 +157,10 @@ router.get("/public", (req, res) => {
   });
 });
 
-router.get("/public/:id", (req, res) => {
-  const row = db
-    .prepare("SELECT * FROM listings WHERE id = ? AND status = 'active'")
-    .get(req.params.id);
+router.get("/public/:id", async (req, res) => {
+  const row = await get("SELECT * FROM listings WHERE id = ? AND status = 'active'", req.params.id);
   if (!row) return res.status(404).json({ detail: "Anuncio no encontrado" });
-  db.prepare("UPDATE listings SET view_count = view_count + 1 WHERE id = ?").run(req.params.id);
+  await run("UPDATE listings SET view_count = view_count + 1 WHERE id = ?", req.params.id);
   return res.json(parseListing({ ...row, view_count: (row.view_count || 0) + 1 }));
 });
 
@@ -176,7 +174,6 @@ router.post("/upload", verifyToken, upload.array("files"), async (req, res, next
         const inputPath = f.path;
         const base = path.basename(f.filename, path.extname(f.filename));
         const { publicFilename } = await optimizeImageToFile(inputPath, UPLOADS_DIR, base);
-        // Borrar original (JPG/PNG) para ahorrar disco; el optimizado queda
         if (publicFilename !== f.filename) {
           await fs.unlink(inputPath).catch(() => {});
         }
@@ -189,7 +186,7 @@ router.post("/upload", verifyToken, upload.array("files"), async (req, res, next
   }
 });
 
-router.get("/", verifyToken, (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   const { status, property_type, operation, city, search, order_by } = req.query;
   const conds = [];
   const params = [];
@@ -207,32 +204,30 @@ router.get("/", verifyToken, (req, res) => {
     params.push(operation);
   }
   if (city) {
-    conds.push("(city LIKE ? OR address LIKE ?)");
+    conds.push("(LOWER(city) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))");
     params.push(`%${city}%`, `%${city}%`);
   }
   if (search) {
-    conds.push("(title LIKE ? OR description LIKE ? OR city LIKE ? OR address LIKE ?)");
+    conds.push(
+      "(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(city) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))",
+    );
     params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
   const orderSql = ORDER_MAP[order_by] || ORDER_MAP.updated;
 
-  return res.json(
-    db
-      .prepare(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`)
-      .all(...params)
-      .map(parseListing),
-  );
+  const rows = await all(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`, ...params);
+  return res.json(rows.map(parseListing));
 });
 
-router.get("/:id", verifyToken, (req, res) => {
-  const row = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id);
+router.get("/:id", verifyToken, async (req, res) => {
+  const row = await get("SELECT * FROM listings WHERE id = ?", req.params.id);
   if (!row) return res.status(404).json({ detail: "Anuncio no encontrado" });
   return res.json(parseListing(row));
 });
 
-router.post("/", verifyToken, (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   const {
     title,
     description,
@@ -261,7 +256,8 @@ router.post("/", verifyToken, (req, res) => {
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
 
-  const stmt = db.prepare(`
+  const { lastInsertRowid } = await run(
+    `
     INSERT INTO listings
     (title,description,property_type,status,operation,documentation,
      address,city,province,lat,lng,location_manual,
@@ -269,9 +265,8 @@ router.post("/", verifyToken, (req, res) => {
      has_garage,has_garden,has_pool,extras_note,images,
      commission_buyer,commission_seller)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `);
-  const { lastInsertRowid } = run(
-    stmt,
+    RETURNING id
+  `,
     title,
     description ?? null,
     property_type ?? "casa",
@@ -299,11 +294,11 @@ router.post("/", verifyToken, (req, res) => {
 
   return res
     .status(201)
-    .json(parseListing(db.prepare("SELECT * FROM listings WHERE id = ?").get(lastInsertRowid)));
+    .json(parseListing(await get("SELECT * FROM listings WHERE id = ?", lastInsertRowid)));
 });
 
-router.patch("/:id", verifyToken, (req, res) => {
-  const existing = db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id);
+router.patch("/:id", verifyToken, async (req, res) => {
+  const existing = await get("SELECT * FROM listings WHERE id = ?", req.params.id);
   if (!existing) return res.status(404).json({ detail: "Anuncio no encontrado" });
 
   const FIELDS = [
@@ -347,19 +342,17 @@ router.patch("/:id", verifyToken, (req, res) => {
 
   if (!sets.length) return res.json(parseListing(existing));
 
-  sets.push("updated_at = datetime('now')");
+  sets.push("updated_at = CURRENT_TIMESTAMP");
   vals.push(req.params.id);
-  db.prepare(`UPDATE listings SET ${sets.join(", ")} WHERE id = ?`).run(...vals);
-  return res.json(
-    parseListing(db.prepare("SELECT * FROM listings WHERE id = ?").get(req.params.id)),
-  );
+  await run(`UPDATE listings SET ${sets.join(", ")} WHERE id = ?`, ...vals);
+  return res.json(parseListing(await get("SELECT * FROM listings WHERE id = ?", req.params.id)));
 });
 
-router.delete("/:id", verifyToken, (req, res) => {
-  if (!db.prepare("SELECT id FROM listings WHERE id = ?").get(req.params.id)) {
+router.delete("/:id", verifyToken, async (req, res) => {
+  if (!(await get("SELECT id FROM listings WHERE id = ?", req.params.id))) {
     return res.status(404).json({ detail: "Anuncio no encontrado" });
   }
-  db.prepare("DELETE FROM listings WHERE id = ?").run(req.params.id);
+  await run("DELETE FROM listings WHERE id = ?", req.params.id);
   return res.status(204).send();
 });
 

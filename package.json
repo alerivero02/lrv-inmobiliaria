@@ -13,6 +13,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@liedekef/fdatepicker": "^3.0.42",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
     "@mui/x-charts": "^8.27.5",
@@ -28,8 +29,8 @@
     "swiper": "^11.0.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
     "@biomejs/biome": "^2.0.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.0"
   }
 }

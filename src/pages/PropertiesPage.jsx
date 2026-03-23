@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import PropertyDetailModal from "../components/PropertyDetailModal";
+
+const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal"));
 import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
 import { getPublicListings } from "../api/client";
 import { CITIES_LA_RIOJA, PROPERTY_TYPES, OPERATION_OPTIONS } from "../data/cities";
@@ -348,10 +349,12 @@ export default function PropertiesPage() {
                 ))}
               </div>
               {selectedListingId != null && (
-                <PropertyDetailModal
-                  listingId={selectedListingId}
-                  onClose={() => setSelectedListingId(null)}
-                />
+                <Suspense fallback={null}>
+                  <PropertyDetailModal
+                    listingId={selectedListingId}
+                    onClose={() => setSelectedListingId(null)}
+                  />
+                </Suspense>
               )}
               {listings.length === 0 && !loading && (
                 <div className="properties-page__empty">

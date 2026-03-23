@@ -146,6 +146,16 @@ export async function deleteListing(id) {
 }
 
 // Visitas (público: crear; admin: listar, actualizar)
+/** Turnos ya tomados (pending/confirmed) para no solapar solicitudes. Público, sin auth. */
+export async function getOccupiedVisitSlots() {
+  const res = await fetch(`${API_BASE}/visits/occupied-slots`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "No se pudo cargar la disponibilidad");
+  }
+  return res.json();
+}
+
 export async function createVisitRequest(data) {
   const url = `${API_BASE}/visits`;
   if (IS_DEV) {
@@ -173,7 +183,10 @@ export async function createVisitRequest(data) {
     const err = await res.json().catch(() => ({}));
     console.error("Respuesta de error:", err);
     if (IS_DEV) console.groupEnd();
-    throw new Error(err.detail || "Error al enviar solicitud");
+    const msg = err.detail || "Error al enviar solicitud";
+    const e = new Error(msg);
+    e.status = res.status;
+    throw e;
   }
   const result = await res.json();
   if (IS_DEV) console.log("Visita creada:", result);

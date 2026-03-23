@@ -79,18 +79,38 @@ export function createApp() {
     res.json({ status: "ok", timestamp: new Date().toISOString() }),
   );
 
-  // Healthcheck genérico (útil para plataformas que consultan `/`).
-  app.get("/", (_req, res) =>
-    res.json({
-      ok: true,
-      service: "lrv-backend",
-      health: "/api/health",
-      timestamp: new Date().toISOString(),
-    }),
-  );
+  const distStatic = process.env.FRONTEND_DIST
+    ? path.resolve(process.env.FRONTEND_DIST)
+    : path.join(__dirname, "..", "dist");
+  const serveStatic = process.env.SERVE_STATIC === "1" && fs.existsSync(distStatic);
 
-  // 404 genérico
-  app.use((_req, res) => res.status(404).json({ detail: "Ruta no encontrada" }));
+  if (!serveStatic) {
+    app.get("/", (_req, res) =>
+      res.json({
+        ok: true,
+        service: "lrv-backend",
+        health: "/api/health",
+        timestamp: new Date().toISOString(),
+      }),
+    );
+  } else {
+    app.use(express.static(distStatic));
+    app.use((req, res, next) => {
+      if (req.path.startsWith("/api")) {
+        return res.status(404).json({ detail: "Ruta no encontrada" });
+      }
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        return res.status(404).json({ detail: "Ruta no encontrada" });
+      }
+      return res.sendFile(path.join(distStatic, "index.html"), (err) => {
+        if (err) next(err);
+      });
+    });
+  }
+
+  if (!serveStatic) {
+    app.use((_req, res) => res.status(404).json({ detail: "Ruta no encontrada" }));
+  }
 
   // Error handler centralizado
   app.use((err, _req, res, _next) => {

@@ -1,10 +1,71 @@
+import { useEffect, useRef, useState } from "react";
+import "./Hero.css";
 import "./About.css";
 
 export default function About() {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(mq.matches);
+    const onMq = () => setReduceMotion(mq.matches);
+    mq.addEventListener("change", onMq);
+
+    const handleMouse = (e) => {
+      if (reduceMotion || !wrapRef.current) return;
+      const rect = wrapRef.current.getBoundingClientRect();
+      setMousePos({
+        x: ((e.clientX - rect.left) / rect.width - 0.5) * 5,
+        y: ((e.clientY - rect.top) / rect.height - 0.5) * 5,
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouse);
+    return () => {
+      mq.removeEventListener("change", onMq);
+      window.removeEventListener("mousemove", handleMouse);
+    };
+  }, [reduceMotion]);
+
   return (
-    <section className="section about" id="nosotros" aria-labelledby="about-title">
+    <section
+      className={`section about ${reduceMotion ? "about--reduced" : ""}`}
+      id="nosotros"
+      aria-labelledby="about-title"
+    >
       <div className="container">
         <div className="about__grid">
+          <div className="about__visual">
+            <figure className="about__figure">
+              <div
+                ref={wrapRef}
+                className="lrvh-card-wrap about__card-wrap"
+                style={
+                  reduceMotion
+                    ? undefined
+                    : {
+                        transform: `perspective(1000px) rotateY(${-mousePos.x * 0.5}deg) rotateX(${mousePos.y * 0.3}deg)`,
+                      }
+                }
+              >
+                <div className="lrvh-main-card about__hero-card">
+                  <div className="lrvh-card-glow" aria-hidden="true" />
+                  <img
+                    src="/EnzoRivero.png"
+                    alt="Enzo Rivero, agente inmobiliario, dueño y administrador de LRV"
+                    className="lrvh-property-img"
+                    width={800}
+                    height={800}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="lrvh-card-shine" aria-hidden="true" />
+                </div>
+              </div>
+            </figure>
+          </div>
           <div className="about__content">
             <h2 id="about-title" className="section-title">
               Nosotros
@@ -23,15 +84,6 @@ export default function About() {
               <li>Atención personalizada y seguimiento</li>
               <li>Venta y alquiler: acompañamos todo el proceso</li>
             </ul>
-          </div>
-          <div className="about__visual">
-            <figure className="about__photo">
-              <img
-                src="/EnzoRivero.png"
-                alt="Enzo Rivero, agente inmobiliario, dueño y administrador de LRV"
-                className="about__photo-img"
-              />
-            </figure>
           </div>
         </div>
       </div>

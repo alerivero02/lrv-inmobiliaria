@@ -1,0 +1,21 @@
+# Postgres solo para desarrollo local (puerto 5433 para no chocar con otro Postgres en 5432)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lrv-postgres-dev
+    environment:
+      POSTGRES_USER: lrv
+      POSTGRES_PASSWORD: lrv
+      POSTGRES_DB: lrv
+    ports:
+      - "5433:5432"
+    volumes:
+      - lrv_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lrv -d lrv"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  lrv_pgdata:
