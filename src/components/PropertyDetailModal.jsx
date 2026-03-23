@@ -1,21 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
+import { ensureLeafletDefaultIcon } from "../utils/leafletDefaultIcon";
 import VisitRequestForm from "./VisitRequestForm";
 import "./PropertyDetailModal.css";
 
+ensureLeafletDefaultIcon();
+
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
-
-const minDate = new Date();
-minDate.setDate(minDate.getDate() + 2);
-const minDateStr = minDate.toISOString().slice(0, 10);
 
 /** Número de WhatsApp de la agencia (con código de país, sin +). Configurar en VITE_AGENCY_WHATSAPP */
 const AGENCY_WHATSAPP = import.meta.env.VITE_AGENCY_WHATSAPP || "5493804123456";
 
 /** URL base del sitio para enlaces en WhatsApp. Configurar en VITE_SITE_URL (ej: https://tudominio.com) */
 const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://www.ejemplo.com").replace(/\/$/, "");
+
+function MapInvalidateSize() {
+  const map = useMap();
+  useEffect(() => {
+    const id = window.setTimeout(() => map.invalidateSize(), 150);
+    return () => clearTimeout(id);
+  }, [map]);
+  return null;
+}
 
 /** Arma un mensaje con formato tipo card: tipo • operación, título, ubicación, características, precio y link para preview con imagen */
 function buildWhatsAppUrl(listing) {
@@ -50,8 +60,10 @@ export default function PropertyDetailModal({ listingId, onClose }) {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [consultSuccess, setConsultSuccess] = useState(false);
+  const swipeRef = useRef({ x: 0, y: 0, tracking: false });
 
   useEffect(() => {
     if (!listingId) return;
@@ -64,20 +76,65 @@ export default function PropertyDetailModal({ listingId, onClose }) {
   }, [listingId]);
 
   useEffect(() => {
-    const onEscape = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onEscape);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onEscape);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
+    setImageIndex(0);
+    setLightboxOpen(false);
+  }, [listingId]);
 
   const images = listing?.images?.length ? listing.images : [];
-  const mapUrl =
-    listing?.lat != null && listing?.lng != null
-      ? `https://www.google.com/maps?q=${listing.lat},${listing.lng}&output=embed`
-      : null;
+  const nImages = images.length;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        if (lightboxOpen) {
+          e.preventDefault();
+          setLightboxOpen(false);
+        } else {
+          onClose();
+        }
+        return;
+      }
+      if (!nImages) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setImageIndex((i) => (i - 1 + nImages) % nImages);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setImageIndex((i) => (i + 1) % nImages);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, lightboxOpen, nImages]);
+
+  const touchStart = (e) => {
+    swipeRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      tracking: true,
+    };
+  };
+
+  const touchEnd = (e) => {
+    if (!nImages || !swipeRef.current.tracking) return;
+    swipeRef.current.tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRef.current.x;
+    const dy = t.clientY - swipeRef.current.y;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) setImageIndex((i) => (i + 1) % nImages);
+      else setImageIndex((i) => (i - 1 + nImages) % nImages);
+    }
+  };
+
+  const hasMapCoords = listing?.lat != null && listing?.lng != null;
+  const googleMapsLink = hasMapCoords
+    ? `https://www.google.com/maps?q=${listing.lat},${listing.lng}`
+    : null;
 
   return (
     <div
@@ -123,25 +180,68 @@ export default function PropertyDetailModal({ listingId, onClose }) {
               <p className="property-detail-modal__price">{formatPrice(listing.price)}</p>
             </div>
 
-            {images.length > 0 && (
-              <div className="property-detail-modal__gallery">
-                {images.slice(0, 6).map((url, i) => (
+            {nImages > 0 && (
+              <div className="property-detail-modal__gallery-block">
+                <div
+                  className="property-detail-modal__carousel"
+                  onTouchStart={touchStart}
+                  onTouchEnd={touchEnd}
+                >
                   <button
-                    key={i}
                     type="button"
-                    className="property-detail-modal__gallery-item"
-                    onClick={() => setLightboxIndex(i)}
+                    className="property-detail-modal__carousel-nav property-detail-modal__carousel-nav--prev"
+                    onClick={() => setImageIndex((i) => (i - 1 + nImages) % nImages)}
+                    aria-label="Imagen anterior"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="property-detail-modal__carousel-main"
+                    onClick={() => setLightboxOpen(true)}
                   >
                     <img
-                      src={url}
+                      src={images[imageIndex]}
                       alt=""
-                      width="800"
+                      width="900"
                       height="600"
-                      loading="lazy"
+                      loading="eager"
                       decoding="async"
                     />
+                    <span className="property-detail-modal__carousel-counter" aria-live="polite">
+                      {imageIndex + 1} / {nImages}
+                    </span>
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    className="property-detail-modal__carousel-nav property-detail-modal__carousel-nav--next"
+                    onClick={() => setImageIndex((i) => (i + 1) % nImages)}
+                    aria-label="Imagen siguiente"
+                  >
+                    ›
+                  </button>
+                </div>
+                <p className="property-detail-modal__carousel-hint">
+                  Deslizá en la imagen o usá las flechas para ver más. Clic para ampliar.
+                </p>
+                <div className="property-detail-modal__thumbs" role="tablist" aria-label="Miniaturas">
+                  {images.map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === imageIndex}
+                      className={
+                        i === imageIndex
+                          ? "property-detail-modal__thumb property-detail-modal__thumb--active"
+                          : "property-detail-modal__thumb"
+                      }
+                      onClick={() => setImageIndex(i)}
+                    >
+                      <img src={url} alt="" width="120" height="90" loading="lazy" decoding="async" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -178,19 +278,35 @@ export default function PropertyDetailModal({ listingId, onClose }) {
               )}
             </section>
 
-            {mapUrl && (
+            {hasMapCoords && (
               <section className="property-detail-modal__map">
                 <h3>Ubicación</h3>
-                <iframe
-                  title="Mapa"
-                  src={mapUrl}
-                  width="100%"
-                  height="200"
-                  style={{ border: 0, borderRadius: "var(--radius)" }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
+                <div className="property-detail-modal__map-wrap">
+                  <MapContainer
+                    key={`${listing.id}-${listing.lat}-${listing.lng}`}
+                    center={[listing.lat, listing.lng]}
+                    zoom={15}
+                    className="property-detail-modal__map-leaflet"
+                    scrollWheelZoom={false}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[listing.lat, listing.lng]} />
+                    <MapInvalidateSize />
+                  </MapContainer>
+                </div>
+                {googleMapsLink && (
+                  <a
+                    className="property-detail-modal__map-link"
+                    href={googleMapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir en Google Maps
+                  </a>
+                )}
               </section>
             )}
 
@@ -230,23 +346,51 @@ export default function PropertyDetailModal({ listingId, onClose }) {
           </div>
         )}
 
-        {lightboxIndex != null && images[lightboxIndex] && (
+        {lightboxOpen && nImages > 0 && images[imageIndex] && (
           <div
             className="property-detail-modal__lightbox"
             role="dialog"
             aria-modal="true"
-            onClick={() => setLightboxIndex(null)}
+            aria-label="Vista ampliada de la imagen"
+            onClick={() => setLightboxOpen(false)}
+            onTouchStart={touchStart}
+            onTouchEnd={touchEnd}
           >
             <button
               type="button"
               className="property-detail-modal__lightbox-close"
-              onClick={() => setLightboxIndex(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxOpen(false);
+              }}
               aria-label="Cerrar"
             >
               ×
             </button>
+            <button
+              type="button"
+              className="property-detail-modal__lightbox-nav property-detail-modal__lightbox-nav--prev"
+              onClick={(e) => {
+                e.stopPropagation();
+                setImageIndex((i) => (i - 1 + nImages) % nImages);
+              }}
+              aria-label="Imagen anterior"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="property-detail-modal__lightbox-nav property-detail-modal__lightbox-nav--next"
+              onClick={(e) => {
+                e.stopPropagation();
+                setImageIndex((i) => (i + 1) % nImages);
+              }}
+              aria-label="Imagen siguiente"
+            >
+              ›
+            </button>
             <img
-              src={images[lightboxIndex]}
+              src={images[imageIndex]}
               alt=""
               width="1200"
               height="900"
@@ -254,6 +398,9 @@ export default function PropertyDetailModal({ listingId, onClose }) {
               decoding="async"
               onClick={(e) => e.stopPropagation()}
             />
+            <span className="property-detail-modal__lightbox-counter" aria-live="polite">
+              {imageIndex + 1} / {nImages}
+            </span>
           </div>
         )}
       </div>

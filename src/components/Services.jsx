@@ -21,6 +21,13 @@ const services = [
     title: "Terrenos",
     description: "Lotes, terrenos, fincas productivas y campos ganaderos para invertir o habitar, con documentación en regla.",
   },
+  {
+    id: "fincas-inversiones",
+    icon: "🌾",
+    title: "Fincas e inversiones privadas",
+    description:
+      "Asesoramiento y operaciones discretas en fincas rurales, campos y oportunidades de inversión para carteras particulares.",
+  },
 ];
 
 export default function Services() {
@@ -32,7 +39,8 @@ export default function Services() {
             Qué ofrecemos
           </h2>
           <p className="section-subtitle">
-            Venta y alquiler en La Rioja: casas, departamentos, terrenos, fincas y campos.
+            Venta y alquiler en La Rioja: casas, departamentos, terrenos, fincas, campos e inversiones
+            privadas.
           </p>
         </header>
         <div className="services__grid" role="list">
