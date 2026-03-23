@@ -503,12 +503,11 @@ export default function VisitRequestForm({
     } catch (err) {
       const msg = err.message || "No se pudo enviar. Intentá de nuevo.";
       if (err.status === 409) {
-        setBookingNotice({
-          type: "error",
-          text: msg,
-        });
+        setError("");
+        setBookingNotice({ type: "error", text: msg });
+      } else {
+        setError(msg);
       }
-      setError(msg);
     } finally {
       setSending(false);
     }
