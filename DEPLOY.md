@@ -4,16 +4,47 @@ Stack: **Vite (frontend)** + **Node/Express (backend)** + **PostgreSQL** + **upl
 
 ## Railway (recomendado)
 
-1. Crear proyecto en [Railway](https://railway.app) y conectar este repositorio.
-2. Añadir el plugin **PostgreSQL**; Railway expone `DATABASE_URL` automáticamente.
-3. Variables del servicio que ejecuta el backend (ver `Dockerfile` en la raíz):
+### Cómo encaja todo (importante)
+
+En Railway tenés **servicios separados** en el mismo proyecto:
+
+| Servicio | Rol |
+|----------|-----|
+| **Postgres** | Corre la base; las variables `DATABASE_URL`, `PGHOST`, etc. viven **solo** en este servicio. |
+| **lrv-inmobiliaria** (Docker) | Corre `node server.js` + estáticos; es el que debe **ver** `DATABASE_URL` en tiempo de ejecución. |
+
+**Git** solo alimenta el build del servicio de la app. **No** “copia” la base de datos: el plugin Postgres es otro servicio que vos agregás al canvas y mantenés conectado por variables.
+
+### Pasos
+
+1. **Crear proyecto** y conectar el repositorio (servicio con `Dockerfile` en la raíz, ver `railway.toml`).
+2. **Añadir PostgreSQL**: `+ New` → **Database** → **PostgreSQL**. Esperá a que quede **Online**.
+3. **Enlazar la base a la app** (sin esto la API no usa Postgres):
+   - Abrí el servicio **lrv-inmobiliaria** (el de tu repo), pestaña **Variables**.
+   - **New variable** → **Add reference** (o “Reference”).
+   - Elegí el servicio **Postgres** y la variable **`DATABASE_URL`**.
+   - Guardá con el nombre **`DATABASE_URL`** (exactamente así; muchas librerías la buscan por ese nombre).
+   - Sintaxis alternativa manual: `${{NombreDelServicioPostgres.DATABASE_URL}}` (el nombre es el que muestra el recuadro del servicio en el canvas, p. ej. `Postgres`).
+4. **Variables obligatorias / recomendadas** en el servicio **de la app** (no en Postgres salvo que el propio Postgres las pida):
    - `JWT_SECRET` — obligatorio, cadena larga y aleatoria.
-   - `HOST` — URL pública del servicio (ej. `https://xxx.up.railway.app`) para enlaces de imágenes en `/uploads`.
-   - `CORS_ORIGINS` — si el front está en otro dominio, lista separada por comas; con un solo servicio Docker que sirve API + `dist`, suele bastar el mismo origen.
+   - `NODE_ENV=production`
    - `TRUST_PROXY=1` — detrás del proxy de Railway.
-4. Build: el `Dockerfile` en la raíz compila el frontend (`npm run build` con `VITE_API_URL=/api`) y copia `dist/` junto al backend; arranque con `SERVE_STATIC=1` y `FRONTEND_DIST=/app/dist` (ya definidos en la imagen).
-5. Tras el primer deploy: ejecutar una vez `npm run seed` en un shell del contenedor o job one-off (crea admin y demos si la base está vacía). Ajustá `ADMIN_EMAIL` / `ADMIN_PASSWORD` por variables de entorno antes del seed en producción.
-6. Postgres local sin SSL: `PGSSLMODE=disable` en `.env` del backend.
+   - `FRONTEND_URL` — URL pública del sitio (ej. `https://www.lrvinmobiliaria.com`) para enlaces en correos (invitaciones / olvidé contraseña).
+   - `CORS_ORIGINS` — si el navegador llama desde otro origen, lista separada por comas; si API y web van en el **mismo dominio** (un solo Docker sirve `/` y `/api`), podés dejarlo vacío o poner tu dominio.
+   - `HOST` — URL pública del servicio para URLs absolutas de `/uploads` si las usás.
+   - **No** definas `PGSSLMODE=disable` en Railway: el Postgres de Railway usa SSL; dejarlo en disable puede romper la conexión.
+5. **Build**: el `Dockerfile` compila Vite con `VITE_API_URL=/api` (mismo host). Si necesitás otro valor en build, configurá variable **`VITE_API_URL`** también en **Build Variables** / Docker ARG según Railway.
+6. **Arranque**: en los **Deploy logs** del servicio app deberías ver `✅ Conectado a PostgreSQL (DATABASE_URL presente)`. Si ves el aviso de **SQLite en producción**, falta o falla la referencia a `DATABASE_URL`.
+7. **Seed** (primera vez): en un shell one-off del contenedor de la app: `node scripts/seed.js` (o `npm run seed` desde `/app/backend-node`). Definí antes `ADMIN_EMAIL` / `ADMIN_PASSWORD` si no querés los defaults del script.
+8. **Correo (SMTP + `FRONTEND_URL`)**: necesario para invitaciones y “olvidé mi contraseña”.
+
+### Panel “Database” de Railway
+
+La pestaña **Database** del servicio Postgres a veces queda en “Attempting to connect…” por la UI o por carga; **no** implica que tu app esté mal configurada. Lo que importa es que el **servicio de la app** tenga `DATABASE_URL` referenciada y que los logs de deploy muestren PostgreSQL como arriba.
+
+### Postgres solo en local
+
+En tu máquina, sin SSL: `PGSSLMODE=disable` en `.env` del backend. **No** uses eso en Railway.
 
 ## VPS (alternativa)
 

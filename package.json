@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "npm run dev --prefix backend-node",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "dev:all": "docker compose up -d db && wait-on tcp:127.0.0.1:5433 -t 120000 && cross-env DATABASE_URL=postgresql://lrv:lrv@127.0.0.1:5433/lrv PGSSLMODE=disable JWT_SECRET=dev-local-jwt-secret-change-me CORS_ORIGINS=http://localhost:5173 FRONTEND_URL=http://localhost:5173 VITE_API_URL=/api concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend-node\" \"vite\"",
+    "dev:all:sqlite": "cross-env JWT_SECRET=dev-local-jwt-secret-change-me CORS_ORIGINS=http://localhost:5173 FRONTEND_URL=http://localhost:5173 VITE_API_URL=/api concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend-node\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "biome lint .",
@@ -31,6 +36,9 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.0"
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "vite": "^5.0.0",
+    "wait-on": "^8.0.1"
   }
 }

@@ -6,14 +6,38 @@ Stack:
 - **DB**: PostgreSQL (`DATABASE_URL`)
 
 ## Desarrollo
-### Frontend
+
+### Todo junto (recomendado): Postgres + API + Vite
+
+Requisitos: **Docker Desktop** (o Docker Engine) y Node 20+.
+
+```bash
+npm install
+cd backend-node && npm install && cd ..
+npm run dev:all
+```
+
+- Postgres local: **puerto 5433** (`docker compose` según `docker-compose.yml`).
+- API: **http://localhost:4000** (Vite reenvía `/api` al mismo origen → usá la app en **http://localhost:5173**).
+- Primera vez con base vacía: en otra terminal `cd backend-node && npm run seed` (crea admin y demos).
+
+Detener solo el contenedor: `npm run db:down`.
+
+Sin Docker (API con **SQLite** en `backend-node/lrv.db`, mismo proxy `/api`):
+
+```bash
+npm run dev:all:sqlite
+```
+
+### Solo frontend
 ```bash
 npm install
 npm run dev
 ```
+(Sin proxy útil si no levantás el backend; podés definir `VITE_API_URL`.)
 
-### Backend
-Necesitás PostgreSQL y `DATABASE_URL` en el entorno (o un archivo `.env` en `backend-node`).
+### Solo backend
+Necesitás PostgreSQL (`DATABASE_URL`) o, sin URL, SQLite en `backend-node/lrv.db`.
 
 ```bash
 cd backend-node
