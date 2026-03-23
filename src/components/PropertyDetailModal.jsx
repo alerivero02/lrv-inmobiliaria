@@ -18,11 +18,29 @@ const AGENCY_WHATSAPP = import.meta.env.VITE_AGENCY_WHATSAPP || "5493804123456";
 /** URL base del sitio para enlaces en WhatsApp. Configurar en VITE_SITE_URL (ej: https://tudominio.com) */
 const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://www.ejemplo.com").replace(/\/$/, "");
 
+/** Ajusta el mapa al tamaño real del contenedor sin setTimeout (evita violaciones de rendimiento en DevTools). */
 function MapInvalidateSize() {
   const map = useMap();
   useEffect(() => {
-    const id = window.setTimeout(() => map.invalidateSize(), 150);
-    return () => clearTimeout(id);
+    const container = map.getContainer();
+    if (!container) return;
+
+    let rafId = 0;
+    const scheduleInvalidate = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        map.invalidateSize({ animate: false });
+      });
+    };
+
+    const ro = new ResizeObserver(scheduleInvalidate);
+    ro.observe(container);
+    scheduleInvalidate();
+
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(rafId);
+    };
   }, [map]);
   return null;
 }
