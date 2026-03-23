@@ -9,7 +9,13 @@ import { isAllowedImageMime, optimizeImageToFile } from "../utils/images.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
-const HOST = process.env.HOST || "http://localhost:4000";
+
+/** Rutas relativas evitan CSP (img-src 'self') al mezclar 127.0.0.1 / localhost / Vite :5173. */
+function normalizeUploadUrl(url) {
+  if (typeof url !== "string") return url;
+  const m = url.match(/^https?:\/\/[^/]+(\/uploads\/[^?#]+)/i);
+  return m ? m[1] : url;
+}
 
 // Multer
 const storage = multer.diskStorage({
@@ -44,9 +50,10 @@ function parseJSON(val, fallback = []) {
 
 function parseListing(row) {
   if (!row) return null;
+  const imgs = parseJSON(row.images, []);
   return {
     ...row,
-    images: parseJSON(row.images, []),
+    images: Array.isArray(imgs) ? imgs.map(normalizeUploadUrl) : imgs,
     has_garage: Boolean(row.has_garage),
     has_garden: Boolean(row.has_garden),
     has_pool: Boolean(row.has_pool),
@@ -177,7 +184,7 @@ router.post("/upload", verifyToken, upload.array("files"), async (req, res, next
         if (publicFilename !== f.filename) {
           await fs.unlink(inputPath).catch(() => {});
         }
-        return `${HOST}/uploads/${publicFilename}`;
+        return `/uploads/${publicFilename}`;
       }),
     );
     return res.json(results);
