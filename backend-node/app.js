@@ -7,6 +7,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 import authRouter from "./routes/auth.js";
+import usersRouter from "./routes/users.js";
 import listingsRouter from "./routes/listings.js";
 import visitsRouter from "./routes/visits.js";
 import transactionsRouter from "./routes/transactions.js";
@@ -25,9 +26,13 @@ export function createApp() {
   app.disable("x-powered-by");
   if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 
+  const trustProxy = process.env.TRUST_PROXY === "1";
   app.use(
     helmet({
       crossOriginResourcePolicy: false, // sirve /uploads; ajustar si se endurece más adelante
+      frameguard: { action: "deny" },
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      hsts: trustProxy ? { maxAge: 15552000, includeSubDomains: true } : false,
     }),
   );
 
@@ -60,15 +65,31 @@ export function createApp() {
   });
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 30,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const usersApiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 200,
     standardHeaders: true,
     legacyHeaders: false,
   });
 
   app.use("/api", apiLimiter);
   app.use("/api/auth/login", loginLimiter);
+  app.use(
+    "/api/auth/forgot-password",
+    rateLimit({
+      windowMs: 60 * 60 * 1000,
+      limit: Number(process.env.FORGOT_PASSWORD_HOURLY_LIMIT) || 8,
+      standardHeaders: true,
+      legacyHeaders: false,
+    }),
+  );
 
   app.use("/api/auth", authRouter);
+  app.use("/api/users", usersApiLimiter, usersRouter);
   app.use("/api/listings", listingsRouter);
   app.use("/api/visits", visitsRouter);
   app.use("/api/transactions", transactionsRouter);

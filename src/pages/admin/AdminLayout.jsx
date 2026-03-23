@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Outlet, Link, NavLink, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -16,6 +16,13 @@ import {
   IconButton,
   AppBar,
   Toolbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -27,7 +34,16 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import PublicIcon from "@mui/icons-material/Public";
-import { logout, getNotificationCounts } from "../../api/client";
+import PeopleIcon from "@mui/icons-material/People";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import {
+  logout,
+  getNotificationCounts,
+  getStoredAdminProfile,
+  refreshAdminProfile,
+  isAuthenticated,
+  changePassword,
+} from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
 
 const DRAWER_WIDTH = 260;
@@ -40,9 +56,31 @@ const navItems = [
   { to: "/admin/contabilidad", end: false, label: "Contabilidad", icon: <AccountBalanceIcon /> },
 ];
 
-function DrawerContent({ onNavClick }) {
+const usersNavItem = {
+  to: "/admin/usuarios",
+  end: false,
+  label: "Usuarios",
+  icon: <PeopleIcon />,
+};
+
+function DrawerContent({ onNavClick, profile }) {
+  const sidebarNav = useMemo(() => {
+    if (profile?.role === "admin") {
+      const next = [...navItems];
+      next.splice(4, 0, usersNavItem);
+      return next;
+    }
+    return navItems;
+  }, [profile]);
   const navigate = useNavigate();
   const [counts, setCounts] = useState({ pending_visits: 0, pending_listings: 0 });
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const [curPw, setCurPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [newPw2, setNewPw2] = useState("");
+  const [pwdErr, setPwdErr] = useState("");
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [pwdSnack, setPwdSnack] = useState("");
 
   useEffect(() => {
     getNotificationCounts()
@@ -59,6 +97,34 @@ function DrawerContent({ onNavClick }) {
   }, []);
 
   const linkProps = onNavClick ? { onClick: onNavClick } : {};
+
+  const handlePwdClose = () => {
+    if (pwdBusy) return;
+    setPwdOpen(false);
+    setPwdErr("");
+    setCurPw("");
+    setNewPw("");
+    setNewPw2("");
+  };
+
+  const handlePwdSubmit = async (e) => {
+    e.preventDefault();
+    setPwdErr("");
+    if (newPw !== newPw2) {
+      setPwdErr("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+    setPwdBusy(true);
+    try {
+      await changePassword(curPw, newPw);
+      setPwdSnack("Contraseña actualizada");
+      handlePwdClose();
+    } catch (err) {
+      setPwdErr(err.message || "Error");
+    } finally {
+      setPwdBusy(false);
+    }
+  };
 
   return (
     <>
@@ -110,7 +176,7 @@ function DrawerContent({ onNavClick }) {
       <Divider sx={{ my: 1 }} />
 
       <List dense sx={{ px: 1 }}>
-        {navItems.map(({ to, end, label, icon }) => (
+        {sidebarNav.map(({ to, end, label, icon }) => (
           <NavLink key={to} to={to} end={end} style={{ textDecoration: "none", color: "inherit" }}>
             {({ isActive }) => (
               <ListItemButton
@@ -149,6 +215,15 @@ function DrawerContent({ onNavClick }) {
           Ver landing
         </Button>
         <Button
+          startIcon={<VpnKeyIcon />}
+          onClick={() => setPwdOpen(true)}
+          size="small"
+          color="inherit"
+          sx={{ justifyContent: "flex-start" }}
+        >
+          Cambiar contraseña
+        </Button>
+        <Button
           startIcon={<LogoutIcon />}
           onClick={() => {
             logout();
@@ -161,6 +236,63 @@ function DrawerContent({ onNavClick }) {
           Cerrar sesión
         </Button>
       </Box>
+
+      <Dialog open={pwdOpen} onClose={handlePwdClose} fullWidth maxWidth="xs" component="form" onSubmit={handlePwdSubmit}>
+        <DialogTitle>Cambiar contraseña</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          {pwdErr && (
+            <Alert severity="error" onClose={() => setPwdErr("")}>
+              {pwdErr}
+            </Alert>
+          )}
+          <TextField
+            label="Contraseña actual"
+            type="password"
+            value={curPw}
+            onChange={(e) => setCurPw(e.target.value)}
+            required
+            fullWidth
+            autoComplete="current-password"
+            disabled={pwdBusy}
+          />
+          <TextField
+            label="Nueva contraseña"
+            type="password"
+            value={newPw}
+            onChange={(e) => setNewPw(e.target.value)}
+            required
+            fullWidth
+            autoComplete="new-password"
+            disabled={pwdBusy}
+            helperText="12+ caracteres, mayúsculas, minúsculas, número y símbolo"
+          />
+          <TextField
+            label="Repetir nueva contraseña"
+            type="password"
+            value={newPw2}
+            onChange={(e) => setNewPw2(e.target.value)}
+            required
+            fullWidth
+            autoComplete="new-password"
+            disabled={pwdBusy}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handlePwdClose} disabled={pwdBusy}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={pwdBusy}>
+            {pwdBusy ? "Guardando…" : "Guardar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={Boolean(pwdSnack)}
+        autoHideDuration={5000}
+        onClose={() => setPwdSnack("")}
+        message={pwdSnack}
+      />
     </>
   );
 }
@@ -168,8 +300,26 @@ function DrawerContent({ onNavClick }) {
 export default function AdminLayout() {
   const isMobile = useMediaQuery(adminTheme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState(() => getStoredAdminProfile());
 
-  const drawer = <DrawerContent onNavClick={isMobile ? () => setMobileOpen(false) : undefined} />;
+  useEffect(() => {
+    let cancelled = false;
+    if (isAuthenticated()) {
+      refreshAdminProfile().then((p) => {
+        if (!cancelled && p) setProfile(p);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const drawer = (
+    <DrawerContent
+      profile={profile}
+      onNavClick={isMobile ? () => setMobileOpen(false) : undefined}
+    />
+  );
 
   return (
     <ThemeProvider theme={adminTheme}>

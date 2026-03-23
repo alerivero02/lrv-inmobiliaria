@@ -8,13 +8,18 @@ import { migrate, get, run } from "../db.js";
 
 await migrate();
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@lrv.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin123!";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "lrventaser@gmail.com";
+/** Contraseña inicial genérica: cambiala desde el panel (Cambiar contraseña) tras el primer acceso. */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LRV_Admin_2026!";
 
 const existing = await get("SELECT id FROM users WHERE email = ?", ADMIN_EMAIL);
 if (!existing) {
   const hash = bcrypt.hashSync(ADMIN_PASSWORD, 12);
-  await run("INSERT INTO users (email, hashed_password, role) VALUES (?, ?, 'admin') RETURNING id", ADMIN_EMAIL, hash);
+  await run(
+    "INSERT INTO users (email, hashed_password, role, email_verified) VALUES (?, ?, 'admin', 1) RETURNING id",
+    ADMIN_EMAIL,
+    hash,
+  );
   console.log(`✅  Admin creado: ${ADMIN_EMAIL}  /  ${ADMIN_PASSWORD}`);
 } else {
   console.log(`ℹ️   Admin ya existe: ${ADMIN_EMAIL}`);

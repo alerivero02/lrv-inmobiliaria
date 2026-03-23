@@ -129,6 +129,12 @@ export default function LoginPage() {
               </Button>
             </Box>
 
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1.5 }}>
+              <Link to="/admin/olvide-contrasena" style={{ color: "inherit", fontSize: "0.875rem" }}>
+                Olvidé mi contraseña
+              </Link>
+            </Typography>
+
             <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
               <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
                 ← Volver al sitio

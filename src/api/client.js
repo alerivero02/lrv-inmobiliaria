@@ -1,8 +1,18 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 const IS_DEV = import.meta.env.DEV;
+const PROFILE_KEY = "lrv_admin_profile";
 
 function getToken() {
   return localStorage.getItem("lrv_admin_token");
+}
+
+export function getStoredAdminProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function login(username, password) {
@@ -17,11 +27,21 @@ export async function login(username, password) {
   }
   const data = await res.json();
   localStorage.setItem("lrv_admin_token", data.access_token);
+  if (data.user) localStorage.setItem(PROFILE_KEY, JSON.stringify(data.user));
   return data;
+}
+
+export async function refreshAdminProfile() {
+  const res = await apiFetch("/auth/me");
+  if (!res || !res.ok) return null;
+  const u = await res.json();
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(u));
+  return u;
 }
 
 export function logout() {
   localStorage.removeItem("lrv_admin_token");
+  localStorage.removeItem(PROFILE_KEY);
 }
 
 export function isAuthenticated() {
@@ -282,4 +302,76 @@ export async function exportTransactionsCsv(params = {}) {
   const res = await apiFetch(`/transactions/export/csv?${q}`);
   if (!res.ok) throw new Error("Error al exportar");
   return res.blob();
+}
+
+// Usuarios (solo rol admin en el backend)
+export async function getUsers() {
+  const res = await apiFetch("/users");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Error al cargar usuarios");
+  }
+  return res.json();
+}
+
+export async function inviteUser(email, role) {
+  const res = await apiFetch("/users/invite", {
+    method: "POST",
+    body: JSON.stringify({ email, role }),
+  });
+  const errBody = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(errBody.detail || "No se pudo enviar la invitación");
+  return errBody;
+}
+
+export async function resendUserInvite(userId) {
+  const res = await apiFetch(`/users/${userId}/resend-invite`, { method: "POST" });
+  const errBody = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(errBody.detail || "No se pudo reenviar el correo");
+  return errBody;
+}
+
+/** Activa cuenta desde enlace del correo (sin sesión). */
+export async function completeAccountActivation(token, password) {
+  const res = await fetch(`${API_BASE}/auth/complete-invite`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "Error al activar la cuenta");
+  return body;
+}
+
+export async function requestPasswordReset(email) {
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "No se pudo procesar la solicitud");
+  return body;
+}
+
+export async function resetPasswordWithToken(token, password) {
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "Error al restablecer la contraseña");
+  return body;
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const res = await apiFetch("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+  if (!res) return;
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "No se pudo cambiar la contraseña");
+  return body;
 }

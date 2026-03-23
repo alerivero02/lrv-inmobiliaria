@@ -14,6 +14,10 @@ const ListingsPage = lazy(() => import("./pages/admin/ListingsPage"));
 const ListingFormPage = lazy(() => import("./pages/admin/ListingFormPage"));
 const VisitsPage = lazy(() => import("./pages/admin/VisitsPage"));
 const AccountingPage = lazy(() => import("./pages/admin/AccountingPage"));
+const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
+const ActivateAccountPage = lazy(() => import("./pages/admin/ActivateAccountPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/admin/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/admin/ResetPasswordPage"));
 
 function RouteFallback() {
   return (
@@ -34,6 +38,9 @@ export default function App() {
         <Route path="/propiedades/:id/solicitar-visita" element={<RequestVisitPage />} />
         <Route path="/demo/la-rioja" element={<InmobiliariaLaRiojaLanding />} />
         <Route path="/admin/login" element={<LoginPage />} />
+        <Route path="/admin/olvide-contrasena" element={<ForgotPasswordPage />} />
+        <Route path="/admin/restablecer-contrasena" element={<ResetPasswordPage />} />
+        <Route path="/admin/activar-cuenta" element={<ActivateAccountPage />} />
         <Route
           path="/admin"
           element={
@@ -48,6 +55,7 @@ export default function App() {
           <Route path="editar/:id" element={<ListingFormPage />} />
           <Route path="visitas" element={<VisitsPage />} />
           <Route path="contabilidad" element={<AccountingPage />} />
+          <Route path="usuarios" element={<UsersPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

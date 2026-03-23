@@ -4,7 +4,6 @@
  */
 import path from "path";
 import { fileURLToPath } from "url";
-import { DatabaseSync } from "node:sqlite";
 import pg from "pg";
 
 const { Pool } = pg;
@@ -12,6 +11,18 @@ const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const isPostgres = Boolean(process.env.DATABASE_URL?.trim());
+
+/** Carga node:sqlite solo sin Postgres (evita ExperimentalWarning en Railway). */
+let sqliteImportPromise;
+let DatabaseSync;
+async function loadSqliteModule() {
+  if (!sqliteImportPromise) {
+    sqliteImportPromise = import("node:sqlite").then((m) => {
+      DatabaseSync = m.DatabaseSync;
+    });
+  }
+  await sqliteImportPromise;
+}
 
 export function sqlToPg(sql) {
   let n = 0;
@@ -50,6 +61,7 @@ export async function get(sql, ...params) {
     const r = await getPool().query(sqlToPg(sql), params);
     return r.rows[0];
   }
+  await loadSqliteModule();
   return getSqliteDb().prepare(sql).get(...params);
 }
 
@@ -58,6 +70,7 @@ export async function all(sql, ...params) {
     const r = await getPool().query(sqlToPg(sql), params);
     return r.rows;
   }
+  await loadSqliteModule();
   return getSqliteDb().prepare(sql).all(...params);
 }
 
@@ -70,6 +83,7 @@ export async function run(sql, ...params) {
       lastInsertRowid: id != null ? Number(id) : null,
     };
   }
+  await loadSqliteModule();
   const db = getSqliteDb();
   const stmt = db.prepare(sql);
   if (/RETURNING\s+id/i.test(sql)) {
@@ -90,11 +104,16 @@ export async function migratePg() {
   const p = getPool();
   await p.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id              SERIAL PRIMARY KEY,
-      email           TEXT    UNIQUE NOT NULL,
-      hashed_password TEXT    NOT NULL,
-      role            TEXT    DEFAULT 'admin',
-      created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      id                  SERIAL PRIMARY KEY,
+      email               TEXT    UNIQUE NOT NULL,
+      hashed_password     TEXT    NOT NULL,
+      role                TEXT    DEFAULT 'admin',
+      email_verified      SMALLINT NOT NULL DEFAULT 1,
+      invite_token_hash   TEXT,
+      invite_expires_at   TIMESTAMPTZ,
+      reset_token_hash    TEXT,
+      reset_expires_at    TIMESTAMPTZ,
+      created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS listings (
@@ -177,6 +196,33 @@ export async function migratePg() {
     UPDATE transactions SET type = 'expense' WHERE type = 'egreso';
   `);
 
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN email_verified SMALLINT NOT NULL DEFAULT 1;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN invite_token_hash TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN invite_expires_at TIMESTAMPTZ;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN reset_token_hash TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN reset_expires_at TIMESTAMPTZ;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`UPDATE users SET email_verified = 1 WHERE email_verified IS NULL`);
+
   console.log("✅  Base de datos PostgreSQL lista");
 }
 
@@ -184,11 +230,16 @@ function migrateSqlite() {
   const db = getSqliteDb();
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
-      id              INTEGER PRIMARY KEY AUTOINCREMENT,
-      email           TEXT    UNIQUE NOT NULL,
-      hashed_password TEXT    NOT NULL,
-      role            TEXT    DEFAULT 'admin',
-      created_at      TEXT    DEFAULT (datetime('now'))
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      email               TEXT    UNIQUE NOT NULL,
+      hashed_password     TEXT    NOT NULL,
+      role                TEXT    DEFAULT 'admin',
+      email_verified      INTEGER NOT NULL DEFAULT 1,
+      invite_token_hash   TEXT,
+      invite_expires_at   TEXT,
+      reset_token_hash    TEXT,
+      reset_expires_at    TEXT,
+      created_at          TEXT    DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS listings (
@@ -262,12 +313,33 @@ function migrateSqlite() {
   db.exec("UPDATE visits SET status = 'cancelled' WHERE status IN ('cancelada')");
   db.exec("UPDATE transactions SET type = 'income'  WHERE type = 'ingreso'");
   db.exec("UPDATE transactions SET type = 'expense' WHERE type = 'egreso'");
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN invite_token_hash TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN invite_expires_at TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN reset_token_hash TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN reset_expires_at TEXT");
+  } catch {}
+  try {
+    db.exec("UPDATE users SET email_verified = 1 WHERE email_verified IS NULL");
+  } catch {}
   console.log("✅  Base de datos SQLite lista →", process.env.DB_PATH || path.join(__dirname, "lrv.db"));
 }
 
 export async function migrate() {
   if (isPostgres) await migratePg();
-  else migrateSqlite();
+  else {
+    await loadSqliteModule();
+    migrateSqlite();
+  }
 }
 
 const db = {
