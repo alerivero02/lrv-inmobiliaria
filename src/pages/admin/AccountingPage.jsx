@@ -10,7 +10,6 @@ import {
   Select,
   MenuItem,
   Chip,
-  Grid,
   Alert,
   Dialog,
   DialogTitle,
@@ -30,6 +29,7 @@ import {
   deleteTransaction,
   exportTransactionsCsv,
 } from "../../api/client";
+import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 
 const CATEGORIES = [
   "mantenimiento",
@@ -228,58 +228,56 @@ export default function AccountingPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Typography variant="h5" fontWeight={700}>
-          Contabilidad
-        </Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cerrar" : "Nuevo movimiento"}
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleExport}
-            disabled={exporting}
-          >
-            {exporting ? "Exportando…" : "Exportar CSV"}
-          </Button>
-        </Box>
-      </Box>
+      <AdminPageHeader
+        title="Contabilidad"
+        subtitle="Movimientos, balance filtrado y exportación para tu archivo."
+        actions={
+          <>
+            <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} size="medium">
+              {showForm ? "Cerrar" : "Nuevo movimiento"}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleExport}
+              disabled={exporting}
+              size="medium"
+            >
+              {exporting ? "Exportando…" : "Exportar CSV"}
+            </Button>
+          </>
+        }
+      />
 
-      {/* Balance cards */}
       {balance != null && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           {[
-            { label: "Ingresos", value: balance.income, color: "success.main" },
-            { label: "Egresos", value: balance.expense, color: "error.main" },
+            { label: "Ingresos", value: balance.income, border: "success.main", bg: "rgba(21, 128, 61, 0.06)" },
+            { label: "Egresos", value: balance.expense, border: "error.main", bg: "rgba(185, 28, 28, 0.06)" },
             {
               label: "Balance",
               value: balance.balance,
-              color: balance.balance >= 0 ? "success.main" : "error.main",
+              border: balance.balance >= 0 ? "success.main" : "error.main",
+              bg: balance.balance >= 0 ? "rgba(21, 128, 61, 0.06)" : "rgba(185, 28, 28, 0.06)",
             },
-          ].map(({ label, value, color }) => (
-            <Grid item xs={12} sm={4} key={label}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {label}
-                </Typography>
-                <Typography variant="h6" fontWeight={700} color={color}>
-                  ${Number(value).toLocaleString("es-AR")}
-                </Typography>
-              </Paper>
-            </Grid>
+          ].map(({ label, value, border, bg }) => (
+            <Paper key={label} sx={{ p: 2.25, borderLeft: "4px solid", borderLeftColor: border, bgcolor: bg }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: "0.04em" }}>
+                {label}
+              </Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ mt: 0.5, fontFamily: "inherit" }}>
+                ${Number(value).toLocaleString("es-AR")}
+              </Typography>
+            </Paper>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* New transaction form */}
@@ -357,7 +355,7 @@ export default function AccountingPage() {
       )}
 
       {/* Filters */}
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+      <Paper sx={{ p: 2.5, mb: 2 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 120 } }}>
             <InputLabel>Tipo</InputLabel>
@@ -411,18 +409,17 @@ export default function AccountingPage() {
         </Alert>
       )}
 
-      <Paper variant="outlined">
+      <Paper sx={{ overflow: "hidden" }}>
         <DataGrid
           rows={transactions}
           columns={columns}
           loading={loading}
-          autoHeight
           disableRowSelectionOnClick
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
           sx={{
             border: "none",
-            "& .MuiDataGrid-columnHeader": { bgcolor: "action.hover" },
+            height: { xs: 480, md: 560 },
             "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
           }}
           localeText={{ noRowsLabel: "No hay movimientos." }}

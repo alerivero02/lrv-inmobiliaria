@@ -12,7 +12,7 @@ import {
   Button,
   Divider,
   ThemeProvider,
-  useMediaQuery,
+  useTheme,
   IconButton,
   AppBar,
   Toolbar,
@@ -45,8 +45,9 @@ import {
   changePassword,
 } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
+import AdminMain from "../../components/admin/AdminMain";
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 272;
 
 const navItems = [
   { to: "/admin", end: true, label: "Dashboard", icon: <DashboardIcon /> },
@@ -64,6 +65,8 @@ const usersNavItem = {
 };
 
 function DrawerContent({ onNavClick, profile }) {
+  const theme = useTheme();
+  const a = theme.palette.admin;
   const sidebarNav = useMemo(() => {
     if (profile?.role === "admin") {
       const next = [...navItems];
@@ -126,71 +129,137 @@ function DrawerContent({ onNavClick, profile }) {
     }
   };
 
+  const navIconSx = { minWidth: 42, color: "inherit" };
+
   return (
-    <>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: a.sidebar,
+        color: a.sidebarText,
+        borderRight: `1px solid ${a.sidebarBorder}`,
+      }}
+    >
+      <Box sx={{ px: 2.25, pt: 2.5, pb: 2, borderBottom: `1px solid ${a.sidebarBorder}` }}>
         <Link to="/admin" style={{ textDecoration: "none" }} {...linkProps}>
-          <Typography variant="h6" component="span" color="primary" fontWeight={700}>
-            LRV Admin
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: theme.typography.h5.fontFamily,
+              fontWeight: 700,
+              color: "#fff",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.2,
+            }}
+          >
+            LRV
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", color: a.sidebarTextMuted, mt: 0.25 }}>
+            Panel de gestión
           </Typography>
         </Link>
       </Box>
 
-      <Box sx={{ px: 1, py: 1 }}>
+      <Box sx={{ px: 1.5, py: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography
+          variant="overline"
+          sx={{ px: 1, color: a.sidebarTextMuted, fontSize: "0.65rem", letterSpacing: "0.14em" }}
+        >
+          Atajos
+        </Typography>
         <ListItemButton
           component={Link}
           to="/admin/visitas"
-          sx={{ borderRadius: 2 }}
+          sx={{
+            borderRadius: 2,
+            py: 1.25,
+            bgcolor: a.sidebarElevated,
+            border: `1px solid ${a.sidebarBorder}`,
+            "&:hover": { bgcolor: a.sidebarHover },
+          }}
           {...linkProps}
         >
-          <ListItemIcon sx={{ minWidth: 40 }}>
+          <ListItemIcon sx={navIconSx}>
             <Badge badgeContent={counts.pending_visits} color="warning">
-              <NotificationsActiveIcon fontSize="small" />
+              <NotificationsActiveIcon sx={{ color: a.accent }} fontSize="small" />
             </Badge>
           </ListItemIcon>
           <ListItemText
             primary="Visitas"
-            secondary={counts.pending_visits > 0 ? `${counts.pending_visits} pendientes` : null}
-            primaryTypographyProps={{ fontSize: "0.875rem" }}
+            secondary={counts.pending_visits > 0 ? `${counts.pending_visits} pendientes` : "Calendario y lista"}
+            primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}
+            secondaryTypographyProps={{ fontSize: "0.75rem", color: a.sidebarTextMuted }}
           />
         </ListItemButton>
         <ListItemButton
           component={Link}
           to="/admin/anuncios?status=pending_review"
-          sx={{ borderRadius: 2 }}
+          sx={{
+            borderRadius: 2,
+            py: 1.25,
+            bgcolor: a.sidebarElevated,
+            border: `1px solid ${a.sidebarBorder}`,
+            "&:hover": { bgcolor: a.sidebarHover },
+          }}
           {...linkProps}
         >
-          <ListItemIcon sx={{ minWidth: 40 }}>
+          <ListItemIcon sx={navIconSx}>
             <Badge badgeContent={counts.pending_listings} color="warning">
-              <AssignmentIcon fontSize="small" />
+              <AssignmentIcon sx={{ color: a.accent }} fontSize="small" />
             </Badge>
           </ListItemIcon>
           <ListItemText
             primary="Publicaciones"
-            secondary={counts.pending_listings > 0 ? `${counts.pending_listings} pendientes` : null}
-            primaryTypographyProps={{ fontSize: "0.875rem" }}
+            secondary={
+              counts.pending_listings > 0 ? `${counts.pending_listings} en revisión` : "Revisar anuncios"
+            }
+            primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}
+            secondaryTypographyProps={{ fontSize: "0.75rem", color: a.sidebarTextMuted }}
           />
         </ListItemButton>
       </Box>
 
-      <Divider sx={{ my: 1 }} />
+      <Divider sx={{ borderColor: a.sidebarBorder, mx: 1.5 }} />
 
-      <List dense sx={{ px: 1 }}>
+      <Typography
+        variant="overline"
+        sx={{ px: 2.25, pt: 2, pb: 0.5, color: a.sidebarTextMuted, fontSize: "0.65rem", letterSpacing: "0.14em" }}
+      >
+        Menú
+      </Typography>
+      <List dense sx={{ px: 1, flex: 1, py: 0 }}>
         {sidebarNav.map(({ to, end, label, icon }) => (
           <NavLink key={to} to={to} end={end} style={{ textDecoration: "none", color: "inherit" }}>
             {({ isActive }) => (
               <ListItemButton
                 selected={isActive}
-                sx={{ borderRadius: 2, mb: 0.5 }}
                 onClick={onNavClick}
+                sx={{
+                  borderRadius: 2,
+                  mb: 0.35,
+                  py: 1,
+                  borderLeft: isActive ? `3px solid ${a.accent}` : "3px solid transparent",
+                  pl: isActive ? 1.5 : 1.75,
+                  bgcolor: isActive ? a.sidebarActive : "transparent",
+                  color: isActive ? "#fff" : a.sidebarText,
+                  "&:hover": { bgcolor: isActive ? a.sidebarActive : a.sidebarHover },
+                  "&.Mui-selected": { bgcolor: a.sidebarActive, "&:hover": { bgcolor: a.sidebarActive } },
+                }}
               >
-                <ListItemIcon sx={{ minWidth: 40, color: isActive ? "primary.main" : "inherit" }}>
+                <ListItemIcon
+                  sx={{
+                    ...navIconSx,
+                    color: isActive ? a.accent : a.sidebarText,
+                  }}
+                >
                   {icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={label}
                   primaryTypographyProps={{
-                    fontSize: "0.9375rem",
+                    fontSize: "0.9rem",
                     fontWeight: isActive ? 600 : 500,
                   }}
                 />
@@ -200,45 +269,79 @@ function DrawerContent({ onNavClick, profile }) {
         ))}
       </List>
 
-      <Box sx={{ flexGrow: 1 }} />
-      <Divider />
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+      {profile?.email && (
+        <Box sx={{ px: 2, py: 1.5, borderTop: `1px solid ${a.sidebarBorder}` }}>
+          <Typography variant="caption" sx={{ color: a.sidebarTextMuted, display: "block" }}>
+            Sesión
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: "#fff", fontWeight: 500, fontSize: "0.8125rem", wordBreak: "break-all" }}
+          >
+            {profile.email}
+          </Typography>
+        </Box>
+      )}
+
+      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 0.75, borderTop: `1px solid ${a.sidebarBorder}` }}>
         <Button
           component={Link}
           to="/"
-          startIcon={<PublicIcon />}
+          startIcon={<PublicIcon sx={{ fontSize: 18 }} />}
           size="small"
-          color="inherit"
-          sx={{ justifyContent: "flex-start" }}
+          sx={{
+            justifyContent: "flex-start",
+            color: a.sidebarText,
+            borderRadius: 2,
+            py: 0.75,
+            "&:hover": { bgcolor: a.sidebarHover, color: "#fff" },
+          }}
           onClick={onNavClick}
         >
-          Ver landing
+          Ver sitio público
         </Button>
         <Button
-          startIcon={<VpnKeyIcon />}
+          startIcon={<VpnKeyIcon sx={{ fontSize: 18 }} />}
           onClick={() => setPwdOpen(true)}
           size="small"
-          color="inherit"
-          sx={{ justifyContent: "flex-start" }}
+          sx={{
+            justifyContent: "flex-start",
+            color: a.sidebarText,
+            borderRadius: 2,
+            py: 0.75,
+            "&:hover": { bgcolor: a.sidebarHover, color: "#fff" },
+          }}
         >
           Cambiar contraseña
         </Button>
         <Button
-          startIcon={<LogoutIcon />}
+          startIcon={<LogoutIcon sx={{ fontSize: 18 }} />}
           onClick={() => {
             logout();
             navigate("/admin/login");
           }}
           size="small"
-          color="inherit"
-          sx={{ justifyContent: "flex-start" }}
+          sx={{
+            justifyContent: "flex-start",
+            color: a.sidebarTextMuted,
+            borderRadius: 2,
+            py: 0.75,
+            "&:hover": { bgcolor: "rgba(185,28,28,0.15)", color: "#fecaca" },
+          }}
         >
           Cerrar sesión
         </Button>
       </Box>
 
-      <Dialog open={pwdOpen} onClose={handlePwdClose} fullWidth maxWidth="xs" component="form" onSubmit={handlePwdSubmit}>
-        <DialogTitle>Cambiar contraseña</DialogTitle>
+      <Dialog
+        open={pwdOpen}
+        onClose={handlePwdClose}
+        fullWidth
+        maxWidth="xs"
+        component="form"
+        onSubmit={handlePwdSubmit}
+      >
+        <DialogTitle sx={{ fontFamily: adminTheme.typography.h5.fontFamily }}>Cambiar contraseña</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {pwdErr && (
             <Alert severity="error" onClose={() => setPwdErr("")}>
@@ -293,7 +396,7 @@ function DrawerContent({ onNavClick, profile }) {
         onClose={() => setPwdSnack("")}
         message={pwdSnack}
       />
-    </>
+    </Box>
   );
 }
 
@@ -301,6 +404,7 @@ export default function AdminLayout() {
   const isMobile = useMediaQuery(adminTheme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState(() => getStoredAdminProfile());
+  const a = adminTheme.palette.admin;
 
   useEffect(() => {
     let cancelled = false;
@@ -329,22 +433,17 @@ export default function AdminLayout() {
             position="fixed"
             sx={{
               zIndex: (theme) => theme.zIndex.drawer + 1,
-              bgcolor: "background.paper",
-              color: "text.primary",
-              boxShadow: 1,
+              bgcolor: a.sidebar,
+              color: "#fff",
+              boxShadow: `0 1px 0 ${a.sidebarBorder}`,
             }}
           >
-            <Toolbar>
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={() => setMobileOpen(true)}
-                sx={{ mr: 1 }}
-              >
+            <Toolbar sx={{ minHeight: 56 }}>
+              <IconButton edge="start" color="inherit" onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}>
                 <MenuIcon />
               </IconButton>
               <Link to="/admin" style={{ textDecoration: "none", color: "inherit", flex: 1 }}>
-                <Typography variant="h6" color="primary" fontWeight={700}>
+                <Typography sx={{ fontFamily: adminTheme.typography.h5.fontFamily, fontWeight: 700 }}>
                   LRV Admin
                 </Typography>
               </Link>
@@ -363,9 +462,8 @@ export default function AdminLayout() {
             "& .MuiDrawer-paper": {
               width: DRAWER_WIDTH,
               boxSizing: "border-box",
-              borderRight: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
+              borderRight: "none",
+              bgcolor: a.sidebar,
               ...(isMobile && { top: 56 }),
               ...(isMobile && { height: "calc(100% - 56px)" }),
             },
@@ -378,13 +476,16 @@ export default function AdminLayout() {
           component="main"
           sx={{
             flex: 1,
-            p: { xs: 2, sm: 3 },
-            pt: { xs: 8, sm: 3 },
-            overflow: "auto",
             minWidth: 0,
+            pt: { xs: 8, md: 0 },
+            pb: { xs: 3, md: 4 },
+            px: { xs: 2, sm: 2.5, md: 3.5 },
+            overflow: "auto",
           }}
         >
-          <Outlet />
+          <AdminMain>
+            <Outlet />
+          </AdminMain>
         </Box>
       </Box>
     </ThemeProvider>

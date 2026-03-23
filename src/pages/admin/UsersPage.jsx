@@ -15,6 +15,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { getUsers, inviteUser, resendUserInvite } from "../../api/client";
+import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 
 export default function UsersPage() {
   const [rows, setRows] = useState([]);
@@ -101,17 +102,14 @@ export default function UsersPage() {
   ];
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: "auto" }}>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        Usuarios del panel
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Invitá colaboradores por correo. Deben abrir el enlace y definir una contraseña segura antes de
-        poder entrar.
-      </Typography>
+    <Box>
+      <AdminPageHeader
+        title="Usuarios del panel"
+        subtitle="Invitá colaboradores por correo. Deben abrir el enlace y definir una contraseña segura antes de poder entrar."
+      />
 
-      <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: 1 }}>
-        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+      <Paper sx={{ p: 2.5, mb: 3 }}>
+        <Typography variant="subtitle1" gutterBottom>
           Nueva invitación
         </Typography>
         <Box
@@ -154,7 +152,7 @@ export default function UsersPage() {
         </Alert>
       )}
 
-      <Paper elevation={0} sx={{ borderRadius: 2, boxShadow: 1, height: 440, width: "100%" }}>
+      <Paper sx={{ overflow: "hidden", width: "100%" }}>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -163,7 +161,7 @@ export default function UsersPage() {
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           disableRowSelectionOnClick
           getRowId={(r) => r.id}
-          sx={{ border: "none" }}
+          sx={{ border: "none", height: 440 }}
         />
       </Paper>
 

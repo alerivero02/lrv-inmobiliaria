@@ -51,31 +51,49 @@ export default function LoginPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "background.default",
-          py: 3,
+          py: 4,
+          px: 2,
+          position: "relative",
+          overflow: "hidden",
+          backgroundColor: "#dfe0d8",
+          backgroundImage: `
+            radial-gradient(ellipse 100% 60% at 15% 10%, rgba(15, 118, 110, 0.18), transparent 55%),
+            radial-gradient(ellipse 80% 50% at 90% 85%, rgba(13, 92, 86, 0.12), transparent 50%),
+            linear-gradient(168deg, #eceae6 0%, #e0ded8 40%, #d8d6d0 100%)
+          `,
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            background:
+              "repeating-linear-gradient(-12deg, transparent, transparent 100px, rgba(255,255,255,0.03) 100px, rgba(255,255,255,0.03) 101px)",
+            pointerEvents: "none",
+          },
         }}
       >
-        <Container maxWidth="xs">
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
-            <Typography
-              variant="h5"
-              component="h1"
-              color="primary"
-              fontWeight={700}
-              textAlign="center"
-              gutterBottom
-            >
+        <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              maxWidth: 420,
+              mx: "auto",
+              p: 0,
+              borderRadius: "18px",
+              border: "1px solid rgba(28, 25, 23, 0.08)",
+              boxShadow: "0 4px 6px rgba(28,25,23,0.04), 0 24px 48px rgba(28,25,23,0.1), 0 0 0 1px rgba(255,255,255,0.6) inset",
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ height: 5, background: "linear-gradient(90deg, #0f766e, #14b8a6, #0d9488)" }} />
+            <Box sx={{ p: { xs: 3, sm: 4 } }}>
+            <Typography variant="h4" component="h1" color="primary" textAlign="center" sx={{ mb: 0.5 }}>
               LRV Admin
             </Typography>
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
-              Inmobiliaria · Panel de gestión
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3, lineHeight: 1.5 }}>
+              Inmobiliaria · Acceso al panel de gestión
             </Typography>
 
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
               {error && (
                 <Alert severity="error" onClose={() => setError("")} sx={{ py: 0 }}>
                   {error}
@@ -90,7 +108,6 @@ export default function LoginPage() {
                 fullWidth
                 autoComplete="username"
                 disabled={loading}
-                size="medium"
               />
               <TextField
                 label="Contraseña"
@@ -101,7 +118,6 @@ export default function LoginPage() {
                 fullWidth
                 autoComplete="current-password"
                 disabled={loading}
-                size="medium"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -117,29 +133,23 @@ export default function LoginPage() {
                   ),
                 }}
               />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                fullWidth
-                disabled={loading}
-                sx={{ py: 1.5 }}
-              >
-                {loading ? "Entrando…" : "Entrar"}
+              <Button type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ mt: 0.5, py: 1.4 }}>
+                {loading ? "Entrando…" : "Entrar al panel"}
               </Button>
             </Box>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1.5 }}>
-              <Link to="/admin/olvide-contrasena" style={{ color: "inherit", fontSize: "0.875rem" }}>
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
+              <Link to="/admin/olvide-contrasena" style={{ color: "inherit", fontWeight: 600, fontSize: "0.875rem" }}>
                 Olvidé mi contraseña
               </Link>
             </Typography>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
-              <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
-                ← Volver al sitio
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2.5, pt: 2, borderTop: 1, borderColor: "divider" }}>
+              <Link to="/" style={{ color: "inherit", textDecoration: "none", fontWeight: 500 }}>
+                ← Volver al sitio público
               </Link>
             </Typography>
+            </Box>
           </Paper>
         </Container>
       </Box>

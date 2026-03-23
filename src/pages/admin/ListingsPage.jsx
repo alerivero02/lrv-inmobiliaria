@@ -32,6 +32,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import SellIcon from "@mui/icons-material/Sell";
 import { getListings, deleteListing, updateListing } from "../../api/client";
 import { formatPrice } from "../../utils/format";
+import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 
 const STATUS_LABELS = {
   active: "Activo",
@@ -320,25 +321,17 @@ export default function ListingsPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Typography variant="h5" fontWeight={700}>
-          Anuncios
-        </Typography>
-        <Button component={Link} to="/admin/nuevo" variant="contained" startIcon={<AddIcon />}>
-          Nuevo anuncio
-        </Button>
-      </Box>
+      <AdminPageHeader
+        title="Anuncios"
+        subtitle="Gestioná el portfolio: filtros, comisiones editables en tabla y estados en un clic."
+        actions={
+          <Button component={Link} to="/admin/nuevo" variant="contained" startIcon={<AddIcon />} size="medium">
+            Nuevo anuncio
+          </Button>
+        }
+      />
 
-      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+      <Paper sx={{ p: { xs: 2, sm: 2.5 }, mb: 2.5 }}>
         <Box
           component="form"
           onSubmit={handleSearch}
@@ -430,12 +423,11 @@ export default function ListingsPage() {
         </Alert>
       )}
 
-      <Paper variant="outlined" sx={{ width: "100%" }}>
+      <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <DataGrid
           rows={listings}
           columns={columns}
           loading={loading}
-          autoHeight
           disableRowSelectionOnClick
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
@@ -443,8 +435,9 @@ export default function ListingsPage() {
           onProcessRowUpdateError={(err) => setError(err.message)}
           sx={{
             border: "none",
+            height: { xs: 520, md: 600 },
+            "& .MuiDataGrid-main": { borderRadius: 0 },
             "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
-            "& .MuiDataGrid-columnHeader": { bgcolor: "action.hover" },
             "& .MuiDataGrid-cell--editable": {
               outline: "1px dashed",
               outlineColor: "primary.light",

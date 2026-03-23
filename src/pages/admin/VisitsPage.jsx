@@ -16,6 +16,7 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
+  Alert,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
@@ -25,7 +26,7 @@ import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 import { es } from "date-fns/locale";
 import { format, isSameDay } from "date-fns";
 import { getVisits, updateVisit } from "../../api/client";
-import "./VisitsPage.css";
+import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 
 const ESTADO_LABELS = {
   pending: "Pendiente",
@@ -235,63 +236,66 @@ export default function VisitsPage() {
   ];
 
   return (
-    <div className="visits-admin">
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 1,
-          mb: 2,
-        }}
-      >
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{ fontFamily: 'var(--font-display, "Playfair Display", Georgia, serif)' }}
-        >
-          Visitas
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(_, val) => val != null && setViewMode(val)}
-            size="small"
-            sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
-          >
-            <ToggleButton value="calendar">Calendario</ToggleButton>
-            <ToggleButton value="list">Lista</ToggleButton>
-          </ToggleButtonGroup>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="filter-estado">Estado</InputLabel>
-            <Select
-              labelId="filter-estado"
-              value={filterEstado}
-              label="Estado"
-              onChange={(e) => setFilterEstado(e.target.value)}
+    <Box>
+      <AdminPageHeader
+        title="Visitas"
+        subtitle="Coordiná solicitudes: calendario con marcadores o tabla completa."
+        actions={
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(_, val) => val != null && setViewMode(val)}
+              size="small"
+              sx={{
+                bgcolor: "grey.100",
+                p: 0.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                gap: 0.5,
+                "& .MuiToggleButton-root": { border: "none", px: 1.5 },
+              }}
             >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.entries(ESTADO_LABELS).map(([k, label]) => (
-                <MenuItem key={k} value={k}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Box>
+              <ToggleButton value="calendar">Calendario</ToggleButton>
+              <ToggleButton value="list">Lista</ToggleButton>
+            </ToggleButtonGroup>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="filter-estado">Estado</InputLabel>
+              <Select
+                labelId="filter-estado"
+                value={filterEstado}
+                label="Estado"
+                onChange={(e) => setFilterEstado(e.target.value)}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.entries(ESTADO_LABELS).map(([k, label]) => (
+                  <MenuItem key={k} value={k}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        }
+      />
 
       {error && (
-        <Typography color="error" sx={{ mb: 1 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
           {error}
-        </Typography>
+        </Alert>
       )}
 
       {viewMode === "calendar" ? (
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
-          <Paper sx={{ p: 1, flex: "0 0 auto", borderRadius: 2, boxShadow: 1 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "minmax(280px, 340px) minmax(0, 1fr)" },
+            gap: 2.5,
+            alignItems: "start",
+          }}
+        >
+          <Paper sx={{ p: 1.5, width: "100%" }}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
               <DateCalendar
                 value={selectedDate}
@@ -350,18 +354,17 @@ export default function VisitsPage() {
           </Paper>
         </Box>
       ) : (
-        <Paper variant="outlined" sx={{ width: "100%" }}>
+        <Paper sx={{ width: "100%", overflow: "hidden" }}>
           <DataGrid
             rows={visits}
             columns={listColumns}
             loading={loading}
-            autoHeight
             disableRowSelectionOnClick
             pageSizeOptions={[25, 50, 100]}
             initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
             sx={{
               border: "none",
-              "& .MuiDataGrid-columnHeader": { bgcolor: "action.hover" },
+              height: { xs: 520, md: 600 },
               "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
             }}
             localeText={{
@@ -465,6 +468,6 @@ export default function VisitsPage() {
           </>
         )}
       </Dialog>
-    </div>
+    </Box>
   );
 }
