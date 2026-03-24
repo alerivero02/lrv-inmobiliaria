@@ -58,8 +58,8 @@ export default function Header() {
       id="inicio"
     >
       <div className="container header__inner">
-        <a href="/" className="header__logo" aria-label="LRV Inmobiliaria - Inicio" onClick={goToTopOrHome}>
-          <img src="/logoLRV.webp" alt="LRV Inmobiliaria" className="header__logo-img" />
+        <a href="/" className="header__logo" aria-label="LRV Asociados - Inicio" onClick={goToTopOrHome}>
+          <img src="/LRV%20ASOCIADOS.webp" alt="LRV Asociados" className="header__logo-img" />
         </a>
 
         <nav
