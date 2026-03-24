@@ -13,7 +13,9 @@ example.com {
     reverse_proxy 127.0.0.1:4000
   }
 
-  # Uploads (servidos por backend, pero si preferís servir directo:
-  # handle_path /uploads/* { root * /var/www/lrv/backend/uploads; file_server }
+  # Uploads de publicaciones
+  handle_path /uploads/* {
+    reverse_proxy 127.0.0.1:4000
+  }
 }
 

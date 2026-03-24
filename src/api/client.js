@@ -2,6 +2,34 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 const IS_DEV = import.meta.env.DEV;
 const PROFILE_KEY = "lrv_admin_profile";
 
+function getApiOrigin() {
+  const fallbackOrigin = typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
+  try {
+    return new URL(API_BASE, fallbackOrigin).origin;
+  } catch {
+    return fallbackOrigin;
+  }
+}
+
+function resolveImageUrl(url) {
+  if (typeof url !== "string" || !url.trim()) return url;
+  if (/^(data:|blob:)/i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const apiOrigin = getApiOrigin();
+  if (url.startsWith("/uploads/")) return `${apiOrigin}${url}`;
+  if (url.startsWith("uploads/")) return `${apiOrigin}/${url}`;
+  return url;
+}
+
+function normalizeListingImages(listing) {
+  if (!listing || !Array.isArray(listing.images)) return listing;
+  return {
+    ...listing,
+    images: listing.images.map(resolveImageUrl),
+  };
+}
+
 function getToken() {
   return localStorage.getItem("lrv_admin_token");
 }
@@ -84,7 +112,8 @@ export async function getListings(params = {}) {
   const q = new URLSearchParams(params).toString();
   const res = await apiFetch(`/listings?${q}`);
   if (!res.ok) throw new Error("Error al cargar anuncios");
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data.map(normalizeListingImages) : data;
 }
 
 // Listado público (sin auth, para landing)
@@ -92,7 +121,12 @@ export async function getPublicListings(params = {}) {
   const q = new URLSearchParams(params).toString();
   const res = await fetch(`${API_BASE}/listings/public?${q}`);
   if (!res.ok) throw new Error("Error al cargar anuncios");
-  return res.json();
+  const data = await res.json();
+  if (!data || !Array.isArray(data.items)) return data;
+  return {
+    ...data,
+    items: data.items.map(normalizeListingImages),
+  };
 }
 
 export async function getListing(id) {
@@ -101,7 +135,7 @@ export async function getListing(id) {
     if (res.status === 404) throw new Error("Anuncio no encontrado");
     throw new Error("Error al cargar anuncio");
   }
-  return res.json();
+  return normalizeListingImages(await res.json());
 }
 
 /** Detalle público (solo activas), sin auth. Para portal cliente. */
@@ -111,7 +145,7 @@ export async function getPublicListing(id) {
     if (res.status === 404) throw new Error("Anuncio no encontrado");
     throw new Error("Error al cargar anuncio");
   }
-  return res.json();
+  return normalizeListingImages(await res.json());
 }
 
 /** Sube imágenes; devuelve array de URLs. Requiere auth. */
@@ -132,7 +166,8 @@ export async function uploadListingImages(files) {
     }
     throw new Error("Error al subir imágenes");
   }
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data.map(resolveImageUrl) : data;
 }
 
 export async function createListing(data) {
@@ -144,7 +179,7 @@ export async function createListing(data) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail?.msg || err.detail || "Error al crear");
   }
-  return res.json();
+  return normalizeListingImages(await res.json());
 }
 
 export async function updateListing(id, data) {
@@ -156,7 +191,7 @@ export async function updateListing(id, data) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail?.msg || err.detail || "Error al actualizar");
   }
-  return res.json();
+  return normalizeListingImages(await res.json());
 }
 
 export async function deleteListing(id) {
