@@ -59,7 +59,7 @@ export default function Header() {
     >
       <div className="container header__inner">
         <a href="/" className="header__logo" aria-label="LRV Asociados - Inicio" onClick={goToTopOrHome}>
-          <img src="/LRV%20ASOCIADOS.webp" alt="LRV Asociados" className="header__logo-img" />
+          <img src="/lrv-asociados.webp" alt="LRV Asociados" className="header__logo-img" />
         </a>
 
         <nav
