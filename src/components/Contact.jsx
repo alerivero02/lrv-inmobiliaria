@@ -1,8 +1,8 @@
 import VisitRequestForm from "./VisitRequestForm";
+import { AGENCY_WHATSAPP } from "../config/agency";
 import "./Contact.css";
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_AGENCY_WHATSAPP || "5493804545701";
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hola, quería consultar sobre una propiedad.")}`;
+const WHATSAPP_URL = `https://wa.me/${AGENCY_WHATSAPP}?text=${encodeURIComponent("Hola, quería consultar sobre una propiedad.")}`;
 
 export default function Contact() {
   return (
@@ -43,7 +43,7 @@ export default function Contact() {
               </div>
               <div className="contact__meta-item">
                 <span className="contact__meta-label">Horario</span>
-                <span>Lun – Vie · 9:00 a 18:00</span>
+                <span>Lun – Vie · 9:00 a 22:00</span>
               </div>
               <div className="contact__meta-item">
                 <span className="contact__meta-label">Anticipación</span>

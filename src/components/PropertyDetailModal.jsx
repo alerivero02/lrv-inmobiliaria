@@ -5,18 +5,13 @@ import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import { ensureLeafletDefaultIcon } from "../utils/leafletDefaultIcon";
 import VisitRequestForm from "./VisitRequestForm";
+import { AGENCY_WHATSAPP, getSiteBaseUrl } from "../config/agency";
 import "./PropertyDetailModal.css";
 
 ensureLeafletDefaultIcon();
 
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
-
-/** Número de WhatsApp de la agencia (con código de país, sin +). Configurar en VITE_AGENCY_WHATSAPP */
-const AGENCY_WHATSAPP = import.meta.env.VITE_AGENCY_WHATSAPP || "5493804123456";
-
-/** URL base del sitio para enlaces en WhatsApp. Configurar en VITE_SITE_URL (ej: https://tudominio.com) */
-const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://www.ejemplo.com").replace(/\/$/, "");
 
 /** Ajusta el mapa al tamaño real del contenedor sin setTimeout (evita violaciones de rendimiento en DevTools). */
 function MapInvalidateSize() {
@@ -54,7 +49,8 @@ function buildWhatsAppUrl(listing) {
   const rooms = listing.rooms != null ? `${listing.rooms} amb.` : "—";
   const area = `${listing.area_sqm} m²`;
   const price = formatPrice(listing.price);
-  const propertyUrl = `${SITE_URL}/propiedades/${listing.id}`;
+  const base = getSiteBaseUrl();
+  const propertyUrl = base ? `${base}/propiedades/${listing.id}` : `/propiedades/${listing.id}`;
 
   const lines = [
     "🏠 _Consulta por publicación_",
