@@ -1,6 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getListing, createListing, updateListing, uploadListingImages } from "../../api/client";
+import {
+  getListing,
+  createListing,
+  updateListing,
+  uploadListingImages,
+  resolveImageUrl,
+} from "../../api/client";
 import { useToast } from "../../context/ToastContext";
 import {
   CITIES_LA_RIOJA,
@@ -11,6 +17,14 @@ import {
 import MapPicker from "../../components/MapPicker";
 import "leaflet/dist/leaflet.css";
 import "./ListingFormPage.css";
+
+function filterImageFiles(fileList) {
+  return [...fileList].filter(
+    (f) =>
+      (f.type && f.type.startsWith("image/")) ||
+      /\.(jpe?g|png|gif|webp|heic)$/i.test(f.name),
+  );
+}
 
 function AddImageUrl({ onAdd }) {
   const [url, setUrl] = useState("");
@@ -118,17 +132,39 @@ export default function ListingFormPage() {
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   const [uploadingImages, setUploadingImages] = useState(false);
-  const handleImageFiles = useCallback(async (e) => {
-    const files = e.target.files ? [...e.target.files] : [];
-    if (!files.length) return;
-    setUploadingImages(true);
-    try {
-      const urls = await uploadListingImages(files);
-      setForm((f) => ({ ...f, images: [...(f.images || []), ...urls] }));
-    } catch (_) {}
-    setUploadingImages(false);
-    e.target.value = "";
-  }, []);
+  const [dropHighlight, setDropHighlight] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const uploadFilesList = useCallback(
+    async (rawFiles) => {
+      const files = filterImageFiles(rawFiles);
+      if (!files.length) {
+        toast.show("No hay imágenes válidas (JPG, PNG, WebP, HEIC…)", "error");
+        return;
+      }
+      setUploadingImages(true);
+      try {
+        const urls = await uploadListingImages(files);
+        setForm((f) => ({ ...f, images: [...(f.images || []), ...urls] }));
+        toast.show(`${urls.length} foto(s) agregada(s)`);
+      } catch (err) {
+        toast.show(err?.message || "Error al subir imágenes", "error");
+      } finally {
+        setUploadingImages(false);
+      }
+    },
+    [toast],
+  );
+
+  const handleImageFiles = useCallback(
+    async (e) => {
+      const files = e.target.files ? [...e.target.files] : [];
+      e.target.value = "";
+      if (!files.length) return;
+      await uploadFilesList(files);
+    },
+    [uploadFilesList],
+  );
 
   const moveImage = (fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
@@ -153,13 +189,46 @@ export default function ListingFormPage() {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", index);
   };
-  const handleDragOver = (e) => e.preventDefault();
-  const handleDrop = (e, toIndex) => {
+  const handleThumbDragOver = (e) => {
     e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) e.dataTransfer.dropEffect = "copy";
+    else e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleThumbDrop = (e, toIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      void uploadFilesList([...files]);
+      setDraggedIndex(null);
+      return;
+    }
     if (draggedIndex != null) {
       moveImage(draggedIndex, toIndex);
       setDraggedIndex(null);
     }
+  };
+
+  const handleDropZoneDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      e.dataTransfer.dropEffect = "copy";
+      setDropHighlight(true);
+    }
+  };
+
+  const handleDropZoneDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDropHighlight(false);
+  };
+
+  const handleDropZoneDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropHighlight(false);
+    const files = e.dataTransfer.files ? [...e.dataTransfer.files] : [];
+    if (files.length) void uploadFilesList(files);
   };
 
   const handleSubmit = async (e) => {
@@ -473,19 +542,43 @@ export default function ListingFormPage() {
         <div className="listing-form__section">
           <h2>Imágenes</h2>
           <p className="listing-form__hint">
-            Subí fotos (JPG, PNG, HEIC) o arrastrá para reordenar. Podés seguir agregando URLs
-            manualmente abajo.
+            Arrastrá archivos a la zona punteada o usá el botón. En las miniaturas, arrastrá para
+            reordenar. También podés pegar URLs abajo.
           </p>
-          <label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.heic,.webp"
-              multiple
-              onChange={handleImageFiles}
-              disabled={uploadingImages}
-            />
-            {uploadingImages && <span className="listing-form__uploading">Subiendo…</span>}
-          </label>
+          <input
+            ref={fileInputRef}
+            id="listing-images-input"
+            className="listing-form__file-input-hidden"
+            type="file"
+            accept=".jpg,.jpeg,.png,.heic,.webp,image/*"
+            multiple
+            onChange={handleImageFiles}
+            disabled={uploadingImages}
+          />
+          <div
+            className={`listing-form__dropzone ${dropHighlight ? "listing-form__dropzone--active" : ""}`}
+            onDragEnter={handleDropZoneDragOver}
+            onDragOver={handleDropZoneDragOver}
+            onDragLeave={handleDropZoneDragLeave}
+            onDrop={handleDropZoneDrop}
+          >
+            <div className="listing-form__dropzone-inner">
+              <span className="listing-form__dropzone-icon" aria-hidden>
+                ⬆
+              </span>
+              <p className="listing-form__dropzone-text">
+                <strong>Soltá las fotos acá</strong> o elegí las fotos desde tu equipo
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary listing-form__pick-btn"
+                disabled={uploadingImages}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingImages ? "Subiendo…" : "Elegir fotos"}
+              </button>
+            </div>
+          </div>
           <div className="listing-form__images">
             {(form.images || []).map((url, index) => (
               <div
@@ -493,11 +586,17 @@ export default function ListingFormPage() {
                 className="listing-form__image-item"
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, index)}
+                onDragOver={handleThumbDragOver}
+                onDrop={(e) => handleThumbDrop(e, index)}
                 onDragEnd={() => setDraggedIndex(null)}
               >
-                <img src={url} alt="" className="listing-form__image-preview" />
+                <img
+                  src={resolveImageUrl(url)}
+                  alt=""
+                  className="listing-form__image-preview"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <span className="listing-form__image-order">{index + 1}</span>
                 <button
                   type="button"

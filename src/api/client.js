@@ -11,15 +11,23 @@ function getApiOrigin() {
   }
 }
 
-function resolveImageUrl(url) {
+/** Público: convierte `/uploads/...` en URL absoluta para `<img src>`. */
+export function resolveImageUrl(url) {
   if (typeof url !== "string" || !url.trim()) return url;
   if (/^(data:|blob:)/i.test(url)) return url;
   if (/^https?:\/\//i.test(url)) return url;
 
+  const path = url.startsWith("uploads/") ? `/${url}` : url.startsWith("/uploads/") ? url : null;
+  if (!path) return url;
+
+  const apiBase = String(API_BASE || "").trim();
+  // API relativa (/api) → mismo origen que la página (Vite proxy /uploads o Express en prod)
+  if (typeof window !== "undefined" && apiBase.startsWith("/")) {
+    return `${window.location.origin}${path}`;
+  }
+
   const apiOrigin = getApiOrigin();
-  if (url.startsWith("/uploads/")) return `${apiOrigin}${url}`;
-  if (url.startsWith("uploads/")) return `${apiOrigin}/${url}`;
-  return url;
+  return `${apiOrigin}${path}`;
 }
 
 function normalizeListingImages(listing) {

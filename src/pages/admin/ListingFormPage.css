@@ -136,6 +136,62 @@
   color: var(--text-muted);
 }
 
+.listing-form__file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.listing-form__dropzone {
+  margin-bottom: 1.25rem;
+  padding: 1.75rem 1.25rem;
+  border: 2px dashed var(--bone-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(0, 168, 107, 0.04), transparent 55%);
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.listing-form__dropzone--active {
+  border-color: var(--green-strong);
+  background: rgba(0, 168, 107, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.listing-form__dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.listing-form__dropzone-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.listing-form__dropzone-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  max-width: 320px;
+  line-height: 1.45;
+}
+
+.listing-form__pick-btn {
+  min-width: 200px;
+}
+
 .listing-form__images {
   display: flex;
   flex-wrap: wrap;

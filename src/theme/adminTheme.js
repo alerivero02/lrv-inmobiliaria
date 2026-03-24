@@ -144,6 +144,10 @@ export const adminTheme = createTheme({
       },
     },
     MuiDataGrid: {
+      defaultProps: {
+        rowHeight: 52,
+        columnHeaderHeight: 44,
+      },
       styleOverrides: {
         root: ({ theme }) => ({
           border: "none",
