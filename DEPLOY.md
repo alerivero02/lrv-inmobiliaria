@@ -38,6 +38,42 @@ En Railway tenés **servicios separados** en el mismo proyecto:
 7. **Seed** (primera vez): en un shell one-off del contenedor de la app: `node scripts/seed.js` (o `npm run seed` desde `/app/backend-node`). Definí antes `ADMIN_EMAIL` / `ADMIN_PASSWORD` si no querés los defaults del script.
 8. **Correo (SMTP + `FRONTEND_URL`)**: necesario para invitaciones y “olvidé mi contraseña”.
 
+### Persistencia de imágenes (`/uploads`)
+
+Las fotos se guardan **en disco** dentro del contenedor. En Railway (y PaaS similares), ese disco **no persiste** entre **redeploy**, **restart** o un **nuevo deploy**: la base sigue apuntando a rutas `/uploads/...`, pero el archivo **ya no existe** → 404 hasta volver a subir.
+
+**En producción hace falta un volumen:**
+
+1. Abrí el servicio **de la app** (el que construye el `Dockerfile`, no el de Postgres).
+2. Pestaña **Settings** → sección **Volumes** (o **Add volume** según la UI).
+3. **Add volume** / **New volume**:
+   - **Mount path** (ruta dentro del contenedor): **`/app/backend-node/uploads`**
+     - Coincide con el `WORKDIR` del [`Dockerfile`](Dockerfile) (`/app/backend-node`) y el directorio por defecto del backend (`uploads/` relativo al backend).
+   - Asigná un tamaño razonable (p. ej. 1–5 GB según necesidad).
+4. Guardá y **redeploy** el servicio (Deploy → Redeploy) para que el mount quede activo.
+5. Verificación rápida:
+   - En los **Deploy logs**, tras el arranque, deberías ver una línea `Uploads: /app/backend-node/uploads (...)`.
+   - `GET /api/health` debe responder JSON con **`uploads_writable: true`**. Si es `false`, el proceso no puede escribir en esa ruta (permisos o mount mal configurado).
+
+Si montás el volumen en **otra** ruta dentro del contenedor:
+
+1. Definí la variable **`UPLOADS_DIR`** en el servicio de la app con esa ruta **absoluta** (misma carpeta para `multer`, `express.static` y el volumen).
+2. Redeploy.
+
+Sin volumen (o sin `UPLOADS_DIR` alineado al montaje), es **normal** que las imágenes “desaparezcan” tras un redeploy.
+
+**Nota:** el espacio de **PostgreSQL** (p. ej. 5 GB en Railway) es solo para la base de datos; **no** almacena los ficheros de `/uploads`. Las imágenes no van a Postgres salvo que migres a BLOB (no es el caso actual).
+
+#### Checklist de prueba (después del volumen + redeploy)
+
+1. `curl -s https://TU_DOMINIO/api/health` → `uploads_writable` debe ser `true`.
+2. Crear una publicación con una imagen nueva y abrir la URL `/uploads/...` en el navegador (debe cargar).
+3. Forzar un **Redeploy** del servicio de la app y volver a abrir la misma URL `/uploads/...` → la imagen debe seguir existiendo.
+
+### Consola del navegador: `[Violation] Added non-passive event listener to 'wheel'`
+
+Si en Chrome ves ese aviso y el stack menciona bundles de **MUI / MUI X** (p. ej. DataGrid, Charts), es **código interno de la librería** (gestos), no un bug propio de la app. Suele ser **ruido de consola** sin impacto funcional claro. Actualizar `@mui/material` y paquetes `@mui/x-*` a los últimos parches de la misma major a veces lo atenúa; no hay garantía hasta que MUI cambie esos listeners.
+
 ### Panel “Database” de Railway
 
 La pestaña **Database** del servicio Postgres a veces queda en “Attempting to connect…” por la UI o por carga; **no** implica que tu app esté mal configurada. Lo que importa es que el **servicio de la app** tenga `DATABASE_URL` referenciada y que los logs de deploy muestren PostgreSQL como arriba.

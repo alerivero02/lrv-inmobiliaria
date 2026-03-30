@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { migrate, isPostgres } from "./db.js";
 import { createApp } from "./app.js";
+import { getUploadsDir } from "./uploadsDir.js";
 
 await migrate();
 
@@ -15,6 +16,7 @@ if (process.env.NODE_ENV === "production" && !isPostgres) {
 
 const app = createApp();
 const PORT = process.env.PORT || 4000;
+const uploadsDirResolved = getUploadsDir();
 
 app.listen(PORT, () => {
   const publicBase =
@@ -23,5 +25,8 @@ app.listen(PORT, () => {
     `http://127.0.0.1:${PORT}`;
   console.log(`\n🚀  LRV Backend → puerto ${PORT}`);
   console.log(`   Health:  ${publicBase}/api/health`);
-  console.log(`   Admin:   ${publicBase}/admin/login\n`);
+  console.log(`   Admin:   ${publicBase}/admin/login`);
+  console.log(
+    `   Uploads: ${uploadsDirResolved} (Railway: volumen persistente montado aquí; ver DEPLOY.md)\n`,
+  );
 });

@@ -1,14 +1,13 @@
 import { Router } from "express";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import multer from "multer";
 import { get, all, run } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
 import { isAllowedImageMime, optimizeImageToFile } from "../utils/images.js";
+import { getUploadsDir } from "../uploadsDir.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+const UPLOADS_DIR = getUploadsDir();
 
 /** Rutas relativas evitan CSP (img-src 'self') al mezclar 127.0.0.1 / localhost / Vite :5173. */
 function normalizeUploadUrl(url) {

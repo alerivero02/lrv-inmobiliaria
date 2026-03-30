@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import listingsRouter from "./routes/listings.js";
+import { getUploadsDir } from "./uploadsDir.js";
 import visitsRouter from "./routes/visits.js";
 import transactionsRouter from "./routes/transactions.js";
 import dashboardRouter from "./routes/dashboard.js";
@@ -16,7 +17,7 @@ import notificationsRouter from "./routes/notifications.js";
 
 export function createApp() {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const UPLOADS_DIR = path.join(__dirname, "uploads");
+  const UPLOADS_DIR = getUploadsDir();
 
   // Crear carpeta de uploads si no existe
   if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -103,9 +104,22 @@ export function createApp() {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/notifications", notificationsRouter);
 
-  app.get("/api/health", (_req, res) =>
-    res.json({ status: "ok", timestamp: new Date().toISOString() }),
-  );
+  app.get("/api/health", async (_req, res) => {
+    let uploadsWritable = false;
+    try {
+      const testFile = path.join(UPLOADS_DIR, `.health-${Date.now()}`);
+      await fs.promises.writeFile(testFile, "ok", "utf8");
+      await fs.promises.unlink(testFile);
+      uploadsWritable = true;
+    } catch {
+      uploadsWritable = false;
+    }
+    return res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uploads_writable: uploadsWritable,
+    });
+  });
 
   const distStatic = process.env.FRONTEND_DIST
     ? path.resolve(process.env.FRONTEND_DIST)
