@@ -201,7 +201,8 @@ export default function VisitRequestForm({
   const occupiedSet = useMemo(() => {
     const s = new Set();
     for (const x of occupiedSlots) {
-      if (x?.date && x?.time) s.add(slotKey(String(x.date).slice(0, 10), String(x.time).slice(0, 5)));
+      if (x?.date && x?.time)
+        s.add(slotKey(String(x.date).slice(0, 10), String(x.time).slice(0, 5)));
     }
     return s;
   }, [occupiedSlots]);
@@ -243,7 +244,10 @@ export default function VisitRequestForm({
   const bookingNoticeId = useId();
   useEffect(() => {
     if (!bookingNotice?.text) return;
-    bookingNoticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const id = requestAnimationFrame(() => {
+      bookingNoticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    return () => cancelAnimationFrame(id);
   }, [bookingNotice]);
 
   const fDateInputRef = useRef(null);
@@ -274,13 +278,20 @@ export default function VisitRequestForm({
 
   const availableTimes = useMemo(() => {
     if (!form.fecha) return TIME_OPTIONS;
-    return getTimesForDay(form.fecha, minAllowed).filter((t) => !occupiedSet.has(slotKey(form.fecha, t)));
+    return getTimesForDay(form.fecha, minAllowed).filter(
+      (t) => !occupiedSet.has(slotKey(form.fecha, t)),
+    );
   }, [form.fecha, minAllowed, occupiedSet]);
 
   useEffect(() => {
     if (!slotsLoaded || !form.fecha) return;
     if (availableTimes.length === 0) {
-      const next = findNextFreeSlot(new Date(`${form.fecha}T12:00:00`), minAllowed, maxBookEndDay, occupiedSet);
+      const next = findNextFreeSlot(
+        new Date(`${form.fecha}T12:00:00`),
+        minAllowed,
+        maxBookEndDay,
+        occupiedSet,
+      );
       if (next) {
         setBookingNotice({
           type: "info",

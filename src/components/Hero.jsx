@@ -1,11 +1,19 @@
 import { useEffect, useId, useRef, useState } from "react";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
+import { usePointerTilt } from "../hooks/usePointerTilt";
 import "./Hero.css";
 
 const FEATURES = [
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
         <circle cx="12" cy="10" r="3" />
       </svg>
@@ -15,7 +23,14 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
@@ -26,7 +41,14 @@ const FEATURES = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <rect x="2" y="5" width="20" height="14" rx="2" />
         <path d="M2 10h20" />
       </svg>
@@ -38,11 +60,21 @@ const FEATURES = [
 
 export default function Hero() {
   const [loaded, setLoaded] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [imgError, setImgError] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const heroRef = useRef(null);
+  const cardWrapRef = useRef(null);
   const titleId = useId();
+
+  usePointerTilt({
+    boundsRef: heroRef,
+    cardRef: cardWrapRef,
+    enabled: !reduceMotion,
+    coeffX: 20,
+    coeffY: 20,
+    rotYMul: -0.5,
+    rotXMul: 0.3,
+  });
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 100);
@@ -50,23 +82,11 @@ export default function Hero() {
     setReduceMotion(mq.matches);
     const onMq = () => setReduceMotion(mq.matches);
     mq.addEventListener("change", onMq);
-
-    const handleMouse = (e) => {
-      if (reduceMotion || !heroRef.current) return;
-      const rect = heroRef.current.getBoundingClientRect();
-      setMousePos({
-        x: ((e.clientX - rect.left) / rect.width - 0.5) * 20,
-        y: ((e.clientY - rect.top) / rect.height - 0.5) * 20,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouse);
     return () => {
       clearTimeout(t);
       mq.removeEventListener("change", onMq);
-      window.removeEventListener("mousemove", handleMouse);
     };
-  }, [reduceMotion]);
+  }, []);
 
   return (
     <section
@@ -101,8 +121,8 @@ export default function Hero() {
           </h1>
 
           <p className="lrvh-subtitle">
-            Descubrí propiedades en La Rioja con atención personalizada: casas, departamentos, terrenos, fincas y campos —
-            venta y alquiler.
+            Descubrí propiedades en La Rioja con atención personalizada: casas, departamentos,
+            terrenos, fincas y campos — venta y alquiler.
           </p>
 
           <div className="lrvh-features-row">
@@ -120,7 +140,14 @@ export default function Hero() {
           <div className="lrvh-cta-row">
             <a className="lrvh-btn lrvh-btn--primary" href="#propiedades">
               <span>Explorar propiedades</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
@@ -131,21 +158,10 @@ export default function Hero() {
               Contactar
             </a>
           </div>
-
-          
         </div>
 
         <div className="lrvh-main-right">
-          <div
-            className="lrvh-card-wrap"
-            style={
-              reduceMotion
-                ? undefined
-                : {
-                    transform: `perspective(1000px) rotateY(${-mousePos.x * 0.5}deg) rotateX(${mousePos.y * 0.3}deg)`,
-                  }
-            }
-          >
+          <div ref={cardWrapRef} className="lrvh-card-wrap">
             <div className="lrvh-main-card">
               <div className="lrvh-card-glow" aria-hidden="true" />
               {!imgError ? (
@@ -177,7 +193,14 @@ export default function Hero() {
 
             <div className="lrvh-float-card lrvh-float-card--tl">
               <div className="lrvh-fc-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>

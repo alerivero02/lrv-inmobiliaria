@@ -1,33 +1,31 @@
 import { useEffect, useRef, useState } from "react";
+import { usePointerTilt } from "../hooks/usePointerTilt";
 import "./Hero.css";
 import "./About.css";
 
 export default function About() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
   const wrapRef = useRef(null);
+
+  usePointerTilt({
+    boundsRef: wrapRef,
+    cardRef: wrapRef,
+    enabled: !reduceMotion,
+    coeffX: 5,
+    coeffY: 5,
+    rotYMul: -0.5,
+    rotXMul: 0.3,
+  });
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(mq.matches);
     const onMq = () => setReduceMotion(mq.matches);
     mq.addEventListener("change", onMq);
-
-    const handleMouse = (e) => {
-      if (reduceMotion || !wrapRef.current) return;
-      const rect = wrapRef.current.getBoundingClientRect();
-      setMousePos({
-        x: ((e.clientX - rect.left) / rect.width - 0.5) * 5,
-        y: ((e.clientY - rect.top) / rect.height - 0.5) * 5,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouse);
     return () => {
       mq.removeEventListener("change", onMq);
-      window.removeEventListener("mousemove", handleMouse);
     };
-  }, [reduceMotion]);
+  }, []);
 
   return (
     <section
@@ -39,17 +37,7 @@ export default function About() {
         <div className="about__grid">
           <div className="about__visual">
             <figure className="about__figure">
-              <div
-                ref={wrapRef}
-                className="lrvh-card-wrap about__card-wrap"
-                style={
-                  reduceMotion
-                    ? undefined
-                    : {
-                        transform: `perspective(1000px) rotateY(${-mousePos.x * 0.5}deg) rotateX(${mousePos.y * 0.3}deg)`,
-                      }
-                }
-              >
+              <div ref={wrapRef} className="lrvh-card-wrap about__card-wrap">
                 <div className="lrvh-main-card about__hero-card">
                   <div className="lrvh-card-glow" aria-hidden="true" />
                   <img
@@ -75,8 +63,8 @@ export default function About() {
             </p>
             <p className="about__text">
               En LRV nos especializamos en venta y alquiler de casas, departamentos, terrenos,
-              fincas y campos en toda la provincia. Acompañamos a nuestros clientes con asesoramiento
-              profesional y transparencia en cada operación.
+              fincas y campos en toda la provincia. Acompañamos a nuestros clientes con
+              asesoramiento profesional y transparencia en cada operación.
             </p>
             <ul className="about__list" role="list">
               <li>+11 años de experiencia en el mercado</li>
