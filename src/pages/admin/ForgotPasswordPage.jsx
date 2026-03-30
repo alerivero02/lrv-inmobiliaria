@@ -12,8 +12,16 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import { requestPasswordReset, isAuthenticated } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
+import { useSeo } from "../../hooks/useSeo";
 
 export default function ForgotPasswordPage() {
+  useSeo({
+    title: "Olvidé mi contraseña",
+    description: "Recuperar acceso al panel LRV Inmobiliaria.",
+    canonicalPath: "/admin/olvide-contrasena",
+    noIndex: true,
+  });
+
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");

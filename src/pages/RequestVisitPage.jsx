@@ -4,6 +4,8 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import VisitRequestForm from "../components/VisitRequestForm";
 import { getPublicListing } from "../api/client";
+import { useSeo } from "../hooks/useSeo";
+import { DEFAULT_META_DESCRIPTION } from "../utils/seo";
 import "./RequestVisitPage.css";
 
 export default function RequestVisitPage() {
@@ -11,6 +13,24 @@ export default function RequestVisitPage() {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+
+  const seoTitle = loading
+    ? "Solicitar visita"
+    : !listing
+      ? "Propiedad no encontrada"
+      : success
+        ? "Solicitud enviada"
+        : `Solicitar visita: ${listing.title}`;
+
+  useSeo({
+    title: seoTitle,
+    description:
+      listing && !success
+        ? `Coordiná una visita con LRV Inmobiliaria — ${listing.title} en La Rioja.`
+        : DEFAULT_META_DESCRIPTION,
+    canonicalPath: id ? `/propiedades/${id}/solicitar-visita` : "/propiedades",
+    noIndex: Boolean(!loading && !listing && id),
+  });
 
   useEffect(() => {
     if (!id) return;

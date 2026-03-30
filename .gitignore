@@ -14,3 +14,7 @@ backend-node/uploads/
 
 # Carpeta de assets suelta (no fuente)
 New folder/
+
+# Generados en `npm run build` (URLs absolutas con VITE_SITE_URL)
+public/sitemap.xml
+public/robots.txt

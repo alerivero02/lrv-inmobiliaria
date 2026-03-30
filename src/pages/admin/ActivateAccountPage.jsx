@@ -16,8 +16,16 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { ThemeProvider } from "@mui/material/styles";
 import { completeAccountActivation, isAuthenticated } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
+import { useSeo } from "../../hooks/useSeo";
 
 export default function ActivateAccountPage() {
+  useSeo({
+    title: "Activar cuenta",
+    description: "Activación de cuenta LRV Inmobiliaria.",
+    canonicalPath: "/admin/activar-cuenta",
+    noIndex: true,
+  });
+
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const navigate = useNavigate();

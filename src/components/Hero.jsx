@@ -93,6 +93,7 @@ export default function Hero() {
           </div>
 
           <h1 id={titleId} className="lrvh-title">
+            <span className="lrvh-title-brand">LRV Inmobiliaria</span>
             <span className="lrvh-title-line lrvh-title-line--1">
               Tu nuevo <span className="lrvh-title-accent">hogar</span>
             </span>

@@ -16,8 +16,15 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { ThemeProvider } from "@mui/material/styles";
 import { login, isAuthenticated } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
+import { useSeo } from "../../hooks/useSeo";
 
 export default function LoginPage() {
+  useSeo({
+    title: "Iniciar sesión",
+    description: "Acceso al panel LRV Inmobiliaria.",
+    canonicalPath: "/admin/login",
+    noIndex: true,
+  });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

@@ -123,6 +123,20 @@
   letter-spacing: -0.03em;
   color: var(--green-900);
 }
+.lrvh-title-brand {
+  display: block;
+  font-family: var(--font-sans, "DM Sans", system-ui, sans-serif);
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green-700);
+  opacity: 0;
+  margin-bottom: 0.15em;
+}
+.lrvh-root--loaded .lrvh-title-brand {
+  animation: clip-up 0.55s var(--ease-out-expo) 0.12s forwards;
+}
 .lrvh-title-line {
   display: block;
   overflow: visible;

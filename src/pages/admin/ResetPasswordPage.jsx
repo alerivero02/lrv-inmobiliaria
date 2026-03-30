@@ -16,8 +16,16 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { ThemeProvider } from "@mui/material/styles";
 import { resetPasswordWithToken, isAuthenticated } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
+import { useSeo } from "../../hooks/useSeo";
 
 export default function ResetPasswordPage() {
+  useSeo({
+    title: "Restablecer contraseña",
+    description: "Nueva contraseña — panel LRV Inmobiliaria.",
+    canonicalPath: "/admin/restablecer-contrasena",
+    noIndex: true,
+  });
+
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const navigate = useNavigate();

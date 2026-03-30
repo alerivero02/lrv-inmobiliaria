@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
+import { applyListingSeo, resetListingSeo } from "../utils/seo";
 import "./PropertyDetailPage.css";
 
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
@@ -23,21 +24,15 @@ export default function PropertyDetailPage() {
     getPublicListing(id)
       .then((data) => {
         setListing(data);
-        document.title = `${data.title} | LRV Inmobiliaria`;
-        const desc = data.description || data.title;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute("content", desc.slice(0, 160));
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.setAttribute("content", data.title);
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        if (ogDesc) ogDesc.setAttribute("content", desc.slice(0, 160));
-        const ogImage = document.querySelector('meta[property="og:image"]');
-        if (ogImage && data.images?.[0]) ogImage.setAttribute("content", data.images[0]);
+        applyListingSeo(data);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        setError(err.message);
+        resetListingSeo();
+      })
       .finally(() => setLoading(false));
     return () => {
-      document.title = "LRV Inmobiliaria";
+      resetListingSeo();
     };
   }, [id]);
 

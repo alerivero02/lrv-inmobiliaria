@@ -6,6 +6,7 @@ const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal
 import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
 import { getPublicListings } from "../api/client";
 import { CITIES_LA_RIOJA, PROPERTY_TYPES, OPERATION_OPTIONS } from "../data/cities";
+import { useSeo } from "../hooks/useSeo";
 import "./PropertiesPage.css";
 
 const LIMIT = 12;
@@ -24,6 +25,13 @@ const INITIAL_FILTERS = {
 };
 
 export default function PropertiesPage() {
+  useSeo({
+    title: "Propiedades en venta y alquiler",
+    description:
+      "Catálogo LRV Inmobiliaria La Rioja: casas, departamentos, terrenos, fincas y campos en venta y alquiler. Buscá LRV o LRV Inmobiliaria.",
+    canonicalPath: "/propiedades",
+  });
+
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -111,7 +119,7 @@ export default function PropertiesPage() {
       <main className="properties-page">
         <header className="properties-page__hero">
           <div className="container">
-            <h1 className="properties-page__title">Propiedades</h1>
+            <h1 className="properties-page__title">Propiedades — LRV Inmobiliaria La Rioja</h1>
             <p className="properties-page__subtitle">
               Buscá por zona, precio, tipo y operación. Todos los inmuebles cuentan con
               documentación.

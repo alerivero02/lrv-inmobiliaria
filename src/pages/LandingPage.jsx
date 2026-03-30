@@ -7,8 +7,12 @@ import AboutSection from "../landing/sections/AboutSection";
 import ServicesSection from "../landing/sections/ServicesSection";
 import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
 import ContactSection from "../landing/sections/ContactSection";
+import { useSeo } from "../hooks/useSeo";
+import { DEFAULT_META_DESCRIPTION } from "../utils/seo";
 
 export default function LandingPage() {
+  useSeo({ canonicalPath: "/", description: DEFAULT_META_DESCRIPTION });
+
   const [selectedListingId, setSelectedListingId] = useState(null);
 
   const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal"));

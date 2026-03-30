@@ -10,7 +10,7 @@
     "db:down": "docker compose down",
     "dev:all": "docker compose up -d db && wait-on tcp:127.0.0.1:5433 -t 120000 && cross-env DATABASE_URL=postgresql://lrv:lrv@127.0.0.1:5433/lrv PGSSLMODE=disable JWT_SECRET=dev-local-jwt-secret-change-me CORS_ORIGINS=http://localhost:5173 FRONTEND_URL=http://localhost:5173 VITE_API_URL=/api concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend-node\" \"vite\"",
     "dev:all:sqlite": "cross-env JWT_SECRET=dev-local-jwt-secret-change-me CORS_ORIGINS=http://localhost:5173 FRONTEND_URL=http://localhost:5173 VITE_API_URL=/api concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend-node\" \"vite\"",
-    "build": "vite build",
+    "build": "node scripts/seo-assets.mjs && vite build",
     "preview": "vite preview",
     "lint": "biome lint .",
     "format": "biome format . --write"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Outlet, Link, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Drawer,
@@ -47,6 +47,7 @@ import {
 } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
 import AdminMain from "../../components/admin/AdminMain";
+import { useSeo } from "../../hooks/useSeo";
 
 const DRAWER_WIDTH = 272;
 
@@ -402,6 +403,14 @@ function DrawerContent({ onNavClick, profile }) {
 }
 
 export default function AdminLayout() {
+  const location = useLocation();
+  useSeo({
+    title: "Panel administración",
+    description: "Acceso al panel de gestión LRV Inmobiliaria.",
+    canonicalPath: location.pathname,
+    noIndex: true,
+  });
+
   const isMobile = useMediaQuery(adminTheme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState(() => getStoredAdminProfile());
