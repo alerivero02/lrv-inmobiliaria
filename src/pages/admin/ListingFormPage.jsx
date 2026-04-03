@@ -15,6 +15,8 @@ import {
   OPERATION_OPTIONS,
 } from "../../data/cities";
 import MapPicker from "../../components/MapPicker";
+import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 import "leaflet/dist/leaflet.css";
 import "./ListingFormPage.css";
 
@@ -280,14 +282,18 @@ export default function ListingFormPage() {
 
   return (
     <div className="listing-form-page">
-      <header className="listing-form-page__header">
-        <h1>{isEdit ? "Editar anuncio" : "Nuevo anuncio"}</h1>
-        <Link to="/admin" className="btn btn-outline">
-          Volver
-        </Link>
-      </header>
+      <AdminPageHeader
+        title={isEdit ? "Editar anuncio" : "Nuevo anuncio"}
+        subtitle="Completá la ficha con datos de ubicación, características, comisiones e imágenes."
+        actions={
+          <Link to="/admin" className="btn btn-outline">
+            Volver
+          </Link>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="listing-form">
+      <AdminSurface>
+        <form onSubmit={handleSubmit} className="listing-form">
         {error && <p className="listing-form__error">{error}</p>}
 
         <div className="listing-form__section">
@@ -622,7 +628,8 @@ export default function ListingFormPage() {
             Cancelar
           </Link>
         </div>
-      </form>
+        </form>
+      </AdminSurface>
     </div>
   );
 }

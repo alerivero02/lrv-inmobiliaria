@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Box,
-  Typography,
-  Paper,
   TextField,
   FormControl,
   InputLabel,
@@ -33,6 +31,7 @@ import SellIcon from "@mui/icons-material/Sell";
 import { getListings, deleteListing, updateListing } from "../../api/client";
 import { formatPrice } from "../../utils/format";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 
 const STATUS_LABELS = {
   active: "Activo",
@@ -331,7 +330,7 @@ export default function ListingsPage() {
         }
       />
 
-      <Paper sx={{ p: { xs: 2, sm: 2.5 }, mb: 2.5 }}>
+      <AdminSurface sx={{ mb: 2.5 }}>
         <Box
           component="form"
           onSubmit={handleSearch}
@@ -415,7 +414,7 @@ export default function ListingsPage() {
             Buscar
           </Button>
         </Box>
-      </Paper>
+      </AdminSurface>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
@@ -423,7 +422,7 @@ export default function ListingsPage() {
         </Alert>
       )}
 
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
+      <AdminSurface sx={{ width: "100%", overflow: "hidden", p: 0 }}>
         <DataGrid
           rows={listings}
           columns={columns}
@@ -449,7 +448,7 @@ export default function ListingsPage() {
             footerRowSelected: (c) => `${c} fila(s) seleccionada(s)`,
           }}
         />
-      </Paper>
+      </AdminSurface>
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
         <DialogTitle>¿Eliminar anuncio?</DialogTitle>

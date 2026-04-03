@@ -5,7 +5,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Paper,
   Chip,
   Button,
   Skeleton,
@@ -26,6 +25,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { getDashboardStats, getVisitsByListing } from "../../api/client";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 
 const fmt = (n) => (n ?? 0).toLocaleString("es-AR");
 const fmtARS = (n) => `$\u00a0${fmt(Math.round(n ?? 0))}`;
@@ -287,7 +287,7 @@ export default function DashboardPage() {
           alignItems: "stretch",
         }}
       >
-        <Paper sx={{ p: 2.5, height: "100%" }}>
+        <AdminSurface sx={{ height: "100%" }}>
           <Typography variant="subtitle1" gutterBottom>
             Finanzas — Este mes
           </Typography>
@@ -333,9 +333,9 @@ export default function DashboardPage() {
               </Typography>
             </Box>
           </Box>
-        </Paper>
+        </AdminSurface>
 
-        <Paper sx={{ p: 2.5, height: "100%", minHeight: 280 }}>
+        <AdminSurface sx={{ height: "100%", minHeight: 280 }}>
           <Typography variant="subtitle1" gutterBottom>
             Propiedades más solicitadas (top 10)
           </Typography>
@@ -371,12 +371,11 @@ export default function DashboardPage() {
               slotProps={{ legend: { hidden: true } }}
             />
           )}
-        </Paper>
+        </AdminSurface>
       </Box>
 
-      <Paper
+      <AdminSurface
         sx={{
-          p: 2.5,
           mb: 3,
           bgcolor: "rgba(3, 105, 161, 0.06)",
           borderColor: "rgba(3, 105, 161, 0.2)",
@@ -412,7 +411,7 @@ export default function DashboardPage() {
             </Box>
           ))}
         </Box>
-      </Paper>
+      </AdminSurface>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mb: 2 }}>
         <Chip

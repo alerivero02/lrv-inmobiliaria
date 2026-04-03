@@ -21,7 +21,7 @@ export const adminTheme = createTheme({
     },
     divider: "#e7e5e4",
     background: {
-      default: "#e8e6e1",
+      default: "#f3f5f4",
       paper: "#ffffff",
     },
     action: {
@@ -101,7 +101,7 @@ export const adminTheme = createTheme({
           borderRadius: 14,
           border: "1px solid",
           borderColor: "#e7e5e4",
-          boxShadow: "0 1px 3px rgba(28,25,23,0.04)",
+          boxShadow: "0 10px 24px rgba(28,25,23,0.04)",
         },
       },
     },
@@ -156,7 +156,7 @@ export const adminTheme = createTheme({
           "--DataGrid-rowBorderColor": theme.palette.grey[200],
         }),
         columnHeaders: ({ theme }) => ({
-          backgroundColor: theme.palette.grey[100],
+          backgroundColor: "#f8faf9",
           borderBottom: `1px solid ${theme.palette.divider}`,
           borderRadius: 0,
         }),
@@ -173,9 +173,17 @@ export const adminTheme = createTheme({
         cell: { borderColor: "#f5f5f4" },
         footerContainer: ({ theme }) => ({
           borderTop: `1px solid ${theme.palette.divider}`,
-          backgroundColor: theme.palette.grey[50],
+          backgroundColor: "#fafaf9",
           minHeight: 48,
         }),
+      },
+    },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+          fontWeight: 500,
+        },
       },
     },
   },

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
-  Paper,
   TextField,
   Button,
   Alert,
@@ -16,6 +15,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { getUsers, inviteUser, resendUserInvite } from "../../api/client";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 
 export default function UsersPage() {
   const [rows, setRows] = useState([]);
@@ -108,7 +108,7 @@ export default function UsersPage() {
         subtitle="Invitá colaboradores por correo. Deben abrir el enlace y definir una contraseña segura antes de poder entrar."
       />
 
-      <Paper sx={{ p: 2.5, mb: 3 }}>
+      <AdminSurface sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
           Nueva invitación
         </Typography>
@@ -144,7 +144,7 @@ export default function UsersPage() {
             {inviteLoading ? "Enviando…" : "Enviar invitación"}
           </Button>
         </Box>
-      </Paper>
+      </AdminSurface>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
@@ -152,7 +152,7 @@ export default function UsersPage() {
         </Alert>
       )}
 
-      <Paper sx={{ overflow: "hidden", width: "100%" }}>
+      <AdminSurface sx={{ overflow: "hidden", width: "100%", p: 0 }}>
         <DataGrid
           rows={rows}
           columns={columns}
@@ -163,7 +163,7 @@ export default function UsersPage() {
           getRowId={(r) => r.id}
           sx={{ border: "none", height: 440 }}
         />
-      </Paper>
+      </AdminSurface>
 
       <Snackbar
         open={Boolean(snack)}

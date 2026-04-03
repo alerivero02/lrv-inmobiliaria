@@ -1,9 +1,11 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+/** Relativo `/api` → mismo origen (Vite proxy → backend :4000 en dev). */
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 const IS_DEV = import.meta.env.DEV;
 const PROFILE_KEY = "lrv_admin_profile";
 
 function getApiOrigin() {
-  const fallbackOrigin = typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
+  const fallbackOrigin =
+    typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
   try {
     return new URL(API_BASE, fallbackOrigin).origin;
   } catch {

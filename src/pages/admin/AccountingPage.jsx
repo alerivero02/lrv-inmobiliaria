@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Paper,
   Button,
   TextField,
   FormControl,
@@ -30,6 +29,7 @@ import {
   exportTransactionsCsv,
 } from "../../api/client";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 
 const CATEGORIES = [
   "mantenimiento",
@@ -268,21 +268,24 @@ export default function AccountingPage() {
               bg: balance.balance >= 0 ? "rgba(21, 128, 61, 0.06)" : "rgba(185, 28, 28, 0.06)",
             },
           ].map(({ label, value, border, bg }) => (
-            <Paper key={label} sx={{ p: 2.25, borderLeft: "4px solid", borderLeftColor: border, bgcolor: bg }}>
+            <AdminSurface
+              key={label}
+              sx={{ p: 2.25, borderLeft: "4px solid", borderLeftColor: border, bgcolor: bg }}
+            >
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: "0.04em" }}>
                 {label}
               </Typography>
               <Typography variant="h6" fontWeight={800} sx={{ mt: 0.5, fontFamily: "inherit" }}>
                 ${Number(value).toLocaleString("es-AR")}
               </Typography>
-            </Paper>
+            </AdminSurface>
           ))}
         </Box>
       )}
 
       {/* New transaction form */}
       {showForm && (
-        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+        <AdminSurface sx={{ p: 2, mb: 3 }}>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
             Nuevo movimiento
           </Typography>
@@ -351,11 +354,11 @@ export default function AccountingPage() {
               Guardar
             </Button>
           </Box>
-        </Paper>
+        </AdminSurface>
       )}
 
       {/* Filters */}
-      <Paper sx={{ p: 2.5, mb: 2 }}>
+      <AdminSurface sx={{ mb: 2 }}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 120 } }}>
             <InputLabel>Tipo</InputLabel>
@@ -401,7 +404,7 @@ export default function AccountingPage() {
             InputLabelProps={{ shrink: true }}
           />
         </Box>
-      </Paper>
+      </AdminSurface>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
@@ -409,7 +412,7 @@ export default function AccountingPage() {
         </Alert>
       )}
 
-      <Paper sx={{ overflow: "hidden" }}>
+      <AdminSurface sx={{ overflow: "hidden", p: 0 }}>
         <DataGrid
           rows={transactions}
           columns={columns}
@@ -424,7 +427,7 @@ export default function AccountingPage() {
           }}
           localeText={{ noRowsLabel: "No hay movimientos." }}
         />
-      </Paper>
+      </AdminSurface>
 
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>¿Eliminar movimiento?</DialogTitle>

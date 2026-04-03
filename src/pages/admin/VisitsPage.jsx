@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Box,
-  Paper,
   Typography,
   Button,
   FormControl,
@@ -27,6 +26,7 @@ import { es } from "date-fns/locale";
 import { format, isSameDay } from "date-fns";
 import { getVisits, updateVisit } from "../../api/client";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
+import { AdminSurface } from "../../components/admin/AdminSurface";
 
 const ESTADO_LABELS = {
   pending: "Pendiente",
@@ -295,7 +295,7 @@ export default function VisitsPage() {
             alignItems: "start",
           }}
         >
-          <Paper sx={{ p: 1.5, width: "100%" }}>
+          <AdminSurface sx={{ p: 1.5, width: "100%" }}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
               <DateCalendar
                 value={selectedDate}
@@ -309,8 +309,8 @@ export default function VisitsPage() {
                 }}
               />
             </LocalizationProvider>
-          </Paper>
-          <Paper sx={{ p: 2, flex: 1, borderRadius: 2, boxShadow: 1, minHeight: 400 }}>
+          </AdminSurface>
+          <AdminSurface sx={{ p: 2, flex: 1, minHeight: 400 }}>
             <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
               Visitas del {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
             </Typography>
@@ -351,10 +351,10 @@ export default function VisitsPage() {
                 ))}
               </Box>
             )}
-          </Paper>
+          </AdminSurface>
         </Box>
       ) : (
-        <Paper sx={{ width: "100%", overflow: "hidden" }}>
+        <AdminSurface sx={{ width: "100%", overflow: "hidden", p: 0 }}>
           <DataGrid
             rows={visits}
             columns={listColumns}
@@ -371,7 +371,7 @@ export default function VisitsPage() {
               noRowsLabel: "No hay visitas con ese filtro.",
             }}
           />
-        </Paper>
+        </AdminSurface>
       )}
 
       {/* Detalle de visita */}

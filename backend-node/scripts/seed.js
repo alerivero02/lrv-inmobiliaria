@@ -25,7 +25,7 @@ if (!existing) {
   console.log(`ℹ️   Admin ya existe: ${ADMIN_EMAIL}`);
 }
 
-const countRow = await get("SELECT COUNT(*)::int AS n FROM listings");
+const countRow = await get("SELECT CAST(COUNT(*) AS INTEGER) AS n FROM listings");
 const count = countRow?.n ?? 0;
 
 if (count === 0) {

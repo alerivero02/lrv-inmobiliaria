@@ -11,7 +11,6 @@ import {
   Badge,
   Button,
   Divider,
-  ThemeProvider,
   useTheme,
   useMediaQuery,
   IconButton,
@@ -47,6 +46,7 @@ import {
 } from "../../api/client";
 import { adminTheme } from "../../theme/adminTheme";
 import AdminMain from "../../components/admin/AdminMain";
+import { AdminProviders } from "../../components/admin/AdminProviders";
 import { useSeo } from "../../hooks/useSeo";
 
 const DRAWER_WIDTH = 272;
@@ -436,7 +436,7 @@ export default function AdminLayout() {
   );
 
   return (
-    <ThemeProvider theme={adminTheme}>
+    <AdminProviders>
       <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
         {isMobile && (
           <AppBar
@@ -498,6 +498,6 @@ export default function AdminLayout() {
           </AdminMain>
         </Box>
       </Box>
-    </ThemeProvider>
+    </AdminProviders>
   );
 }

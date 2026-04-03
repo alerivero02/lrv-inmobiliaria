@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
-  Container,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -13,9 +11,8 @@ import {
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { ThemeProvider } from "@mui/material/styles";
 import { completeAccountActivation, isAuthenticated } from "../../api/client";
-import { adminTheme } from "../../theme/adminTheme";
+import { AdminAuthShell } from "../../components/admin/AdminAuthShell";
 import { useSeo } from "../../hooks/useSeo";
 
 export default function ActivateAccountPage() {
@@ -66,101 +63,80 @@ export default function ActivateAccountPage() {
   };
 
   return (
-    <ThemeProvider theme={adminTheme}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-          py: 3,
-        }}
-      >
-        <Container maxWidth="xs">
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
-            <Typography variant="h5" component="h1" color="primary" fontWeight={700} textAlign="center">
-              Activar cuenta
-            </Typography>
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 2 }}>
-              Elegí una contraseña segura para el panel LRV.
-            </Typography>
-            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 2 }}>
-              Mínimo 12 caracteres, mayúsculas, minúsculas, un número y un símbolo.
-            </Typography>
+    <AdminAuthShell
+      title="Activar cuenta"
+      subtitle="Elegí una contraseña segura para el panel LRV."
+      footer={{ to: "/admin/login", label: "Ir al inicio de sesión" }}
+    >
+      <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 2 }}>
+        Mínimo 12 caracteres, mayúsculas, minúsculas, un número y un símbolo.
+      </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {error && (
-                <Alert severity="error" onClose={() => setError("")}>
-                  {error}
-                </Alert>
-              )}
-              {success && <Alert severity="success">{success}</Alert>}
-              <TextField
-                label="Contraseña"
-                type={show1 ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                fullWidth
-                disabled={loading}
-                autoComplete="new-password"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label={show1 ? "Ocultar" : "Mostrar"}
-                        onClick={() => setShow1((v) => !v)}
-                        edge="end"
-                        size="small"
-                      >
-                        {show1 ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <TextField
-                label="Repetir contraseña"
-                type={show2 ? "text" : "password"}
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-                required
-                fullWidth
-                disabled={loading}
-                autoComplete="new-password"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label={show2 ? "Ocultar" : "Mostrar"}
-                        onClick={() => setShow2((v) => !v)}
-                        edge="end"
-                        size="small"
-                      >
-                        {show2 ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}>
-                {loading ? "Guardando…" : "Activar y continuar"}
-              </Button>
-            </Box>
-
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
-              <Link to="/admin/login" style={{ color: "inherit" }}>
-                Ir al inicio de sesión
-              </Link>
-              {" · "}
-              <Link to="/" style={{ color: "inherit" }}>
-                Sitio público
-              </Link>
-            </Typography>
-          </Paper>
-        </Container>
+      <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {error && (
+          <Alert severity="error" onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
+        {success && <Alert severity="success">{success}</Alert>}
+        <TextField
+          label="Contraseña"
+          type={show1 ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          fullWidth
+          disabled={loading}
+          autoComplete="new-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={show1 ? "Ocultar" : "Mostrar"}
+                  onClick={() => setShow1((v) => !v)}
+                  edge="end"
+                  size="small"
+                >
+                  {show1 ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          label="Repetir contraseña"
+          type={show2 ? "text" : "password"}
+          value={password2}
+          onChange={(e) => setPassword2(e.target.value)}
+          required
+          fullWidth
+          disabled={loading}
+          autoComplete="new-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={show2 ? "Ocultar" : "Mostrar"}
+                  onClick={() => setShow2((v) => !v)}
+                  edge="end"
+                  size="small"
+                >
+                  {show2 ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}>
+          {loading ? "Guardando…" : "Activar y continuar"}
+        </Button>
       </Box>
-    </ThemeProvider>
+
+      <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
+        <Link to="/" style={{ color: "inherit" }}>
+          Sitio público
+        </Link>
+      </Typography>
+    </AdminAuthShell>
   );
 }
