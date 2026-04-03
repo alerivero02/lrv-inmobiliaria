@@ -295,7 +295,7 @@ export default function VisitsPage() {
             alignItems: "start",
           }}
         >
-          <AdminSurface sx={{ p: 1.5, width: "100%" }}>
+          <AdminSurface className="w-full" contentClassName="p-3">
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
               <DateCalendar
                 value={selectedDate}
@@ -310,7 +310,7 @@ export default function VisitsPage() {
               />
             </LocalizationProvider>
           </AdminSurface>
-          <AdminSurface sx={{ p: 2, flex: 1, minHeight: 400 }}>
+          <AdminSurface className="min-h-[400px] flex-1" contentClassName="p-5">
             <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
               Visitas del {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
             </Typography>
@@ -354,23 +354,26 @@ export default function VisitsPage() {
           </AdminSurface>
         </Box>
       ) : (
-        <AdminSurface sx={{ width: "100%", overflow: "hidden", p: 0 }}>
-          <DataGrid
-            rows={visits}
-            columns={listColumns}
-            loading={loading}
-            disableRowSelectionOnClick
-            pageSizeOptions={[25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            sx={{
-              border: "none",
-              height: { xs: 520, md: 600 },
-              "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
-            }}
-            localeText={{
-              noRowsLabel: "No hay visitas con ese filtro.",
-            }}
-          />
+        <AdminSurface className="w-full min-w-0 overflow-hidden py-0" contentClassName="p-0">
+          <div className="min-w-0 w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <DataGrid
+              rows={visits}
+              columns={listColumns}
+              loading={loading}
+              disableRowSelectionOnClick
+              pageSizeOptions={[25, 50, 100]}
+              initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+              sx={{
+                border: "none",
+                minWidth: 640,
+                height: { xs: 480, sm: 520, md: 600 },
+                "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
+              }}
+              localeText={{
+                noRowsLabel: "No hay visitas con ese filtro.",
+              }}
+            />
+          </div>
         </AdminSurface>
       )}
 

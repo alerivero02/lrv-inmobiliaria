@@ -108,7 +108,7 @@ export default function UsersPage() {
         subtitle="Invitá colaboradores por correo. Deben abrir el enlace y definir una contraseña segura antes de poder entrar."
       />
 
-      <AdminSurface sx={{ mb: 3 }}>
+      <AdminSurface className="mb-6">
         <Typography variant="subtitle1" gutterBottom>
           Nueva invitación
         </Typography>
@@ -152,17 +152,19 @@ export default function UsersPage() {
         </Alert>
       )}
 
-      <AdminSurface sx={{ overflow: "hidden", width: "100%", p: 0 }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          pageSizeOptions={[10, 25]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          disableRowSelectionOnClick
-          getRowId={(r) => r.id}
-          sx={{ border: "none", height: 440 }}
-        />
+      <AdminSurface className="w-full min-w-0 overflow-hidden py-0" contentClassName="p-0">
+        <div className="min-w-0 w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            pageSizeOptions={[10, 25]}
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            disableRowSelectionOnClick
+            getRowId={(r) => r.id}
+            sx={{ border: "none", minWidth: 560, height: { xs: 400, sm: 440 } }}
+          />
+        </div>
       </AdminSurface>
 
       <Snackbar

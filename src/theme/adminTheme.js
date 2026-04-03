@@ -1,8 +1,10 @@
 import { createTheme } from "@mui/material/styles";
 import "./admin-fonts.css";
+import "./admin-shadcn-bridge.css";
 
-const serif = '"Source Serif 4", "Playfair Display", Georgia, serif';
-const sans = '"Outfit", "DM Sans", system-ui, sans-serif';
+/* Misma familia que el shell shadcn (Geist en index.css + tokens). */
+const sans =
+  '"Geist Variable", "DM Sans", "Outfit", system-ui, -apple-system, sans-serif';
 
 export const adminContentMaxWidth = 1440;
 
@@ -10,18 +12,18 @@ export const adminTheme = createTheme({
   palette: {
     mode: "light",
     primary: { main: "#0f766e", light: "#14b8a6", dark: "#0d5c56", contrastText: "#fff" },
-    secondary: { main: "#44403c", light: "#57534e", dark: "#292524" },
+    secondary: { main: "#3f3f46", light: "#52525b", dark: "#27272a" },
     success: { main: "#15803d", light: "#22c55e" },
     error: { main: "#b91c1c", light: "#ef4444" },
     warning: { main: "#c2410c", light: "#ea580c" },
     info: { main: "#0369a1", light: "#0ea5e9" },
     text: {
-      primary: "#1c1917",
-      secondary: "#78716c",
+      primary: "#18181b",
+      secondary: "#71717a",
     },
-    divider: "#e7e5e4",
+    divider: "#e4e4e7",
     background: {
-      default: "#f3f5f4",
+      default: "#fafafa",
       paper: "#ffffff",
     },
     action: {
@@ -53,25 +55,25 @@ export const adminTheme = createTheme({
   },
   typography: {
     fontFamily: sans,
-    h1: { fontFamily: serif, fontWeight: 600, fontSize: "2rem", letterSpacing: "-0.02em", lineHeight: 1.2 },
-    h2: { fontFamily: serif, fontWeight: 600, fontSize: "1.65rem", letterSpacing: "-0.02em", lineHeight: 1.25 },
-    h3: { fontFamily: serif, fontWeight: 600, fontSize: "1.35rem", letterSpacing: "-0.015em", lineHeight: 1.3 },
-    h4: { fontFamily: serif, fontWeight: 600, fontSize: "1.6rem", letterSpacing: "-0.02em", lineHeight: 1.25 },
-    h5: { fontFamily: serif, fontWeight: 600, fontSize: "1.28rem", letterSpacing: "-0.015em", lineHeight: 1.3 },
+    h1: { fontWeight: 600, fontSize: "2rem", letterSpacing: "-0.025em", lineHeight: 1.2 },
+    h2: { fontWeight: 600, fontSize: "1.65rem", letterSpacing: "-0.02em", lineHeight: 1.25 },
+    h3: { fontWeight: 600, fontSize: "1.35rem", letterSpacing: "-0.02em", lineHeight: 1.3 },
+    h4: { fontWeight: 600, fontSize: "1.5rem", letterSpacing: "-0.02em", lineHeight: 1.25 },
+    h5: { fontWeight: 600, fontSize: "1.2rem", letterSpacing: "-0.015em", lineHeight: 1.3 },
     h6: { fontWeight: 600, fontSize: "1.05rem", letterSpacing: "-0.01em" },
     subtitle1: { fontWeight: 600, fontSize: "0.9375rem" },
     subtitle2: { fontWeight: 600, fontSize: "0.8125rem", letterSpacing: "0.02em" },
     body1: { fontSize: "0.9375rem", lineHeight: 1.55 },
     body2: { fontSize: "0.875rem", lineHeight: 1.5 },
-    button: { fontWeight: 600, letterSpacing: "0.02em" },
-    caption: { fontSize: "0.75rem", color: "#78716c" },
+    button: { fontWeight: 600, letterSpacing: "0.01em" },
+    caption: { fontSize: "0.75rem", color: "#71717a" },
     overline: {
       fontFamily: sans,
       fontWeight: 600,
       fontSize: "0.6875rem",
-      letterSpacing: "0.12em",
+      letterSpacing: "0.1em",
       textTransform: "uppercase",
-      color: "#78716c",
+      color: "#71717a",
     },
   },
   shape: { borderRadius: 12 },
@@ -84,12 +86,12 @@ export const adminTheme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: { textTransform: "none", fontWeight: 600, borderRadius: 10, paddingInline: 18 },
+        root: { textTransform: "none", fontWeight: 600, borderRadius: "var(--radius)", paddingInline: 16 },
         containedPrimary: {
-          background: "linear-gradient(180deg, #0f766e 0%, #0d5c56 100%)",
-          "&:hover": { background: "linear-gradient(180deg, #115e59 0%, #0b4743 100%)" },
+          backgroundColor: "#0f766e",
+          "&:hover": { backgroundColor: "#0d5c56" },
         },
-        outlined: { borderWidth: 1.5, "&:hover": { borderWidth: 1.5 } },
+        outlined: { borderWidth: 1, borderColor: "#e4e4e7", "&:hover": { borderWidth: 1, borderColor: "#d4d4d8" } },
         sizeLarge: { paddingTop: 12, paddingBottom: 12, fontSize: "0.9375rem" },
       },
     },
@@ -98,19 +100,18 @@ export const adminTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: "none",
-          borderRadius: 14,
-          border: "1px solid",
-          borderColor: "#e7e5e4",
-          boxShadow: "0 10px 24px rgba(28,25,23,0.04)",
+          borderRadius: "var(--radius)",
+          border: "1px solid #e4e4e7",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 14,
-          border: "1px solid #e7e5e4",
-          boxShadow: "0 2px 12px rgba(28,25,23,0.05)",
+          borderRadius: "var(--radius)",
+          border: "1px solid #e4e4e7",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           backgroundImage: "none",
         },
       },
@@ -120,7 +121,7 @@ export const adminTheme = createTheme({
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: { borderRadius: 10 },
+        root: { borderRadius: "var(--radius)" },
       },
     },
     MuiChip: {
@@ -130,7 +131,7 @@ export const adminTheme = createTheme({
     },
     MuiDialog: {
       styleOverrides: {
-        paper: { borderRadius: 16, border: "1px solid #e7e5e4" },
+        paper: { borderRadius: "var(--radius)", border: "1px solid #e4e4e7" },
       },
     },
     MuiToggleButton: {
@@ -151,12 +152,12 @@ export const adminTheme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           border: "none",
-          borderRadius: 14,
+          borderRadius: "var(--radius)",
           fontSize: "0.875rem",
           "--DataGrid-rowBorderColor": theme.palette.grey[200],
         }),
         columnHeaders: ({ theme }) => ({
-          backgroundColor: "#f8faf9",
+          backgroundColor: "#f4f4f5",
           borderBottom: `1px solid ${theme.palette.divider}`,
           borderRadius: 0,
         }),
@@ -170,10 +171,10 @@ export const adminTheme = createTheme({
           "&:hover": { backgroundColor: "rgba(15, 118, 110, 0.04)" },
           "&.Mui-selected": { backgroundColor: "rgba(15, 118, 110, 0.08)" },
         }),
-        cell: { borderColor: "#f5f5f4" },
+        cell: { borderColor: "#f4f4f5" },
         footerContainer: ({ theme }) => ({
           borderTop: `1px solid ${theme.palette.divider}`,
-          backgroundColor: "#fafaf9",
+          backgroundColor: "#fafafa",
           minHeight: 48,
         }),
       },

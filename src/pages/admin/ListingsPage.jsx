@@ -330,7 +330,7 @@ export default function ListingsPage() {
         }
       />
 
-      <AdminSurface sx={{ mb: 2.5 }}>
+      <AdminSurface className="mb-6">
         <Box
           component="form"
           onSubmit={handleSearch}
@@ -422,32 +422,35 @@ export default function ListingsPage() {
         </Alert>
       )}
 
-      <AdminSurface sx={{ width: "100%", overflow: "hidden", p: 0 }}>
-        <DataGrid
-          rows={listings}
-          columns={columns}
-          loading={loading}
-          disableRowSelectionOnClick
-          pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          processRowUpdate={processRowUpdate}
-          onProcessRowUpdateError={(err) => setError(err.message)}
-          sx={{
-            border: "none",
-            height: { xs: 520, md: 600 },
-            "& .MuiDataGrid-main": { borderRadius: 0 },
-            "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
-            "& .MuiDataGrid-cell--editable": {
-              outline: "1px dashed",
-              outlineColor: "primary.light",
-              cursor: "pointer",
-            },
-          }}
-          localeText={{
-            noRowsLabel: "No hay anuncios con esos filtros.",
-            footerRowSelected: (c) => `${c} fila(s) seleccionada(s)`,
-          }}
-        />
+      <AdminSurface className="w-full min-w-0 overflow-hidden py-0" contentClassName="p-0">
+        <div className="min-w-0 w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+          <DataGrid
+            rows={listings}
+            columns={columns}
+            loading={loading}
+            disableRowSelectionOnClick
+            pageSizeOptions={[25, 50, 100]}
+            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+            processRowUpdate={processRowUpdate}
+            onProcessRowUpdateError={(err) => setError(err.message)}
+            sx={{
+              border: "none",
+              minWidth: 720,
+              height: { xs: 480, sm: 520, md: 600 },
+              "& .MuiDataGrid-main": { borderRadius: 0 },
+              "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
+              "& .MuiDataGrid-cell--editable": {
+                outline: "1px dashed",
+                outlineColor: "primary.light",
+                cursor: "pointer",
+              },
+            }}
+            localeText={{
+              noRowsLabel: "No hay anuncios con esos filtros.",
+              footerRowSelected: (c) => `${c} fila(s) seleccionada(s)`,
+            }}
+          />
+        </div>
       </AdminSurface>
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>

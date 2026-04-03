@@ -146,7 +146,7 @@ router.get("/public", async (req, res) => {
   const pageN = Math.max(Number(page) || 1, 1);
   const offset = (pageN - 1) * limitN;
 
-  const totalRow = await get(`SELECT COUNT(*)::int AS n FROM listings ${where}`, ...params);
+  const totalRow = await get(`SELECT COUNT(*) AS n FROM listings ${where}`, ...params);
   const total = Number(totalRow?.n ?? 0);
   const rows = await all(
     `SELECT * FROM listings ${where} ORDER BY ${orderSql} LIMIT ? OFFSET ?`,

@@ -1,0 +1,22 @@
+/**
+ * Alinea componentes MUI dentro del panel admin con el look shadcn (sidebar inset).
+ * Solo aplica bajo [data-admin-shell] montado en AdminAppLayout.
+ */
+[data-admin-shell] .MuiTypography-root {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-admin-shell] .MuiAlert-root {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  box-shadow: none;
+}
+
+[data-admin-shell] .MuiDialog-paper {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.06),
+    0 4px 6px -4px rgb(0 0 0 / 0.06);
+}

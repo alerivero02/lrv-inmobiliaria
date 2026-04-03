@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { get, all, run } from "../db.js";
+import { get, all, run, isPostgres } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -20,8 +20,11 @@ router.get("/balance", async (req, res) => {
   }
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
 
+  const sumTotal = isPostgres
+    ? "COALESCE(SUM(amount),0)::float AS total"
+    : "CAST(COALESCE(SUM(amount),0) AS REAL) AS total";
   const rows = await all(
-    `SELECT type, COALESCE(SUM(amount),0)::float AS total FROM transactions ${where} GROUP BY type`,
+    `SELECT type, ${sumTotal} FROM transactions ${where} GROUP BY type`,
     ...params,
   );
   const income = rows.find((r) => r.type === "income")?.total ?? 0;

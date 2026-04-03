@@ -1,19 +1,16 @@
-import Sheet from "@mui/joy/Sheet";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-export function AdminSurface({ children, sx, variant = "soft" }) {
+export function AdminSurface({ children, className, contentClassName, style }) {
   return (
-    <Sheet
-      variant={variant}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderRadius: "14px",
-        border: "1px solid",
-        borderColor: "divider",
-        bgcolor: "background.paper",
-        ...sx,
-      }}
+    <Card
+      className={cn(
+        "border-border/80 bg-card shadow-sm ring-1 ring-foreground/5 transition-shadow hover:shadow-md",
+        className,
+      )}
+      style={style}
     >
-      {children}
-    </Sheet>
+      <CardContent className={cn("gap-0 p-5 pt-5", contentClassName)}>{children}</CardContent>
+    </Card>
   );
 }

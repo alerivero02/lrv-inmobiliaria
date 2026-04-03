@@ -259,18 +259,20 @@ export default function AccountingPage() {
           }}
         >
           {[
-            { label: "Ingresos", value: balance.income, border: "success.main", bg: "rgba(21, 128, 61, 0.06)" },
-            { label: "Egresos", value: balance.expense, border: "error.main", bg: "rgba(185, 28, 28, 0.06)" },
+            { label: "Ingresos", value: balance.income, border: "#15803d", bg: "rgba(21, 128, 61, 0.06)" },
+            { label: "Egresos", value: balance.expense, border: "#b91c1c", bg: "rgba(185, 28, 28, 0.06)" },
             {
               label: "Balance",
               value: balance.balance,
-              border: balance.balance >= 0 ? "success.main" : "error.main",
+              border: balance.balance >= 0 ? "#15803d" : "#b91c1c",
               bg: balance.balance >= 0 ? "rgba(21, 128, 61, 0.06)" : "rgba(185, 28, 28, 0.06)",
             },
           ].map(({ label, value, border, bg }) => (
             <AdminSurface
               key={label}
-              sx={{ p: 2.25, borderLeft: "4px solid", borderLeftColor: border, bgcolor: bg }}
+              className="border-l-4 border-solid border-l-transparent pl-0"
+              style={{ borderLeftColor: border, backgroundColor: bg }}
+              contentClassName="p-6 pt-6"
             >
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: "0.04em" }}>
                 {label}
@@ -285,7 +287,7 @@ export default function AccountingPage() {
 
       {/* New transaction form */}
       {showForm && (
-        <AdminSurface sx={{ p: 2, mb: 3 }}>
+        <AdminSurface className="mb-6" contentClassName="p-5">
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
             Nuevo movimiento
           </Typography>
@@ -358,7 +360,7 @@ export default function AccountingPage() {
       )}
 
       {/* Filters */}
-      <AdminSurface sx={{ mb: 2 }}>
+      <AdminSurface className="mb-4">
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 120 } }}>
             <InputLabel>Tipo</InputLabel>
@@ -412,21 +414,24 @@ export default function AccountingPage() {
         </Alert>
       )}
 
-      <AdminSurface sx={{ overflow: "hidden", p: 0 }}>
-        <DataGrid
-          rows={transactions}
-          columns={columns}
-          loading={loading}
-          disableRowSelectionOnClick
-          pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          sx={{
-            border: "none",
-            height: { xs: 480, md: 560 },
-            "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
-          }}
-          localeText={{ noRowsLabel: "No hay movimientos." }}
-        />
+      <AdminSurface className="w-full min-w-0 overflow-hidden py-0" contentClassName="p-0">
+        <div className="min-w-0 w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+          <DataGrid
+            rows={transactions}
+            columns={columns}
+            loading={loading}
+            disableRowSelectionOnClick
+            pageSizeOptions={[25, 50, 100]}
+            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+            sx={{
+              border: "none",
+              minWidth: 720,
+              height: { xs: 440, sm: 480, md: 560 },
+              "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
+            }}
+            localeText={{ noRowsLabel: "No hay movimientos." }}
+          />
+        </div>
       </AdminSurface>
 
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>

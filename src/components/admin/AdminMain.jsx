@@ -1,9 +1,13 @@
-import { Box } from "@mui/material";
 import { adminContentMaxWidth } from "../../theme/adminTheme";
 
-/** Contenedor principal del panel: ancho máximo y centrado para que las grillas no se estiren sin control. */
+/** Contenedor principal del panel: mismo ritmo visual que el shell shadcn (espaciado + ancho máximo). */
 export default function AdminMain({ children }) {
   return (
-    <Box sx={{ width: "100%", maxWidth: adminContentMaxWidth, mx: "auto", minWidth: 0 }}>{children}</Box>
+    <div
+      className="admin-main w-full min-w-0 space-y-6"
+      style={{ maxWidth: adminContentMaxWidth, marginInline: "auto" }}
+    >
+      {children}
+    </div>
   );
 }
