@@ -173,7 +173,27 @@ export function createApp() {
       }),
     );
   } else {
-    app.use(express.static(distStatic));
+    // Chunks con hash en /assets/: si el archivo no existe (p. ej. index.html cacheado tras un deploy),
+    // NO devolver index.html aquí: el navegador espera JS y falla con "MIME type text/html".
+    const shouldNotSpaFallback = (urlPath) => {
+      const p = urlPath.split("?")[0];
+      if (p.startsWith("/assets/")) return true;
+      return /\.(?:js|mjs|cjs|css|map|json|woff2?|ttf|otf|eot|svg|png|jpe?g|webp|ico|gif|avif|txt|xml|webmanifest)$/i.test(
+        p,
+      );
+    };
+
+    app.use(
+      express.static(distStatic, {
+        setHeaders(res, filePath) {
+          if (/[/\\]assets[/\\]/.test(filePath)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          } else if (filePath.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+          }
+        },
+      }),
+    );
     app.use((req, res, next) => {
       if (req.path.startsWith("/api")) {
         return res.status(404).json({ detail: "Ruta no encontrada" });
@@ -181,6 +201,10 @@ export function createApp() {
       if (req.method !== "GET" && req.method !== "HEAD") {
         return res.status(404).json({ detail: "Ruta no encontrada" });
       }
+      if (shouldNotSpaFallback(req.path)) {
+        return res.status(404).type("text/plain").send("Not found");
+      }
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
       return res.sendFile(path.join(distStatic, "index.html"), (err) => {
         if (err) next(err);
       });
