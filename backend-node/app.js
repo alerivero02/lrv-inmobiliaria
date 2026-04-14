@@ -186,8 +186,18 @@ export function createApp() {
     app.use(
       express.static(distStatic, {
         setHeaders(res, filePath) {
+          const posix = filePath.replace(/\\/g, "/");
+          // El bundle de entrada (Vite: assets/index-[hash].js) referencia hashes de chunks; si va
+          // con immutable + 1 año, tras un deploy el cliente puede seguir usando un index.js viejo
+          // que pide chunks que ya no existen → 404 en lazy imports.
+          const isViteEntryScript = /\/assets\/index-[^/]+\.js$/i.test(posix);
           if (/[/\\]assets[/\\]/.test(filePath)) {
-            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+            res.setHeader(
+              "Cache-Control",
+              isViteEntryScript
+                ? "no-cache, max-age=0, must-revalidate"
+                : "public, max-age=31536000, immutable",
+            );
           } else if (filePath.endsWith("index.html")) {
             res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
           }
