@@ -2,6 +2,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 const IS_DEV = import.meta.env.DEV;
 const PROFILE_KEY = "lrv_admin_profile";
+const BLOCKED_REMOTE_IMAGE_HOSTS = ["fbcdn.net", "cdninstagram.com"];
 
 function getApiOrigin() {
   const fallbackOrigin =
@@ -13,9 +14,28 @@ function getApiOrigin() {
   }
 }
 
+function isBlockedRemoteImageUrl(url) {
+  if (typeof url !== "string") return false;
+  const value = url.trim();
+  if (!/^https?:\/\//i.test(value)) return false;
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return BLOCKED_REMOTE_IMAGE_HOSTS.some(
+      (blocked) => hostname === blocked || hostname.endsWith(`.${blocked}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function isUnsupportedRemoteImageUrl(url) {
+  return isBlockedRemoteImageUrl(url);
+}
+
 /** Público: convierte `/uploads/...` en URL absoluta para `<img src>`. */
 export function resolveImageUrl(url) {
   if (typeof url !== "string" || !url.trim()) return url;
+  if (isBlockedRemoteImageUrl(url)) return null;
   if (/^(data:|blob:)/i.test(url)) return url;
   if (/^https?:\/\//i.test(url)) return url;
 
@@ -36,7 +56,9 @@ function normalizeListingImages(listing) {
   if (!listing || !Array.isArray(listing.images)) return listing;
   return {
     ...listing,
-    images: listing.images.map(resolveImageUrl),
+    images: listing.images
+      .map(resolveImageUrl)
+      .filter((img) => typeof img === "string" && img.trim().length > 0),
   };
 }
 

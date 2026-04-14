@@ -6,6 +6,7 @@ import {
   updateListing,
   uploadListingImages,
   resolveImageUrl,
+  isUnsupportedRemoteImageUrl,
 } from "../../api/client";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -237,6 +238,19 @@ export default function ListingFormPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    const cleanedImages = (form.images || [])
+      .map((img) => (typeof img === "string" ? img.trim() : ""))
+      .filter(Boolean)
+      .filter((img) => !isUnsupportedRemoteImageUrl(img));
+
+    const droppedImageCount = (form.images || []).length - cleanedImages.length;
+    if (droppedImageCount > 0) {
+      toast.show(
+        `${droppedImageCount} imagen(es) fueron omitidas porque su CDN no permite mostrarlas fuera de Instagram/Facebook.`,
+        "error",
+      );
+    }
+
     const payload = {
       ...form,
       city: citySource === "manual" ? form.location_manual || form.city : form.city,
@@ -246,7 +260,7 @@ export default function ListingFormPage() {
       rooms: form.rooms === "" || form.rooms == null ? null : Number(form.rooms),
       operation: form.operation || "venta",
       documentation: form.documentation || null,
-      images: form.images && form.images.length ? form.images : null,
+      images: cleanedImages.length ? cleanedImages : null,
     };
     if (!payload.city) {
       setError("Indicá la ubicación (ciudad o localidad).");
@@ -616,7 +630,16 @@ export default function ListingFormPage() {
             ))}
           </div>
           <AddImageUrl
-            onAdd={(url) => setForm((f) => ({ ...f, images: [...(f.images || []), url] }))}
+            onAdd={(url) => {
+              if (isUnsupportedRemoteImageUrl(url)) {
+                toast.show(
+                  "Esa URL de imagen está bloqueada por su proveedor (Instagram/Facebook CDN). Subí la foto al sistema o usá otra URL pública estable.",
+                  "error",
+                );
+                return;
+              }
+              setForm((f) => ({ ...f, images: [...(f.images || []), url] }));
+            }}
           />
         </div>
 
