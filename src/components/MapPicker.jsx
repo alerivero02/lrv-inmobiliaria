@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { GoogleMap, MarkerF, StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
+import { Autocomplete, GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import {
   Box,
   Alert,
@@ -28,7 +28,7 @@ function parseAddressComponents(components = []) {
 function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelect }) {
   const [searchError, setSearchError] = useState("");
   const mapRef = useRef(null);
-  const searchBoxRef = useRef(null);
+  const autocompleteRef = useRef(null);
   const { isLoaded, loadError } = useJsApiLoader({
     ...getSharedGoogleMapsLoaderOptions(),
     googleMapsApiKey,
@@ -60,13 +60,13 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
   };
 
   const handlePlaceChanged = () => {
-    const places = searchBoxRef.current?.getPlaces?.() || [];
-    if (!places.length || !places[0].geometry?.location) {
+    const ac = autocompleteRef.current;
+    const place = ac?.getPlace?.();
+    if (!place?.geometry?.location) {
       setSearchError("No se pudo geocodificar la dirección seleccionada.");
       return;
     }
     setSearchError("");
-    const place = places[0];
     const nextLat = place.geometry.location.lat();
     const nextLng = place.geometry.location.lng();
     onChange(nextLat, nextLng);
@@ -94,43 +94,6 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
 
   return (
     <Box>
-      <Box sx={{ mb: 1.5 }}>
-        <StandaloneSearchBox
-          onLoad={(ref) => {
-            searchBoxRef.current = ref;
-          }}
-          onPlacesChanged={handlePlaceChanged}
-        >
-          <input
-            type="text"
-            placeholder="Buscar dirección (ej: Rivadavia 100, La Rioja)"
-            className="listing-form__google-search"
-          />
-        </StandaloneSearchBox>
-      </Box>
-      {searchError && (
-        <Typography color="error" variant="caption" sx={{ mb: 1, display: "block" }}>
-          {searchError}
-        </Typography>
-      )}
-
-      {position && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}
-        >
-          <MyLocationIcon sx={{ fontSize: 14 }} />
-          {Number(lat).toFixed(6)}, {Number(lng).toFixed(6)}
-          &nbsp;·&nbsp;Arrastrá el marcador o hacé clic para reubicar
-        </Typography>
-      )}
-      {!position && (
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
-          Hacé clic en el mapa para seleccionar la ubicación
-        </Typography>
-      )}
-
       <Box
         sx={{
           height: 380,
@@ -138,6 +101,7 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
           overflow: "hidden",
           border: "1px solid",
           borderColor: "divider",
+          position: "relative",
         }}
       >
         <GoogleMap
@@ -154,6 +118,32 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
             updatePosition(nextLat, nextLng);
           }}
         >
+          <Box
+            sx={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              right: 10,
+              zIndex: 2,
+            }}
+          >
+            <Autocomplete
+              onLoad={(instance) => {
+                autocompleteRef.current = instance;
+              }}
+              onPlaceChanged={handlePlaceChanged}
+              options={{
+                componentRestrictions: { country: "ar" },
+                fields: ["formatted_address", "geometry", "address_components"],
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Buscar dirección (ej: Rivadavia 100, La Rioja)"
+                className="listing-form__google-search"
+              />
+            </Autocomplete>
+          </Box>
           {position && (
             <MarkerF
               position={position}
@@ -168,6 +158,28 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
           )}
         </GoogleMap>
       </Box>
+      {searchError && (
+        <Typography color="error" variant="caption" sx={{ mt: 1, display: "block" }}>
+          {searchError}
+        </Typography>
+      )}
+
+      {position && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.5 }}
+        >
+          <MyLocationIcon sx={{ fontSize: 14 }} />
+          {Number(lat).toFixed(6)}, {Number(lng).toFixed(6)}
+          &nbsp;·&nbsp;Arrastrá el marcador o hacé clic para reubicar
+        </Typography>
+      )}
+      {!position && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+          Hacé clic en el mapa para seleccionar la ubicación
+        </Typography>
+      )}
     </Box>
   );
 }
