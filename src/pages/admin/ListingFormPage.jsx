@@ -10,6 +10,7 @@ import {
 } from "../../api/client";
 import { useToast } from "../../context/ToastContext";
 import {
+  ARGENTINA_PROVINCES,
   CITIES_LA_RIOJA,
   PROPERTY_TYPES,
   STATUS_OPTIONS,
@@ -18,7 +19,6 @@ import {
 import MapPicker from "../../components/MapPicker";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
-import "leaflet/dist/leaflet.css";
 import "./ListingFormPage.css";
 
 function filterImageFiles(fileList) {
@@ -77,6 +77,13 @@ const emptyForm = {
   has_garage: false,
   has_garden: false,
   has_pool: false,
+  has_patio: false,
+  has_balcony: false,
+  has_quincho: false,
+  has_terrace: false,
+  garage_count: null,
+  covered_area_sqm: "",
+  featured: false,
   extras_note: "",
   images: [],
 };
@@ -118,6 +125,13 @@ export default function ListingFormPage() {
             has_garage: data.has_garage ?? false,
             has_garden: data.has_garden ?? false,
             has_pool: data.has_pool ?? false,
+            has_patio: data.has_patio ?? false,
+            has_balcony: data.has_balcony ?? false,
+            has_quincho: data.has_quincho ?? false,
+            has_terrace: data.has_terrace ?? false,
+            garage_count: data.garage_count ?? null,
+            covered_area_sqm: data.covered_area_sqm ?? "",
+            featured: data.featured ?? false,
             extras_note: data.extras_note ?? "",
             images: Array.isArray(data.images) ? data.images : [],
           });
@@ -256,14 +270,37 @@ export default function ListingFormPage() {
       city: citySource === "manual" ? form.location_manual || form.city : form.city,
       location_manual: citySource === "manual" ? form.location_manual || form.city : null,
       area_sqm: Number(form.area_sqm) || 0,
+      covered_area_sqm:
+        form.covered_area_sqm === "" || form.covered_area_sqm == null
+          ? null
+          : Number(form.covered_area_sqm),
       price: form.price === "" || form.price == null ? null : Number(form.price),
       rooms: form.rooms === "" || form.rooms == null ? null : Number(form.rooms),
+      garage_count:
+        form.has_garage && form.garage_count !== "" && form.garage_count != null
+          ? Number(form.garage_count)
+          : null,
       operation: form.operation || "venta",
       documentation: form.documentation || null,
       images: cleanedImages.length ? cleanedImages : null,
     };
     if (!payload.city) {
       setError("Indicá la ubicación (ciudad o localidad).");
+      setLoading(false);
+      return;
+    }
+    if (!payload.province) {
+      setError("Seleccioná la provincia.");
+      setLoading(false);
+      return;
+    }
+    if (payload.price == null || Number.isNaN(payload.price)) {
+      setError("Ingresá un precio válido.");
+      setLoading(false);
+      return;
+    }
+    if (!payload.currency) {
+      setError("Seleccioná la moneda.");
       setLoading(false);
       return;
     }
@@ -380,109 +417,6 @@ export default function ListingFormPage() {
         </div>
 
         <div className="listing-form__section">
-          <h2>Ubicación</h2>
-          <p className="listing-form__hint">
-            Elegí una localidad de la lista o insertá una manualmente.
-          </p>
-          <div className="listing-form__radio-group">
-            <label className="listing-form__radio">
-              <input
-                type="radio"
-                name="citySource"
-                checked={citySource === "list"}
-                onChange={() => setCitySource("list")}
-              />
-              Elegir del listado
-            </label>
-            <label className="listing-form__radio">
-              <input
-                type="radio"
-                name="citySource"
-                checked={citySource === "manual"}
-                onChange={() => setCitySource("manual")}
-              />
-              Escribir manualmente
-            </label>
-          </div>
-          {citySource === "list" ? (
-            <label>
-              Localidad *
-              <select value={form.city} onChange={(e) => update("city", e.target.value)} required>
-                <option value="">Seleccionar...</option>
-                {[...new Set(CITIES_LA_RIOJA)].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <label>
-              Localidad / dirección (manual) *
-              <input
-                type="text"
-                value={form.location_manual || form.city}
-                onChange={(e) => {
-                  update("location_manual", e.target.value);
-                  update("city", e.target.value);
-                }}
-                placeholder="Ej: La Rioja Capital, Barrio Sur"
-                required
-              />
-            </label>
-          )}
-          <label>
-            Dirección (calle y número)
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => update("address", e.target.value)}
-              placeholder="Ej: Av. San Martín 123"
-            />
-          </label>
-          <div className="listing-form__map-section">
-            <p className="listing-form__hint" style={{ marginBottom: 8 }}>
-              <strong>Ubicación en el mapa</strong> (opcional) — Buscá la dirección o hacé clic para
-              marcar la posición exacta
-            </p>
-            <MapPicker
-              lat={form.lat}
-              lng={form.lng}
-              onChange={(lat, lng) => {
-                update("lat", lat);
-                update("lng", lng);
-              }}
-            />
-            <div className="listing-form__row" style={{ marginTop: 8 }}>
-              <label>
-                Latitud
-                <input
-                  type="number"
-                  step="any"
-                  value={form.lat ?? ""}
-                  onChange={(e) =>
-                    update("lat", e.target.value ? parseFloat(e.target.value) : null)
-                  }
-                  placeholder="-29.4131"
-                />
-              </label>
-              <label>
-                Longitud
-                <input
-                  type="number"
-                  step="any"
-                  value={form.lng ?? ""}
-                  onChange={(e) =>
-                    update("lng", e.target.value ? parseFloat(e.target.value) : null)
-                  }
-                  placeholder="-66.8556"
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="listing-form__section">
           <h2>Características</h2>
           <div className="listing-form__row">
             <label>
@@ -511,43 +445,50 @@ export default function ListingFormPage() {
               />
             </label>
             <label>
-              Precio (dejar vacío = Consultar)
+              Superficie cubierta (m²)
               <input
                 type="number"
                 min={0}
+                step={0.01}
+                value={form.covered_area_sqm ?? ""}
+                onChange={(e) => update("covered_area_sqm", e.target.value)}
+                placeholder="Ej: 85"
+              />
+            </label>
+          </div>
+          <div className="listing-form__toggle-grid">
+            {[
+              ["has_garage", "Garaje"],
+              ["has_garden", "Jardín"],
+              ["has_pool", "Pileta"],
+              ["has_patio", "Patio"],
+              ["has_balcony", "Balcón"],
+              ["has_quincho", "Quincho / Asador"],
+              ["has_terrace", "Terraza"],
+            ].map(([key, label]) => (
+              <label key={key} className="listing-form__toggle">
+                <span>{label}</span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(form[key])}
+                  onChange={(e) => update(key, e.target.checked)}
+                />
+              </label>
+            ))}
+          </div>
+          {form.has_garage && (
+            <label>
+              Cantidad de garages
+              <input
+                type="number"
+                min={1}
                 step={1}
-                value={form.price ?? ""}
-                onChange={(e) => update("price", e.target.value === "" ? null : e.target.value)}
-                placeholder="Consultar"
+                value={form.garage_count ?? ""}
+                onChange={(e) => update("garage_count", e.target.value === "" ? null : e.target.value)}
+                placeholder="Ej: 2"
               />
             </label>
-          </div>
-          <div className="listing-form__checkboxes">
-            <label className="listing-form__checkbox">
-              <input
-                type="checkbox"
-                checked={form.has_garage}
-                onChange={(e) => update("has_garage", e.target.checked)}
-              />
-              Garaje
-            </label>
-            <label className="listing-form__checkbox">
-              <input
-                type="checkbox"
-                checked={form.has_garden}
-                onChange={(e) => update("has_garden", e.target.checked)}
-              />
-              Jardín
-            </label>
-            <label className="listing-form__checkbox">
-              <input
-                type="checkbox"
-                checked={form.has_pool}
-                onChange={(e) => update("has_pool", e.target.checked)}
-              />
-              Pileta
-            </label>
-          </div>
+          )}
           <label>
             Notas extras (comodidades, etc.)
             <input
@@ -557,6 +498,43 @@ export default function ListingFormPage() {
               placeholder="Ej: Aire acondicionado, calefacción..."
             />
           </label>
+        </div>
+
+        <div className="listing-form__section">
+          <h2>Precio</h2>
+          <div className="listing-form__row">
+            <label>
+              Precio *
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={form.price ?? ""}
+                onChange={(e) => update("price", e.target.value === "" ? null : e.target.value)}
+                required
+                placeholder="Ej: 125000"
+              />
+            </label>
+            <label>
+              Moneda *
+              <select
+                value={form.currency}
+                onChange={(e) => update("currency", e.target.value)}
+                required
+              >
+                <option value="ARS">ARS (Pesos argentinos)</option>
+                <option value="USD">USD (Dólares)</option>
+              </select>
+            </label>
+            <label className="listing-form__toggle">
+              <span>Destacado en landing</span>
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => update("featured", e.target.checked)}
+              />
+            </label>
+          </div>
         </div>
 
         <div className="listing-form__section">
@@ -641,6 +619,137 @@ export default function ListingFormPage() {
               setForm((f) => ({ ...f, images: [...(f.images || []), url] }));
             }}
           />
+        </div>
+
+        <div className="listing-form__section">
+          <h2>Ubicación</h2>
+          <p className="listing-form__hint">
+            Esta sección queda al final para confirmar dirección exacta y pin en mapa.
+          </p>
+          <div className="listing-form__row">
+            <label>
+              Provincia *
+              <select
+                value={form.province}
+                onChange={(e) => update("province", e.target.value)}
+                required
+              >
+                <option value="">Seleccionar provincia...</option>
+                {ARGENTINA_PROVINCES.map((province) => (
+                  <option key={province} value={province}>
+                    {province}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="listing-form__radio-group">
+            <label className="listing-form__radio">
+              <input
+                type="radio"
+                name="citySource"
+                checked={citySource === "list"}
+                onChange={() => setCitySource("list")}
+              />
+              Elegir del listado
+            </label>
+            <label className="listing-form__radio">
+              <input
+                type="radio"
+                name="citySource"
+                checked={citySource === "manual"}
+                onChange={() => setCitySource("manual")}
+              />
+              Escribir manualmente
+            </label>
+          </div>
+          {citySource === "list" ? (
+            <label>
+              Localidad *
+              <select value={form.city} onChange={(e) => update("city", e.target.value)} required>
+                <option value="">Seleccionar...</option>
+                {[...new Set(CITIES_LA_RIOJA)].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <label>
+              Localidad / dirección (manual) *
+              <input
+                type="text"
+                value={form.location_manual || form.city}
+                onChange={(e) => {
+                  update("location_manual", e.target.value);
+                  update("city", e.target.value);
+                }}
+                placeholder="Ej: La Rioja Capital, Barrio Sur"
+                required
+              />
+            </label>
+          )}
+          <label>
+            Dirección (calle y número)
+            <input
+              type="text"
+              value={form.address}
+              onChange={(e) => update("address", e.target.value)}
+              placeholder="Ej: Av. San Martín 123"
+            />
+          </label>
+          <div className="listing-form__map-section">
+            <p className="listing-form__hint" style={{ marginBottom: 8 }}>
+              <strong>Ubicación en el mapa</strong> — Buscá la dirección, hacé clic en el mapa o
+              arrastrá el pin para ajustar la posición.
+            </p>
+            <MapPicker
+              lat={form.lat}
+              lng={form.lng}
+              onChange={(nextLat, nextLng) => {
+                update("lat", nextLat);
+                update("lng", nextLng);
+              }}
+              onAddressSelect={({ address, city, province }) => {
+                if (address) update("address", address);
+                if (city) {
+                  update("city", city);
+                  update("location_manual", city);
+                  setCitySource("manual");
+                }
+                if (province && ARGENTINA_PROVINCES.includes(province)) {
+                  update("province", province);
+                }
+              }}
+            />
+            <div className="listing-form__row" style={{ marginTop: 8 }}>
+              <label>
+                Latitud
+                <input
+                  type="number"
+                  step="any"
+                  value={form.lat ?? ""}
+                  onChange={(e) =>
+                    update("lat", e.target.value ? parseFloat(e.target.value) : null)
+                  }
+                  placeholder="-29.4131"
+                />
+              </label>
+              <label>
+                Longitud
+                <input
+                  type="number"
+                  step="any"
+                  value={form.lng ?? ""}
+                  onChange={(e) =>
+                    update("lng", e.target.value ? parseFloat(e.target.value) : null)
+                  }
+                  placeholder="-66.8556"
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="listing-form__actions">

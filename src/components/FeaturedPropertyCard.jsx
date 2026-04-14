@@ -2,7 +2,12 @@ import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/format";
 import "./PropertyCarousel.css";
 
-const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
+const TYPE_LABELS = {
+  casa: "Casa",
+  departamento: "Departamento",
+  terreno: "Terreno",
+  local_comercial: "Local comercial",
+};
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
 /**
@@ -21,9 +26,11 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
     [listing.city, listing.address]
       .filter(Boolean)
       .join(listing.city && listing.address ? ", " : "") || "La Rioja";
-  const price = formatPrice(listing.price);
+  const price = formatPrice(listing.price, listing.currency);
   const rooms = listing.rooms != null ? `${listing.rooms} amb.` : "—";
   const area = `${listing.area_sqm} m²`;
+  const coveredArea =
+    listing.covered_area_sqm != null ? `Cubierta ${listing.covered_area_sqm} m²` : null;
   const imageUrl = listing.images?.[0];
 
   const handleClick = (e) => {
@@ -68,6 +75,7 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
         </button>
       )}
       <div className="property-card__content">
+        {listing.featured && <span className="property-card__featured-badge">★ Destacada</span>}
         <span className="property-card__type">
           {typeLabel} · {opLabel}
         </span>
@@ -90,6 +98,8 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
         <ul className="property-card__meta" role="list">
           <li>{rooms}</li>
           <li>{area}</li>
+          {coveredArea && <li>{coveredArea}</li>}
+          {listing.has_balcony && <li>Balcón</li>}
         </ul>
         <p className="property-card__price">
           {listing.price != null ? (

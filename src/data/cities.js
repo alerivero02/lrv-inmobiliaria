@@ -30,6 +30,34 @@ export const PROPERTY_TYPES = [
   { value: "casa", label: "Casa" },
   { value: "departamento", label: "Departamento" },
   { value: "terreno", label: "Terreno" },
+  { value: "local_comercial", label: "Local comercial" },
+];
+
+export const ARGENTINA_PROVINCES = [
+  "Buenos Aires",
+  "Catamarca",
+  "Chaco",
+  "Chubut",
+  "Ciudad Autónoma de Buenos Aires",
+  "Córdoba",
+  "Corrientes",
+  "Entre Ríos",
+  "Formosa",
+  "Jujuy",
+  "La Pampa",
+  "La Rioja",
+  "Mendoza",
+  "Misiones",
+  "Neuquén",
+  "Río Negro",
+  "Salta",
+  "San Juan",
+  "San Luis",
+  "Santa Cruz",
+  "Santa Fe",
+  "Santiago del Estero",
+  "Tierra del Fuego",
+  "Tucumán",
 ];
 
 export const STATUS_OPTIONS = [

@@ -137,6 +137,13 @@ export async function migratePg() {
       has_garage      INTEGER DEFAULT 0,
       has_garden      INTEGER DEFAULT 0,
       has_pool        INTEGER DEFAULT 0,
+      has_patio       INTEGER DEFAULT 0,
+      has_balcony     INTEGER DEFAULT 0,
+      has_quincho     INTEGER DEFAULT 0,
+      has_terrace     INTEGER DEFAULT 0,
+      garage_count    INTEGER,
+      covered_area_sqm DOUBLE PRECISION,
+      featured        INTEGER DEFAULT 0,
       extras_note     TEXT,
       images          TEXT    DEFAULT '[]',
       view_count        INTEGER DEFAULT 0,
@@ -182,6 +189,41 @@ export async function migratePg() {
   await p.query(`
     DO $$ BEGIN
       ALTER TABLE listings ADD COLUMN commission_seller DOUBLE PRECISION DEFAULT 3.0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN has_patio INTEGER DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN has_balcony INTEGER DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN has_quincho INTEGER DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN has_terrace INTEGER DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN garage_count INTEGER;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN covered_area_sqm DOUBLE PRECISION;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0;
     EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
 
@@ -263,6 +305,13 @@ function migrateSqlite() {
       has_garage      INTEGER DEFAULT 0,
       has_garden      INTEGER DEFAULT 0,
       has_pool        INTEGER DEFAULT 0,
+      has_patio       INTEGER DEFAULT 0,
+      has_balcony     INTEGER DEFAULT 0,
+      has_quincho     INTEGER DEFAULT 0,
+      has_terrace     INTEGER DEFAULT 0,
+      garage_count    INTEGER,
+      covered_area_sqm REAL,
+      featured        INTEGER DEFAULT 0,
       extras_note     TEXT,
       images          TEXT    DEFAULT '[]',
       view_count        INTEGER DEFAULT 0,
@@ -304,6 +353,27 @@ function migrateSqlite() {
   } catch {}
   try {
     db.exec("ALTER TABLE listings ADD COLUMN commission_seller REAL DEFAULT 3.0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN has_patio INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN has_balcony INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN has_quincho INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN has_terrace INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN garage_count INTEGER");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN covered_area_sqm REAL");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0");
   } catch {}
   db.exec("UPDATE listings SET commission_buyer  = 3.0 WHERE commission_buyer  IS NULL");
   db.exec("UPDATE listings SET commission_seller = 3.0 WHERE commission_seller IS NULL");

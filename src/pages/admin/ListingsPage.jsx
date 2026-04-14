@@ -28,6 +28,8 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import SellIcon from "@mui/icons-material/Sell";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import StarIcon from "@mui/icons-material/Star";
 import { getListings, deleteListing, updateListing } from "../../api/client";
 import { formatPrice } from "../../utils/format";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
@@ -40,7 +42,12 @@ const STATUS_LABELS = {
   archived: "Archivado",
   pending_review: "Pend. revisión",
 };
-const TYPE_LABELS = { casa: "Casa", departamento: "Dpto", terreno: "Terreno" };
+const TYPE_LABELS = {
+  casa: "Casa",
+  departamento: "Dpto",
+  terreno: "Terreno",
+  local_comercial: "Local comercial",
+};
 const OPERATION_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 const statusColor = {
   active: "success",
@@ -142,6 +149,21 @@ export default function ListingsPage() {
     }
   };
 
+  const handleToggleFeatured = async (row) => {
+    const featuredCount = listings.filter((l) => l.featured).length;
+    if (!row.featured && featuredCount >= 5) {
+      setError("Ya hay 5 anuncios destacados. Quitá uno antes de agregar otro.");
+      return;
+    }
+    try {
+      const updated = await updateListing(row.id, { featured: !row.featured });
+      setListings((prev) => prev.map((l) => (l.id === row.id ? updated : l)));
+      setSnackMsg(!row.featured ? "Anuncio marcado como destacado" : "Destacado quitado");
+    } catch (err) {
+      setError(err.message || "No se pudo actualizar destacado");
+    }
+  };
+
   const columns = [
     {
       field: "title",
@@ -201,7 +223,9 @@ export default function ListingsPage() {
       width: 130,
       align: "right",
       headerAlign: "right",
-      renderCell: ({ value }) => <span style={{ fontWeight: 500 }}>{formatPrice(value)}</span>,
+      renderCell: ({ row }) => (
+        <span style={{ fontWeight: 500 }}>{formatPrice(row.price, row.currency)}</span>
+      ),
     },
     {
       field: "view_count",
@@ -269,11 +293,20 @@ export default function ListingsPage() {
     {
       field: "actions",
       headerName: "Acciones",
-      width: 170,
+      width: 230,
       sortable: false,
       filterable: false,
       renderCell: ({ row }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+          <Tooltip title={row.featured ? "Quitar destacado" : "Marcar como destacado"}>
+            <IconButton
+              size="small"
+              color={row.featured ? "warning" : "default"}
+              onClick={() => handleToggleFeatured(row)}
+            >
+              {row.featured ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
           {row.status === "active" && (
             <Tooltip title="Pausar">
               <IconButton size="small" onClick={() => handleStatusChange(row.id, "paused")}>
@@ -361,6 +394,7 @@ export default function ListingsPage() {
               <MenuItem value="casa">Casa</MenuItem>
               <MenuItem value="departamento">Departamento</MenuItem>
               <MenuItem value="terreno">Terreno</MenuItem>
+              <MenuItem value="local_comercial">Local comercial</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 110 } }}>

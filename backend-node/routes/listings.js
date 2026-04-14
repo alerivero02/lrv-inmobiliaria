@@ -56,6 +56,13 @@ function parseListing(row) {
     has_garage: Boolean(row.has_garage),
     has_garden: Boolean(row.has_garden),
     has_pool: Boolean(row.has_pool),
+    has_patio: Boolean(row.has_patio),
+    has_balcony: Boolean(row.has_balcony),
+    has_quincho: Boolean(row.has_quincho),
+    has_terrace: Boolean(row.has_terrace),
+    featured: Boolean(row.featured),
+    garage_count: row.garage_count ?? null,
+    covered_area_sqm: row.covered_area_sqm ?? null,
     price: row.price ?? null,
     lat: row.lat ?? null,
     lng: row.lng ?? null,
@@ -69,11 +76,24 @@ function parseListing(row) {
 const ORDER_MAP = {
   views: "view_count DESC, updated_at DESC",
   consults: "consult_count DESC, updated_at DESC",
-  destacadas: "(view_count + consult_count * 2) DESC, updated_at DESC",
+  destacadas: "featured DESC, (view_count + consult_count * 2) DESC, updated_at DESC",
   price_asc: "price ASC NULLS LAST",
   price_desc: "price DESC NULLS LAST",
   updated: "updated_at DESC",
 };
+
+async function ensureFeaturedLimit({ nextFeatured, currentFeatured = false, listingId = null }) {
+  if (!nextFeatured || currentFeatured) return;
+  const row = listingId
+    ? await get("SELECT COUNT(*) AS n FROM listings WHERE featured = 1 AND id != ?", listingId)
+    : await get("SELECT COUNT(*) AS n FROM listings WHERE featured = 1");
+  const featuredCount = Number(row?.n ?? 0);
+  if (featuredCount >= 5) {
+    const err = new Error("Solo podés tener 5 anuncios destacados como máximo.");
+    err.status = 422;
+    throw err;
+  }
+}
 
 const router = Router();
 
@@ -254,6 +274,13 @@ router.post("/", verifyToken, async (req, res) => {
     has_garage,
     has_garden,
     has_pool,
+    has_patio,
+    has_balcony,
+    has_quincho,
+    has_terrace,
+    garage_count,
+    covered_area_sqm,
+    featured,
     extras_note,
     images,
     commission_buyer,
@@ -261,6 +288,15 @@ router.post("/", verifyToken, async (req, res) => {
   } = req.body;
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
+  if (!province?.trim()) return res.status(422).json({ detail: "La provincia es obligatoria" });
+  if (price == null || price === "") return res.status(422).json({ detail: "El precio es obligatorio" });
+  if (!currency?.trim()) return res.status(422).json({ detail: "La moneda es obligatoria" });
+
+  try {
+    await ensureFeaturedLimit({ nextFeatured: Boolean(featured) });
+  } catch (err) {
+    return res.status(err.status || 500).json({ detail: err.message });
+  }
 
   const { lastInsertRowid } = await run(
     `
@@ -268,9 +304,9 @@ router.post("/", verifyToken, async (req, res) => {
     (title,description,property_type,status,operation,documentation,
      address,city,province,lat,lng,location_manual,
      rooms,area_sqm,price,currency,
-     has_garage,has_garden,has_pool,extras_note,images,
+     has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,featured,extras_note,images,
      commission_buyer,commission_seller)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
     title,
@@ -281,17 +317,24 @@ router.post("/", verifyToken, async (req, res) => {
     documentation ?? null,
     address ?? null,
     city ?? null,
-    province ?? "La Rioja",
+    province.trim(),
     lat ?? null,
     lng ?? null,
     location_manual ?? null,
     rooms ?? null,
     area_sqm ?? 0,
-    price ?? null,
-    currency ?? "ARS",
+    Number(price),
+    currency.trim(),
     has_garage ? 1 : 0,
     has_garden ? 1 : 0,
     has_pool ? 1 : 0,
+    has_patio ? 1 : 0,
+    has_balcony ? 1 : 0,
+    has_quincho ? 1 : 0,
+    has_terrace ? 1 : 0,
+    has_garage ? (garage_count == null || garage_count === "" ? null : Number(garage_count)) : null,
+    covered_area_sqm == null || covered_area_sqm === "" ? null : Number(covered_area_sqm),
+    featured ? 1 : 0,
     extras_note ?? null,
     JSON.stringify(Array.isArray(images) ? images : []),
     commission_buyer ?? 3.0,
@@ -327,12 +370,50 @@ router.patch("/:id", verifyToken, async (req, res) => {
     "has_garage",
     "has_garden",
     "has_pool",
+    "has_patio",
+    "has_balcony",
+    "has_quincho",
+    "has_terrace",
+    "garage_count",
+    "covered_area_sqm",
+    "featured",
     "extras_note",
     "images",
     "commission_buyer",
     "commission_seller",
   ];
-  const BOOL_FIELDS = new Set(["has_garage", "has_garden", "has_pool"]);
+  const BOOL_FIELDS = new Set([
+    "has_garage",
+    "has_garden",
+    "has_pool",
+    "has_patio",
+    "has_balcony",
+    "has_quincho",
+    "has_terrace",
+    "featured",
+  ]);
+
+  const nextPrice = "price" in req.body ? req.body.price : existing.price;
+  const nextCurrency = "currency" in req.body ? req.body.currency : existing.currency;
+  const nextProvince = "province" in req.body ? req.body.province : existing.province;
+  if (nextPrice == null || nextPrice === "") {
+    return res.status(422).json({ detail: "El precio es obligatorio" });
+  }
+  if (!String(nextCurrency || "").trim()) {
+    return res.status(422).json({ detail: "La moneda es obligatoria" });
+  }
+  if (!String(nextProvince || "").trim()) {
+    return res.status(422).json({ detail: "La provincia es obligatoria" });
+  }
+  try {
+    await ensureFeaturedLimit({
+      nextFeatured: "featured" in req.body ? Boolean(req.body.featured) : Boolean(existing.featured),
+      currentFeatured: Boolean(existing.featured),
+      listingId: req.params.id,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({ detail: err.message });
+  }
 
   const sets = [];
   const vals = [];
@@ -341,7 +422,17 @@ router.patch("/:id", verifyToken, async (req, res) => {
     if (!(f in req.body)) continue;
     let v = req.body[f];
     if (f === "images") v = JSON.stringify(Array.isArray(v) ? v : []);
+    if (f === "province" && typeof v === "string") v = v.trim();
+    if (f === "currency" && typeof v === "string") v = v.trim();
+    if (f === "price") v = Number(v);
+    if (f === "covered_area_sqm") v = v == null || v === "" ? null : Number(v);
+    if (f === "garage_count") v = v == null || v === "" ? null : Number(v);
     if (BOOL_FIELDS.has(f)) v = v ? 1 : 0;
+    if (f === "garage_count" && !("has_garage" in req.body) && !existing.has_garage) v = null;
+    if (f === "has_garage" && !v) {
+      sets.push("garage_count = ?");
+      vals.push(null);
+    }
     sets.push(`${f} = ?`);
     vals.push(v);
   }

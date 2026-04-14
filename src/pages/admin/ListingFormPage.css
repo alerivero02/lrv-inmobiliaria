@@ -129,6 +129,44 @@
   font-weight: 400;
 }
 
+.listing-form__toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.listing-form__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--bone-border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  background: var(--white);
+}
+
+.listing-form__toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.listing-form__google-search {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--bone-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.listing-form__google-search:focus {
+  outline: none;
+  border-color: var(--green-strong);
+}
+
 .listing-form__uploading {
   margin-left: 0.5rem;
   font-size: 0.875rem;
