@@ -6,10 +6,10 @@ import {
   Typography,
 } from "@mui/material";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
+import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
 
 const LA_RIOJA_CENTER = { lat: -29.41, lng: -66.85 };
 const mapContainerStyle = { width: "100%", height: "100%" };
-const libraries = ["places"];
 
 function parseAddressComponents(components = []) {
   const cityComponent = components.find((c) =>
@@ -30,11 +30,8 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
   const mapRef = useRef(null);
   const searchBoxRef = useRef(null);
   const { isLoaded, loadError } = useJsApiLoader({
-    id: "listing-google-map-script",
+    ...getSharedGoogleMapsLoaderOptions(),
     googleMapsApiKey,
-    libraries,
-    language: "es",
-    region: "AR",
   });
   const geocoder = useMemo(
     () => (isLoaded && window.google?.maps ? new window.google.maps.Geocoder() : null),
@@ -176,7 +173,7 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
 }
 
 export default function MapPicker(props) {
-  const googleMapsApiKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
+  const googleMapsApiKey = getGoogleMapsApiKey();
 
   if (!googleMapsApiKey) {
     return (

@@ -1,44 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
-import { ensureLeafletDefaultIcon } from "../utils/leafletDefaultIcon";
 import VisitRequestForm from "./VisitRequestForm";
+import PropertyLocationMap from "./PropertyLocationMap";
 import { AGENCY_WHATSAPP, getSiteBaseUrl } from "../config/agency";
 import "./PropertyDetailModal.css";
 
-ensureLeafletDefaultIcon();
-
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
-
-/** Ajusta el mapa al tamaño real del contenedor sin setTimeout (evita violaciones de rendimiento en DevTools). */
-function MapInvalidateSize() {
-  const map = useMap();
-  useEffect(() => {
-    const container = map.getContainer();
-    if (!container) return;
-
-    let rafId = 0;
-    const scheduleInvalidate = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        map.invalidateSize({ animate: false });
-      });
-    };
-
-    const ro = new ResizeObserver(scheduleInvalidate);
-    ro.observe(container);
-    scheduleInvalidate();
-
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(rafId);
-    };
-  }, [map]);
-  return null;
-}
 
 /** Arma un mensaje con formato tipo card: tipo • operación, título, ubicación, características, precio y link para preview con imagen */
 function buildWhatsAppUrl(listing) {
@@ -296,20 +265,11 @@ export default function PropertyDetailModal({ listingId, onClose }) {
               <section className="property-detail-modal__map">
                 <h3>Ubicación</h3>
                 <div className="property-detail-modal__map-wrap">
-                  <MapContainer
+                  <PropertyLocationMap
                     key={`${listing.id}-${listing.lat}-${listing.lng}`}
-                    center={[listing.lat, listing.lng]}
-                    zoom={15}
-                    className="property-detail-modal__map-leaflet"
-                    scrollWheelZoom={false}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <Marker position={[listing.lat, listing.lng]} />
-                    <MapInvalidateSize />
-                  </MapContainer>
+                    lat={listing.lat}
+                    lng={listing.lng}
+                  />
                 </div>
                 {googleMapsLink && (
                   <a
