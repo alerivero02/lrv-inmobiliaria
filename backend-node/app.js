@@ -35,10 +35,26 @@ export function createApp() {
       referrerPolicy: { policy: "strict-origin-when-cross-origin" },
       hsts: trustProxy ? { maxAge: 15552000, includeSubDomains: true } : false,
       // Helmet por defecto: img-src 'self' data: — bloquea HTTPS externo (CDN, fotos absolutas) y blob:
+      // Google Maps JS API carga scripts y hace requests a *.googleapis.com / *.gstatic.com (CSP debe permitirlo).
       contentSecurityPolicy: {
         directives: {
           ...helmet.contentSecurityPolicy.getDefaultDirectives(),
           "img-src": ["'self'", "data:", "blob:", "https:"],
+          "script-src": [
+            "'self'",
+            "https://maps.googleapis.com",
+            "https://*.googleapis.com",
+            "https://*.gstatic.com",
+          ],
+          "connect-src": [
+            "'self'",
+            "https://maps.googleapis.com",
+            "https://*.googleapis.com",
+            "https://*.gstatic.com",
+            "https://www.google.com",
+          ],
+          "frame-src": ["'self'", "https://*.google.com"],
+          "worker-src": ["'self'", "blob:"],
         },
       },
     }),

@@ -31,6 +31,8 @@ export default function MapPicker({ lat, lng, onChange, onAddressSelect }) {
     id: "listing-google-map-script",
     googleMapsApiKey,
     libraries,
+    language: "es",
+    region: "AR",
   });
   const geocoder = useMemo(
     () => (isLoaded && window.google?.maps ? new window.google.maps.Geocoder() : null),
