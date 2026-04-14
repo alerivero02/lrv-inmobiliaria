@@ -22,11 +22,13 @@ function parseAddressComponents(components = []) {
   };
 }
 
-export default function MapPicker({ lat, lng, onChange, onAddressSelect }) {
+/**
+ * Solo monta el hook de carga cuando ya hay API key (evita script sin `key` y el warning NoApiKeys).
+ */
+function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelect }) {
   const [searchError, setSearchError] = useState("");
   const mapRef = useRef(null);
   const searchBoxRef = useRef(null);
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
   const { isLoaded, loadError } = useJsApiLoader({
     id: "listing-google-map-script",
     googleMapsApiKey,
@@ -84,14 +86,6 @@ export default function MapPicker({ lat, lng, onChange, onAddressSelect }) {
       });
     }
   };
-
-  if (!googleMapsApiKey) {
-    return (
-      <Alert severity="warning">
-        Configurá `VITE_GOOGLE_MAPS_API_KEY` para habilitar mapa, marcador draggable y autocompletado.
-      </Alert>
-    );
-  }
 
   if (loadError) {
     return <Alert severity="error">No se pudo cargar Google Maps. Verificá la API key y permisos.</Alert>;
@@ -179,4 +173,18 @@ export default function MapPicker({ lat, lng, onChange, onAddressSelect }) {
       </Box>
     </Box>
   );
+}
+
+export default function MapPicker(props) {
+  const googleMapsApiKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();
+
+  if (!googleMapsApiKey) {
+    return (
+      <Alert severity="warning">
+        Configurá `VITE_GOOGLE_MAPS_API_KEY` para habilitar mapa, marcador draggable y autocompletado.
+      </Alert>
+    );
+  }
+
+  return <MapPickerWithKey googleMapsApiKey={googleMapsApiKey} {...props} />;
 }
