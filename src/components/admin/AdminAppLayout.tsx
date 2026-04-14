@@ -1,29 +1,41 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Outlet, Link, NavLink, useNavigate, useLocation, matchPath } from "react-router-dom";
 import {
+  Alert,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
-  Alert,
   Snackbar,
+  TextField,
 } from "@mui/material";
 import {
-  LayoutDashboard,
-  FileText,
-  PlusCircle,
-  Calendar,
-  Landmark,
-  Users,
   Bell,
+  Calendar,
   ClipboardList,
+  FileText,
   Globe,
   KeyRound,
+  Landmark,
+  LayoutDashboard,
   LogOut,
+  PlusCircle,
+  Users,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, matchPath, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  changePassword,
+  getNotificationCounts,
+  getStoredAdminProfile,
+  isAuthenticated,
+  logout,
+  refreshAdminProfile,
+} from "@/api/client";
+import AdminMain from "@/components/admin/AdminMain";
+import { AdminProviders } from "@/components/admin/AdminProviders";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
@@ -42,20 +54,8 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  logout,
-  getNotificationCounts,
-  getStoredAdminProfile,
-  refreshAdminProfile,
-  isAuthenticated,
-  changePassword,
-} from "@/api/client";
-import { adminTheme } from "@/theme/adminTheme";
-import AdminMain from "@/components/admin/AdminMain";
-import { AdminProviders } from "@/components/admin/AdminProviders";
 import { useSeo } from "@/hooks/useSeo";
+import { adminTheme } from "@/theme/adminTheme";
 
 const mainNav = [
   { to: "/admin", end: true, label: "Dashboard", Icon: LayoutDashboard },
@@ -86,8 +86,7 @@ function SidebarNavItem({
   onNavClick?: () => void;
 }) {
   const { pathname } = useLocation();
-  const isActive =
-    matchPath({ path: to, end: end ?? false }, pathname) !== null;
+  const isActive = matchPath({ path: to, end: end ?? false }, pathname) !== null;
 
   return (
     <SidebarMenuItem>
@@ -120,8 +119,7 @@ function AdminSidebarNav({
   const [pwdSnack, setPwdSnack] = useState("");
 
   const visitasActive = matchPath({ path: "/admin/visitas", end: false }, pathname) !== null;
-  const publicacionesActive =
-    pathname === "/admin/anuncios" && search.includes("pending_review");
+  const publicacionesActive = pathname === "/admin/anuncios" && search.includes("pending_review");
 
   const sidebarNav = useMemo(() => {
     if (profile?.role === "admin") {
@@ -133,17 +131,22 @@ function AdminSidebarNav({
   }, [profile]);
 
   useEffect(() => {
-    getNotificationCounts()
-      .then(setCounts)
-      .catch(() => {});
-    const t = setInterval(
-      () =>
-        getNotificationCounts()
-          .then(setCounts)
-          .catch(() => {}),
-      60000,
-    );
-    return () => clearInterval(t);
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      getNotificationCounts()
+        .then(setCounts)
+        .catch(() => {});
+    };
+    refresh();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const t = setInterval(refresh, 60000);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   const handlePwdClose = () => {
@@ -182,9 +185,7 @@ function AdminSidebarNav({
           onClick={onNavClick}
           className="flex flex-col gap-0.5 rounded-md px-1 outline-none ring-sidebar-ring focus-visible:ring-2"
         >
-          <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
-            LRV
-          </span>
+          <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">LRV</span>
           <span className="text-xs text-muted-foreground">Panel de gestión</span>
         </Link>
       </SidebarHeader>
@@ -208,15 +209,8 @@ function AdminSidebarNav({
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={publicacionesActive}
-                  tooltip="En revisión"
-                >
-                  <NavLink
-                    to="/admin/anuncios?status=pending_review"
-                    onClick={onNavClick}
-                  >
+                <SidebarMenuButton asChild isActive={publicacionesActive} tooltip="En revisión">
+                  <NavLink to="/admin/anuncios?status=pending_review" onClick={onNavClick}>
                     <ClipboardList className="size-4 shrink-0" />
                     <span>Publicaciones</span>
                     {counts.pending_listings > 0 ? (
@@ -266,7 +260,12 @@ function AdminSidebarNav({
               Ver sitio público
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" className="justify-start" onClick={() => setPwdOpen(true)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-start"
+            onClick={() => setPwdOpen(true)}
+          >
             <KeyRound className="size-4" />
             Cambiar contraseña
           </Button>
@@ -285,8 +284,17 @@ function AdminSidebarNav({
         </div>
       </SidebarFooter>
 
-      <Dialog open={pwdOpen} onClose={handlePwdClose} fullWidth maxWidth="xs" component="form" onSubmit={handlePwdSubmit}>
-        <DialogTitle sx={{ fontFamily: adminTheme.typography.h5.fontFamily }}>Cambiar contraseña</DialogTitle>
+      <Dialog
+        open={pwdOpen}
+        onClose={handlePwdClose}
+        fullWidth
+        maxWidth="xs"
+        component="form"
+        onSubmit={handlePwdSubmit}
+      >
+        <DialogTitle sx={{ fontFamily: adminTheme.typography.h5.fontFamily }}>
+          Cambiar contraseña
+        </DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {pwdErr && (
             <Alert severity="error" onClose={() => setPwdErr("")}>

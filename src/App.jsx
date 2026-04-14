@@ -1,23 +1,26 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { lazyWithRetry } from "./utils/lazyRetry";
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const PropertiesPage = lazy(() => import("./pages/PropertiesPage"));
-const PropertyDetailPage = lazy(() => import("./pages/PropertyDetailPage"));
-const RequestVisitPage = lazy(() => import("./pages/RequestVisitPage"));
-const InmobiliariaLaRiojaLanding = lazy(() => import("./pages/InmobiliariaLaRiojaLanding"));
-const LoginPage = lazy(() => import("./pages/admin/LoginPage"));
-const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
-const DashboardPage = lazy(() => import("./pages/admin/DashboardPage"));
-const ListingsPage = lazy(() => import("./pages/admin/ListingsPage"));
-const ListingFormPage = lazy(() => import("./pages/admin/ListingFormPage"));
-const VisitsPage = lazy(() => import("./pages/admin/VisitsPage"));
-const AccountingPage = lazy(() => import("./pages/admin/AccountingPage"));
-const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
-const ActivateAccountPage = lazy(() => import("./pages/admin/ActivateAccountPage"));
-const ForgotPasswordPage = lazy(() => import("./pages/admin/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("./pages/admin/ResetPasswordPage"));
+const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"));
+const PropertiesPage = lazyWithRetry(() => import("./pages/PropertiesPage"));
+const PropertyDetailPage = lazyWithRetry(() => import("./pages/PropertyDetailPage"));
+const RequestVisitPage = lazyWithRetry(() => import("./pages/RequestVisitPage"));
+const InmobiliariaLaRiojaLanding = lazyWithRetry(
+  () => import("./pages/InmobiliariaLaRiojaLanding"),
+);
+const LoginPage = lazyWithRetry(() => import("./pages/admin/LoginPage"));
+const AdminLayout = lazyWithRetry(() => import("./pages/admin/AdminLayout"));
+const DashboardPage = lazyWithRetry(() => import("./pages/admin/DashboardPage"));
+const ListingsPage = lazyWithRetry(() => import("./pages/admin/ListingsPage"));
+const ListingFormPage = lazyWithRetry(() => import("./pages/admin/ListingFormPage"));
+const VisitsPage = lazyWithRetry(() => import("./pages/admin/VisitsPage"));
+const AccountingPage = lazyWithRetry(() => import("./pages/admin/AccountingPage"));
+const UsersPage = lazyWithRetry(() => import("./pages/admin/UsersPage"));
+const ActivateAccountPage = lazyWithRetry(() => import("./pages/admin/ActivateAccountPage"));
+const ForgotPasswordPage = lazyWithRetry(() => import("./pages/admin/ForgotPasswordPage"));
+const ResetPasswordPage = lazyWithRetry(() => import("./pages/admin/ResetPasswordPage"));
 
 function RouteFallback() {
   return (

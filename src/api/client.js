@@ -346,9 +346,14 @@ export async function deleteTransaction(id) {
 }
 
 export async function getNotificationCounts() {
-  const res = await apiFetch("/notifications/counts");
-  if (!res.ok) return { pending_visits: 0, pending_listings: 0, total: 0 };
-  return res.json();
+  const zeros = { pending_visits: 0, pending_listings: 0, total: 0 };
+  try {
+    const res = await apiFetch("/notifications/counts");
+    if (!res || !res.ok) return zeros;
+    return await res.json();
+  } catch {
+    return zeros;
+  }
 }
 
 export async function getDashboardStats() {

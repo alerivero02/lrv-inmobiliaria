@@ -1,21 +1,22 @@
-import { Suspense, lazy, useState } from "react";
-import Header from "../components/Header";
+import { Suspense, useState } from "react";
 import Footer from "../components/Footer";
-import HeroSection from "../landing/sections/HeroSection";
-import StatsSection from "../landing/sections/StatsSection";
-import AboutSection from "../landing/sections/AboutSection";
-import ServicesSection from "../landing/sections/ServicesSection";
-import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
-import ContactSection from "../landing/sections/ContactSection";
+import Header from "../components/Header";
 import { useSeo } from "../hooks/useSeo";
+import AboutSection from "../landing/sections/AboutSection";
+import ContactSection from "../landing/sections/ContactSection";
+import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
+import HeroSection from "../landing/sections/HeroSection";
+import ServicesSection from "../landing/sections/ServicesSection";
+import StatsSection from "../landing/sections/StatsSection";
+import { lazyWithRetry } from "../utils/lazyRetry";
 import { DEFAULT_META_DESCRIPTION } from "../utils/seo";
+
+const PropertyDetailModal = lazyWithRetry(() => import("../components/PropertyDetailModal"));
 
 export default function LandingPage() {
   useSeo({ canonicalPath: "/", description: DEFAULT_META_DESCRIPTION });
 
   const [selectedListingId, setSelectedListingId] = useState(null);
-
-  const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal"));
 
   return (
     <>

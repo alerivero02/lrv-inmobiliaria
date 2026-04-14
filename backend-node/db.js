@@ -40,6 +40,9 @@ function getPool() {
       connectionString: conn,
       ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
     });
+    pool.on("error", (err) => {
+      console.error("[pg pool] error en cliente idle (no tumbar el proceso):", err?.message || err);
+    });
   }
   return pool;
 }

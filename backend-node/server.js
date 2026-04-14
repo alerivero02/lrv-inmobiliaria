@@ -18,7 +18,7 @@ const app = createApp();
 const PORT = process.env.PORT || 4000;
 const uploadsDirResolved = getUploadsDir();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   const publicBase =
     process.env.FRONTEND_URL?.trim().replace(/\/$/, "") ||
     process.env.HOST?.trim().replace(/\/$/, "") ||
@@ -30,3 +30,18 @@ app.listen(PORT, () => {
     `   Uploads: ${uploadsDirResolved} (Railway: volumen persistente montado aquí; ver DEPLOY.md)\n`,
   );
 });
+
+function shutdown(signal) {
+  console.log(`\n${signal}: cierre ordenado del servidor…`);
+  server.close(() => {
+    console.log("HTTP cerrado.");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error("Timeout de cierre, saliendo con código 1.");
+    process.exit(1);
+  }, 10_000).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

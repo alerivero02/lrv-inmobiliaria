@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-
-const PropertyDetailModal = lazy(() => import("../components/PropertyDetailModal"));
-import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { getPublicListings } from "../api/client";
-import { CITIES_LA_RIOJA, PROPERTY_TYPES, OPERATION_OPTIONS } from "../data/cities";
+import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { CITIES_LA_RIOJA, OPERATION_OPTIONS, PROPERTY_TYPES } from "../data/cities";
 import { useSeo } from "../hooks/useSeo";
+import { lazyWithRetry } from "../utils/lazyRetry";
 import "./PropertiesPage.css";
+
+const PropertyDetailModal = lazyWithRetry(() => import("../components/PropertyDetailModal"));
 
 const LIMIT = 12;
 const INITIAL_FILTERS = {
