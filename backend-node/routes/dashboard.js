@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { get, all, isPostgres } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 router.use(verifyToken);
 
 // GET /api/dashboard/stats
-router.get("/stats", async (_req, res) => {
+router.get("/stats", asyncHandler(async (_req, res) => {
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const today = now.toISOString().split("T")[0];
@@ -134,10 +135,10 @@ router.get("/stats", async (_req, res) => {
     sold_portfolio_value,
     sold_commission_earned,
   });
-});
+}));
 
 // GET /api/dashboard/visits-by-listing
-router.get("/visits-by-listing", async (req, res) => {
+router.get("/visits-by-listing", asyncHandler(async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 10, 50);
 
   const rows = await all(
@@ -154,6 +155,6 @@ router.get("/visits-by-listing", async (req, res) => {
   );
 
   return res.json(rows);
-});
+}));
 
 export default router;

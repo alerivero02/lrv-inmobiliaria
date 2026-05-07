@@ -6,6 +6,7 @@ import { get, all, run } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
 import { isAllowedImageMime, optimizeImageToFile } from "../utils/images.js";
 import { getUploadsDir } from "../uploadsDir.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const UPLOADS_DIR = getUploadsDir();
 
@@ -100,7 +101,7 @@ const router = Router();
 // ─── PUBLIC ───────────────────────────────────────────────────────────────────
 // IMPORTANTE: rutas estáticas antes de /:id
 
-router.get("/public", async (req, res) => {
+router.get("/public", asyncHandler(async (req, res) => {
   const {
     min_price,
     max_price,
@@ -181,14 +182,14 @@ router.get("/public", async (req, res) => {
     page: pageN,
     pages: Math.ceil(total / limitN),
   });
-});
+}));
 
-router.get("/public/:id", async (req, res) => {
+router.get("/public/:id", asyncHandler(async (req, res) => {
   const row = await get("SELECT * FROM listings WHERE id = ? AND status = 'active'", req.params.id);
   if (!row) return res.status(404).json({ detail: "Anuncio no encontrado" });
   await run("UPDATE listings SET view_count = view_count + 1 WHERE id = ?", req.params.id);
   return res.json(parseListing({ ...row, view_count: (row.view_count || 0) + 1 }));
-});
+}));
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 
@@ -212,7 +213,7 @@ router.post("/upload", verifyToken, upload.array("files"), async (req, res, next
   }
 });
 
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, asyncHandler(async (req, res) => {
   const { status, property_type, operation, city, search, order_by } = req.query;
   const conds = [];
   const params = [];
@@ -245,15 +246,15 @@ router.get("/", verifyToken, async (req, res) => {
 
   const rows = await all(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`, ...params);
   return res.json(rows.map(parseListing));
-});
+}));
 
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/:id", verifyToken, asyncHandler(async (req, res) => {
   const row = await get("SELECT * FROM listings WHERE id = ?", req.params.id);
   if (!row) return res.status(404).json({ detail: "Anuncio no encontrado" });
   return res.json(parseListing(row));
-});
+}));
 
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyToken, asyncHandler(async (req, res) => {
   const {
     title,
     description,
@@ -344,9 +345,9 @@ router.post("/", verifyToken, async (req, res) => {
   return res
     .status(201)
     .json(parseListing(await get("SELECT * FROM listings WHERE id = ?", lastInsertRowid)));
-});
+}));
 
-router.patch("/:id", verifyToken, async (req, res) => {
+router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   const existing = await get("SELECT * FROM listings WHERE id = ?", req.params.id);
   if (!existing) return res.status(404).json({ detail: "Anuncio no encontrado" });
 
@@ -417,6 +418,7 @@ router.patch("/:id", verifyToken, async (req, res) => {
 
   const sets = [];
   const vals = [];
+  const nextHasGarage = "has_garage" in req.body ? Boolean(req.body.has_garage) : Boolean(existing.has_garage);
 
   for (const f of FIELDS) {
     if (!(f in req.body)) continue;
@@ -428,13 +430,14 @@ router.patch("/:id", verifyToken, async (req, res) => {
     if (f === "covered_area_sqm") v = v == null || v === "" ? null : Number(v);
     if (f === "garage_count") v = v == null || v === "" ? null : Number(v);
     if (BOOL_FIELDS.has(f)) v = v ? 1 : 0;
-    if (f === "garage_count" && !("has_garage" in req.body) && !existing.has_garage) v = null;
-    if (f === "has_garage" && !v) {
-      sets.push("garage_count = ?");
-      vals.push(null);
-    }
+    if (f === "garage_count" && !nextHasGarage) v = null;
     sets.push(`${f} = ?`);
     vals.push(v);
+  }
+
+  if (!nextHasGarage && !("garage_count" in req.body)) {
+    sets.push("garage_count = ?");
+    vals.push(null);
   }
 
   if (!sets.length) return res.json(parseListing(existing));
@@ -443,14 +446,14 @@ router.patch("/:id", verifyToken, async (req, res) => {
   vals.push(req.params.id);
   await run(`UPDATE listings SET ${sets.join(", ")} WHERE id = ?`, ...vals);
   return res.json(parseListing(await get("SELECT * FROM listings WHERE id = ?", req.params.id)));
-});
+}));
 
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyToken, asyncHandler(async (req, res) => {
   if (!(await get("SELECT id FROM listings WHERE id = ?", req.params.id))) {
     return res.status(404).json({ detail: "Anuncio no encontrado" });
   }
   await run("DELETE FROM listings WHERE id = ?", req.params.id);
   return res.status(204).send();
-});
+}));
 
 export default router;

@@ -229,6 +229,21 @@ export async function migratePg() {
       ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0;
     EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
+  await p.query(`
+    DO $$
+    BEGIN
+      CREATE UNIQUE INDEX IF NOT EXISTS visits_slot_active_uq
+      ON visits (preferred_date, preferred_time)
+      WHERE status IN ('pending', 'confirmed')
+        AND preferred_date IS NOT NULL
+        AND preferred_time IS NOT NULL
+        AND BTRIM(preferred_date) <> ''
+        AND BTRIM(preferred_time) <> '';
+    EXCEPTION
+      WHEN unique_violation THEN
+        RAISE NOTICE 'visits_slot_active_uq no creado por duplicados existentes';
+    END $$;
+  `);
 
   await p.query(`
     UPDATE listings SET commission_buyer = 3.0 WHERE commission_buyer IS NULL;
@@ -377,6 +392,17 @@ function migrateSqlite() {
   } catch {}
   try {
     db.exec("ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS visits_slot_active_uq
+      ON visits (preferred_date, preferred_time)
+      WHERE status IN ('pending', 'confirmed')
+        AND preferred_date IS NOT NULL
+        AND preferred_time IS NOT NULL
+        AND TRIM(preferred_date) != ''
+        AND TRIM(preferred_time) != ''
+    `);
   } catch {}
   db.exec("UPDATE listings SET commission_buyer  = 3.0 WHERE commission_buyer  IS NULL");
   db.exec("UPDATE listings SET commission_seller = 3.0 WHERE commission_seller IS NULL");

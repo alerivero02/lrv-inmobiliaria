@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { get, all, run, isPostgres } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 router.use(verifyToken);
+const MAX_EXPORT_ROWS = Number(process.env.TRANSACTIONS_EXPORT_MAX_ROWS) || 5000;
 
 // GET /api/transactions/balance
-router.get("/balance", async (req, res) => {
+router.get("/balance", asyncHandler(async (req, res) => {
   const { from, to } = req.query;
   const conds = [];
   const params = [];
@@ -30,10 +32,10 @@ router.get("/balance", async (req, res) => {
   const income = rows.find((r) => r.type === "income")?.total ?? 0;
   const expense = rows.find((r) => r.type === "expense")?.total ?? 0;
   return res.json({ income, expense, balance: income - expense });
-});
+}));
 
 // GET /api/transactions/export/csv
-router.get("/export/csv", async (req, res) => {
+router.get("/export/csv", asyncHandler(async (req, res) => {
   const { from, to, type } = req.query;
   const conds = [];
   const params = [];
@@ -50,6 +52,13 @@ router.get("/export/csv", async (req, res) => {
     params.push(type);
   }
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+  const totalRow = await get(`SELECT COUNT(*) AS n FROM transactions t ${where}`, ...params);
+  const total = Number(totalRow?.n ?? 0);
+  if (total > MAX_EXPORT_ROWS) {
+    return res.status(413).json({
+      detail: `Exportación demasiado grande (${total} filas). Acotá el rango o filtros (máximo ${MAX_EXPORT_ROWS}).`,
+    });
+  }
 
   const rows = await all(
     `
@@ -80,10 +89,10 @@ router.get("/export/csv", async (req, res) => {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", 'attachment; filename="transacciones.csv"');
   return res.send("\uFEFF" + lines.join("\r\n"));
-});
+}));
 
 // GET /api/transactions
-router.get("/", async (req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
   const { from, to, type, category, limit = 50, page = 1 } = req.query;
   const conds = [];
   const params = [];
@@ -120,10 +129,10 @@ router.get("/", async (req, res) => {
   );
 
   return res.json(rows);
-});
+}));
 
 // POST /api/transactions
-router.post("/", async (req, res) => {
+router.post("/", asyncHandler(async (req, res) => {
   const { description, amount, type, category, date, notes, listing_id } = req.body;
   if (!description || amount == null || !type) {
     return res.status(422).json({ detail: "Descripción, monto y tipo son obligatorios" });
@@ -145,10 +154,10 @@ router.post("/", async (req, res) => {
 
   const id = Number(result.lastInsertRowid);
   return res.status(201).json(await get("SELECT * FROM transactions WHERE id = ?", id));
-});
+}));
 
 // PATCH /api/transactions/:id
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", asyncHandler(async (req, res) => {
   const existing = await get("SELECT * FROM transactions WHERE id = ?", req.params.id);
   if (!existing) return res.status(404).json({ detail: "Movimiento no encontrado" });
 
@@ -165,15 +174,15 @@ router.patch("/:id", async (req, res) => {
   vals.push(req.params.id);
   await run(`UPDATE transactions SET ${sets.join(", ")} WHERE id = ?`, ...vals);
   return res.json(await get("SELECT * FROM transactions WHERE id = ?", req.params.id));
-});
+}));
 
 // DELETE /api/transactions/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", asyncHandler(async (req, res) => {
   if (!(await get("SELECT id FROM transactions WHERE id = ?", req.params.id))) {
     return res.status(404).json({ detail: "Movimiento no encontrado" });
   }
   await run("DELETE FROM transactions WHERE id = ?", req.params.id);
   return res.status(204).send();
-});
+}));
 
 export default router;

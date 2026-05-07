@@ -62,6 +62,7 @@ export default function Hero() {
   const [loaded, setLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [coarsePointer, setCoarsePointer] = useState(false);
   const heroRef = useRef(null);
   const cardWrapRef = useRef(null);
   const titleId = useId();
@@ -69,7 +70,7 @@ export default function Hero() {
   usePointerTilt({
     boundsRef: heroRef,
     cardRef: cardWrapRef,
-    enabled: !reduceMotion,
+    enabled: !reduceMotion && !coarsePointer,
     coeffX: 20,
     coeffY: 20,
     rotYMul: -0.5,
@@ -79,12 +80,17 @@ export default function Hero() {
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 100);
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarseMq = window.matchMedia("(pointer: coarse)");
     setReduceMotion(mq.matches);
+    setCoarsePointer(coarseMq.matches);
     const onMq = () => setReduceMotion(mq.matches);
+    const onCoarseMq = () => setCoarsePointer(coarseMq.matches);
     mq.addEventListener("change", onMq);
+    coarseMq.addEventListener("change", onCoarseMq);
     return () => {
       clearTimeout(t);
       mq.removeEventListener("change", onMq);
+      coarseMq.removeEventListener("change", onCoarseMq);
     };
   }, []);
 
@@ -92,7 +98,7 @@ export default function Hero() {
     <section
       id="hero"
       ref={heroRef}
-      className={`lrvh-root ${loaded ? "lrvh-root--loaded" : ""} ${reduceMotion ? "lrvh-root--reduced" : ""}`}
+      className={`lrvh-root ${loaded ? "lrvh-root--loaded" : ""} ${reduceMotion || coarsePointer ? "lrvh-root--reduced" : ""}`}
       aria-labelledby={titleId}
     >
       <div className="lrvh-bg-base" aria-hidden="true" />

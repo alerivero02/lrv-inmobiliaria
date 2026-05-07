@@ -4,6 +4,7 @@ import { formatPrice } from "../utils/format";
 import VisitRequestForm from "./VisitRequestForm";
 import PropertyLocationMap from "./PropertyLocationMap";
 import { AGENCY_WHATSAPP, getSiteBaseUrl } from "../config/agency";
+import { useScrollLock } from "../hooks/useScrollLock";
 import "./PropertyDetailModal.css";
 
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
@@ -47,6 +48,7 @@ export default function PropertyDetailModal({ listingId, onClose }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [consultSuccess, setConsultSuccess] = useState(false);
   const swipeRef = useRef({ x: 0, y: 0, tracking: false });
+  useScrollLock(Boolean(listingId));
 
   useEffect(() => {
     if (!listingId) return;
@@ -87,10 +89,8 @@ export default function PropertyDetailModal({ listingId, onClose }) {
       }
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
     };
   }, [onClose, lightboxOpen, nImages]);
 

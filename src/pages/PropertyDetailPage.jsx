@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import { applyListingSeo, resetListingSeo } from "../utils/seo";
+import { useScrollLock } from "../hooks/useScrollLock";
 import "./PropertyDetailPage.css";
 
 const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
@@ -16,6 +17,7 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  useScrollLock(lightboxIndex != null);
 
   useEffect(() => {
     if (!id) return;

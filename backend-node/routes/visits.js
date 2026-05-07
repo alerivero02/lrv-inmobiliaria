@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { get, all, run } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ function normalizeVisitTime(t) {
 }
 
 // GET /api/visits/occupied-slots — público (para formulario sin solapar turnos)
-router.get("/occupied-slots", async (_req, res) => {
+router.get("/occupied-slots", asyncHandler(async (_req, res) => {
   const rows = await all(
     `
     SELECT preferred_date, preferred_time
@@ -39,10 +40,10 @@ router.get("/occupied-slots", async (_req, res) => {
     time: normalizeVisitTime(r.preferred_time),
   }));
   return res.json({ slots });
-});
+}));
 
 // POST /api/visits — público
-router.post("/", async (req, res) => {
+router.post("/", asyncHandler(async (req, res) => {
   const { listing_id, name, email, phone, message, preferred_date, preferred_time } = req.body;
   if (!name) return res.status(422).json({ detail: "El nombre es obligatorio" });
 
@@ -66,20 +67,35 @@ router.post("/", async (req, res) => {
     }
   }
 
-  const result = await run(
-    `
-    INSERT INTO visits (listing_id, name, email, phone, message, preferred_date, preferred_time, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
-    RETURNING id
-  `,
-    listing_id ?? null,
-    name,
-    email ?? null,
-    phone ?? null,
-    message ?? null,
-    nd || preferred_date || null,
-    nt || preferred_time || null,
-  );
+  let result;
+  try {
+    result = await run(
+      `
+      INSERT INTO visits (listing_id, name, email, phone, message, preferred_date, preferred_time, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+      RETURNING id
+    `,
+      listing_id ?? null,
+      name,
+      email ?? null,
+      phone ?? null,
+      message ?? null,
+      nd || preferred_date || null,
+      nt || preferred_time || null,
+    );
+  } catch (err) {
+    const msg = String(err?.message || "");
+    const duplicateSlot =
+      msg.includes("visits_slot_active_uq") ||
+      msg.includes("UNIQUE constraint failed: visits.preferred_date, visits.preferred_time");
+    if (duplicateSlot) {
+      return res.status(409).json({
+        detail:
+          "Ese día y horario ya tienen una visita solicitada o confirmada. Elegí otro turno.",
+      });
+    }
+    throw err;
+  }
 
   if (listing_id) {
     await run("UPDATE listings SET consult_count = consult_count + 1 WHERE id = ?", listing_id);
@@ -88,10 +104,10 @@ router.post("/", async (req, res) => {
   const id = Number(result.lastInsertRowid);
   const visit = await get("SELECT * FROM visits WHERE id = ?", id);
   return res.status(201).json(visit);
-});
+}));
 
 // GET /api/visits — admin
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, asyncHandler(async (req, res) => {
   const { status, listing_id, limit = 50, page = 1 } = req.query;
   const conds = [];
   const params = [];
@@ -124,10 +140,10 @@ router.get("/", verifyToken, async (req, res) => {
   );
 
   return res.json(rows);
-});
+}));
 
 // PATCH /api/visits/:id — admin
-router.patch("/:id", verifyToken, async (req, res) => {
+router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   const existing = await get("SELECT * FROM visits WHERE id = ?", req.params.id);
   if (!existing) return res.status(404).json({ detail: "Visita no encontrada" });
 
@@ -155,6 +171,6 @@ router.patch("/:id", verifyToken, async (req, res) => {
   vals.push(req.params.id);
   await run(`UPDATE visits SET ${sets.join(", ")} WHERE id = ?`, ...vals);
   return res.json(await get("SELECT * FROM visits WHERE id = ?", req.params.id));
-});
+}));
 
 export default router;

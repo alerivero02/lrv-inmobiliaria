@@ -15,6 +15,8 @@
   width: 100%;
   max-width: 900px;
   max-height: calc(100vh - 2rem);
+  max-height: calc(100svh - 2rem);
+  max-height: calc(100dvh - 2rem);
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
@@ -369,7 +371,7 @@
   padding: 0.5rem 0.75rem;
   border: 2px solid var(--bone-border);
   border-radius: var(--radius);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   margin-top: 0.25rem;
 }
 
@@ -412,6 +414,8 @@
 .property-detail-modal__lightbox img {
   max-width: 100%;
   max-height: calc(100vh - 5rem);
+  max-height: calc(100svh - 5rem);
+  max-height: calc(100dvh - 5rem);
   object-fit: contain;
   display: block;
 }
