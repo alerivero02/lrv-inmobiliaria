@@ -65,6 +65,12 @@ button {
   cursor: pointer;
 }
 
+/*
+ * Responsive: usar prefijos Tailwind (sm/md/lg/xl) en componentes.
+ * md = 768px — nav móvil y sidebar admin. lg = 1024px — filtros y layouts amplios.
+ * Ver src/lib/breakpoints.ts para hooks JS.
+ */
+
 /* Utilidades */
 .container {
   width: 100%;

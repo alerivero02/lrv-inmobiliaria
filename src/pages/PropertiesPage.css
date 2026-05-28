@@ -184,7 +184,7 @@
 
 .pf__adv-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 1rem;
   align-items: end;
 }
@@ -266,90 +266,6 @@
 
 .pf__clear:hover {
   color: var(--text);
-}
-
-/* ── Responsive ─────────────────────────────────────────────────── */
-@media (max-width: 960px) {
-  .pf__bar {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-
-  .pf__field {
-    height: 44px;
-    border: 1.5px solid var(--bone-border);
-    border-radius: var(--radius);
-    background: var(--white);
-  }
-
-  .pf__field--search {
-    flex: 1 0 100%;
-    order: -1;
-  }
-
-  .pf__divider {
-    display: none;
-  }
-
-  .pf__input {
-    padding: 0 1rem 0 2.75rem;
-  }
-
-  .pf__select {
-    padding: 0 2rem 0 0.875rem;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .pf__adv-btn {
-    flex: 1;
-    height: 44px;
-    border-radius: var(--radius);
-    border: 1.5px solid var(--bone-border);
-    border-left: 1.5px solid var(--bone-border);
-    justify-content: center;
-  }
-
-  .pf__submit {
-    flex: 1;
-    height: 44px;
-    border-radius: var(--radius);
-    border: none;
-  }
-
-  .pf__adv-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .pf__adv-field:last-child {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 480px) {
-  .pf__adv-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Grid */
-.properties-page__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.properties-page__grid .property-card {
-  min-height: 360px;
-}
-
-/* Skeleton */
-.properties-page__skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
 }
 
 .properties-page__card-skeleton {
@@ -438,4 +354,60 @@
 .properties-page {
   padding: 5rem 0 4rem;
   min-height: 60vh;
+}
+
+.pf__select--province {
+  max-width: 11rem;
+}
+
+.properties-page__results-bar {
+  margin-bottom: 1rem;
+}
+
+.properties-page__results-meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.properties-page__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 44%);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.properties-page__map-wrap {
+  position: sticky;
+  top: 5.5rem;
+  height: calc(100vh - 7rem);
+  min-height: 420px;
+}
+
+.properties-page__card--hover .featured-property-card {
+  outline: 2px solid var(--green-strong);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .properties-page__split {
+    grid-template-columns: 1fr;
+  }
+
+  .properties-page__map-wrap {
+    position: relative;
+    top: 0;
+    height: 52vh;
+    order: -1;
+  }
+
+  .pf__bar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 58px;
+  }
+
+  .pf__select--province {
+    max-width: none;
+  }
 }

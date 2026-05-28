@@ -149,15 +149,48 @@ export async function getListings(params = {}) {
 }
 
 // Listado público (sin auth, para landing)
+function appendListingSearchParams(searchParams, params) {
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    if (key === "polygon" && Array.isArray(value)) {
+      searchParams.set("polygon", JSON.stringify(value));
+      continue;
+    }
+    if (typeof value === "boolean") {
+      if (value) searchParams.set(key, "1");
+      continue;
+    }
+    searchParams.set(key, String(value));
+  }
+}
+
 export async function getPublicListings(params = {}) {
-  const q = new URLSearchParams(params).toString();
-  const res = await fetch(`${API_BASE}/listings/public?${q}`);
+  const searchParams = new URLSearchParams();
+  appendListingSearchParams(searchParams, params);
+  const res = await fetch(`${API_BASE}/listings/public?${searchParams}`);
   if (!res.ok) throw new Error("Error al cargar anuncios");
   const data = await res.json();
   if (!data || !Array.isArray(data.items)) return data;
   return {
     ...data,
     items: data.items.map(normalizeListingImages),
+  };
+}
+
+/** Pins ligeros para el mapa de búsqueda (sin paginación, máx. 500). */
+export async function getPublicListingsMap(params = {}) {
+  const searchParams = new URLSearchParams();
+  appendListingSearchParams(searchParams, params);
+  const res = await fetch(`${API_BASE}/listings/public/map?${searchParams}`);
+  if (!res.ok) throw new Error("Error al cargar el mapa");
+  const data = await res.json();
+  if (!data?.items) return data;
+  return {
+    ...data,
+    items: data.items.map((item) => ({
+      ...item,
+      image: item.image ? resolveImageUrl(item.image) : null,
+    })),
   };
 }
 
@@ -196,7 +229,8 @@ export async function uploadListingImages(files) {
       window.location.href = "/admin/login";
       return;
     }
-    throw new Error("Error al subir imágenes");
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Error al subir imágenes");
   }
   const data = await res.json();
   return Array.isArray(data) ? data.map(resolveImageUrl) : data;

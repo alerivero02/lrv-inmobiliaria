@@ -1,0 +1,65 @@
+.map-popover {
+  display: block;
+  width: 220px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  background: var(--white, #fff);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.map-popover:hover {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+}
+
+.map-popover__image {
+  aspect-ratio: 16 / 10;
+  background: var(--bone, #f5f2ed);
+  overflow: hidden;
+}
+
+.map-popover__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.map-popover__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 120px;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b6560);
+}
+
+.map-popover__body {
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.map-popover__price {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #1a1714);
+}
+
+.map-popover__meta {
+  margin: 0 0 0.15rem;
+  font-size: 0.8125rem;
+  color: var(--text, #1a1714);
+}
+
+.map-popover__type {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b6560);
+}

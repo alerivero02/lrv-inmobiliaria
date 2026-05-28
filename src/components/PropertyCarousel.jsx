@@ -76,7 +76,7 @@ export default function PropertyCarousel({ onSelectListing }) {
           </p>
         </header>
 
-        <div className="properties__carousel">
+        <div className="properties__carousel max-md:px-2">
           <Swiper
             className="properties__swiper"
             modules={[Navigation, Pagination, Autoplay]}
@@ -108,7 +108,7 @@ export default function PropertyCarousel({ onSelectListing }) {
             ))}
           </Swiper>
 
-          <div className="properties__nav">
+          <div className="properties__nav max-md:hidden">
             <button
               type="button"
               className="properties__arrow properties__arrow--prev"

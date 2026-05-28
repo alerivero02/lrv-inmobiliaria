@@ -5,18 +5,18 @@ const currentYear = new Date().getFullYear();
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="container footer__inner">
+      <div className="container footer__inner max-md:grid-cols-1 max-md:text-center">
         <div className="footer__brand">
           <a href="#inicio" className="footer__logo">
             <span className="footer__logo-icon">LRV</span>
             <span className="footer__logo-text">Inmobiliaria</span>
           </a>
-          <p className="footer__tagline">
+          <p className="footer__tagline max-md:mx-auto">
             Venta y alquiler de casas, departamentos, terrenos, fincas y campos en La Rioja,
             Argentina.
           </p>
         </div>
-        <div className="footer__links">
+        <div className="footer__links max-md:justify-center">
           <a href="#nosotros">Nosotros</a>
           <a href="#servicios">Servicios</a>
           <a href="#propiedades">Propiedades</a>

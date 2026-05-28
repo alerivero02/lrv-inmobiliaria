@@ -2,9 +2,12 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+
+import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_REJECT_MESSAGE } from "./utils/images.js";
 
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
@@ -227,7 +230,21 @@ export function createApp() {
 
   // Error handler centralizado
   app.use((err, _req, res, _next) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        const maxMb = Math.round(IMAGE_UPLOAD_MAX_BYTES / (1024 * 1024));
+        return res
+          .status(413)
+          .json({ detail: `Cada imagen puede pesar hasta ${maxMb} MB` });
+      }
+      return res.status(400).json({ detail: err.message });
+    }
+
     const msg = typeof err?.message === "string" ? err.message : "Error interno";
+    if (msg === IMAGE_UPLOAD_REJECT_MESSAGE || msg.startsWith("Solo se permiten imágenes")) {
+      return res.status(400).json({ detail: msg });
+    }
+
     const status = msg.startsWith("CORS:") ? 403 : 500;
     if (status === 500) console.error("[error]", err);
     return res.status(status).json({ detail: msg });

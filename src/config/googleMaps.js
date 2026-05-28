@@ -2,7 +2,7 @@
 export const LRV_GOOGLE_MAPS_SCRIPT_ID = "lrv-google-maps-script";
 
 /** Array estable (referencia fija) para evitar warnings de recarga en useJsApiLoader. */
-export const LRV_GOOGLE_MAPS_LIBRARIES = ["places"];
+export const LRV_GOOGLE_MAPS_LIBRARIES = ["places", "drawing"];
 
 export function getGoogleMapsApiKey() {
   return (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "").trim();

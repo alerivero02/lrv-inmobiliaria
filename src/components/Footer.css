@@ -67,19 +67,3 @@
   font-size: 0.8125rem;
   color: rgba(250, 248, 245, 0.6);
 }
-
-@media (max-width: 768px) {
-  .footer__inner {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-
-  .footer__tagline {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .footer__links {
-    justify-content: center;
-  }
-}

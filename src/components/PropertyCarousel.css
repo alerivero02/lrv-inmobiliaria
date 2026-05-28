@@ -304,13 +304,3 @@
 .property-card--skeleton .property-card__image {
   background: var(--bone-dark);
 }
-
-@media (max-width: 768px) {
-  .properties__carousel {
-    padding: 0 0.5rem;
-  }
-
-  .properties__nav {
-    display: none;
-  }
-}

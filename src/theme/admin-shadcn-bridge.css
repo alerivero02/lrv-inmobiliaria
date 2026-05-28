@@ -20,3 +20,13 @@
     0 10px 15px -3px rgb(0 0 0 / 0.06),
     0 4px 6px -4px rgb(0 0 0 / 0.06);
 }
+
+[data-admin-shell] .MuiDataGrid-root {
+  --DataGrid-rowBorderColor: var(--border);
+}
+
+[data-admin-shell] .MuiDataGrid-columnHeaderTitle {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
