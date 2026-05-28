@@ -168,16 +168,17 @@ function PropertiesSearchMapInner({
     hoveredPin ?? mapPins?.find((p) => p.id === hoveredId) ?? null;
 
   const hintText =
-    variant === "landing"
-      ? "Seleccioná el ícono de polígono arriba, dibujá el área y cerrá haciendo clic en el primer punto"
-      : "Dibujá un área en el mapa para ver solo las propiedades dentro";
+    variant === "landing" ? null : "Dibujá un área en el mapa para ver solo las propiedades dentro";
+
+  const showToolbar = hintText || polygon?.length > 0;
 
   const rootClass = ["search-map", compact && "search-map--compact"].filter(Boolean).join(" ");
 
   return (
     <div className={rootClass}>
+      {showToolbar && (
       <div className="search-map__toolbar">
-        <span className="search-map__hint">{hintText}</span>
+        {hintText && <span className="search-map__hint">{hintText}</span>}
         <div className="search-map__actions">
           {polygon?.length > 0 && (
             <>
@@ -191,6 +192,7 @@ function PropertiesSearchMapInner({
           )}
         </div>
       </div>
+      )}
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
         center={center}
