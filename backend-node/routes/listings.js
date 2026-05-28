@@ -18,6 +18,7 @@ import {
   isValidProvinceCode,
   resolveProvinceCode,
 } from "../constants/provinces.js";
+import { MAX_FEATURED_LISTINGS } from "../constants/featured.js";
 import {
   applyPolygonFilter,
   buildPublicListingWhere,
@@ -115,8 +116,10 @@ async function ensureFeaturedLimit({ nextFeatured, currentFeatured = false, list
     ? await get("SELECT COUNT(*) AS n FROM listings WHERE featured = 1 AND id != ?", listingId)
     : await get("SELECT COUNT(*) AS n FROM listings WHERE featured = 1");
   const featuredCount = Number(row?.n ?? 0);
-  if (featuredCount >= 5) {
-    const err = new Error("Solo podés tener 5 anuncios destacados como máximo.");
+  if (featuredCount >= MAX_FEATURED_LISTINGS) {
+    const err = new Error(
+      `Solo podés tener ${MAX_FEATURED_LISTINGS} anuncios destacados como máximo.`,
+    );
     err.status = 422;
     throw err;
   }

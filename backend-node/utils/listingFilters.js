@@ -78,6 +78,9 @@ export function buildPublicListingWhere(query) {
     );
     params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
   }
+  if (query.featured === "1" || query.featured === true || query.featured === 1) {
+    conds.push("featured = 1");
+  }
   if (requireCoords) {
     conds.push("lat IS NOT NULL AND lng IS NOT NULL");
   }

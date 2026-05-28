@@ -3,6 +3,7 @@ import { getPublicListings, getPublicListingsMap } from "../api/client";
 import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import PropertiesFilterSheet from "../components/PropertiesFilterSheet";
 import PropertiesSearchMap from "../components/PropertiesSearchMap";
 import {
   ARGENTINA_PROVINCES,
@@ -14,25 +15,27 @@ import {
 import { getProvinceByCode } from "../data/provinces";
 import { useSeo } from "../hooks/useSeo";
 import { lazyWithRetry } from "../utils/lazyRetry";
+import {
+  buildFilterChips,
+  countActiveFilters,
+  INITIAL_PROPERTY_FILTERS,
+} from "../utils/propertyFilters";
 import "./PropertiesPage.css";
 
 const PropertyDetailModal = lazyWithRetry(() => import("../components/PropertyDetailModal"));
 
 const LIMIT = 12;
-const INITIAL_FILTERS = {
-  search: "",
-  property_type: "",
-  operation: "",
-  city: "",
-  province_code: DEFAULT_PROVINCE_CODE,
-  min_price: "",
-  max_price: "",
-  min_rooms: "",
-  min_area: "",
-  has_garage: false,
-  has_garden: false,
-  has_pool: false,
-};
+const SEARCH_DEBOUNCE_MS = 400;
+
+const ADVANCED_KEYS = [
+  "min_price",
+  "max_price",
+  "min_rooms",
+  "min_area",
+  "has_garage",
+  "has_garden",
+  "has_pool",
+];
 
 function buildApiParams(filters, polygon) {
   const params = {};
@@ -52,6 +55,17 @@ function buildApiParams(filters, polygon) {
   return params;
 }
 
+function LabeledSelect({ label, className = "", children, ...selectProps }) {
+  return (
+    <label className={`pf__labeled ${className}`.trim()}>
+      <span className="pf__labeled-text">{label}</span>
+      <select className="pf__select pf__select--labeled" {...selectProps}>
+        {children}
+      </select>
+    </label>
+  );
+}
+
 export default function PropertiesPage() {
   useSeo({
     title: "Propiedades en venta y alquiler",
@@ -68,23 +82,28 @@ export default function PropertiesPage() {
   const [hasMore, setHasMore] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState(null);
   const [hoveredListingId, setHoveredListingId] = useState(null);
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [filters, setFilters] = useState(INITIAL_PROPERTY_FILTERS);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [polygon, setPolygon] = useState(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
-  const ADVANCED_KEYS = [
-    "min_price",
-    "max_price",
-    "min_rooms",
-    "min_area",
-    "has_garage",
-    "has_garden",
-    "has_pool",
-  ];
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(filters.search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [filters.search]);
 
-  const apiParams = useMemo(() => buildApiParams(filters, polygon), [filters, polygon]);
+  const filtersForApi = useMemo(
+    () => ({ ...filters, search: debouncedSearch }),
+    [filters, debouncedSearch],
+  );
 
-  const hasActiveFilters = Object.keys(INITIAL_FILTERS).some((k) => {
+  const apiParams = useMemo(
+    () => buildApiParams(filtersForApi, polygon),
+    [filtersForApi, polygon],
+  );
+
+  const hasActiveFilters = Object.keys(INITIAL_PROPERTY_FILTERS).some((k) => {
     const v = filters[k];
     if (k === "province_code") return v !== DEFAULT_PROVINCE_CODE;
     return typeof v === "boolean" ? v : v !== "";
@@ -94,11 +113,29 @@ export default function PropertiesPage() {
     return typeof v === "boolean" ? v : v !== "";
   });
   const hasPolygon = Boolean(polygon?.length);
+  const activeFilterCount = countActiveFilters(filters, { hasPolygon });
 
   const clearFilters = () => {
-    setFilters(INITIAL_FILTERS);
+    setFilters(INITIAL_PROPERTY_FILTERS);
     setPolygon(null);
   };
+
+  const removeChip = (chip) => {
+    if (chip.id === "polygon") {
+      setPolygon(null);
+      return;
+    }
+    setFilters((f) => ({ ...f, ...chip.clear() }));
+  };
+
+  const filterChips = useMemo(
+    () =>
+      buildFilterChips(filters, {
+        hasPolygon,
+        onClearPolygon: () => setPolygon(null),
+      }),
+    [filters, hasPolygon],
+  );
 
   const fetchPage = useCallback(
     async (pageNum, reset = false) => {
@@ -140,6 +177,13 @@ export default function PropertiesPage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setDebouncedSearch(filters.search);
+    fetchPage(1, true);
+    fetchMapPins();
+  };
+
+  const applyFiltersNow = () => {
+    setDebouncedSearch(filters.search);
     fetchPage(1, true);
     fetchMapPins();
   };
@@ -162,7 +206,7 @@ export default function PropertiesPage() {
 
         <div className="container">
           <form onSubmit={handleSearch} className="pf" aria-label="Filtros de búsqueda">
-            <div className="pf__bar">
+            <div className="pf__row pf__row--primary">
               <div className="pf__field pf__field--search">
                 <svg
                   className="pf__search-icon"
@@ -189,86 +233,82 @@ export default function PropertiesPage() {
                 />
               </div>
 
-              <div className="pf__divider" aria-hidden />
+              <button
+                type="button"
+                className="pf__filters-btn"
+                aria-expanded={filterSheetOpen}
+                onClick={() => setFilterSheetOpen(true)}
+              >
+                Filtros
+                {activeFilterCount > 0 && (
+                  <span className="pf__filters-badge">{activeFilterCount}</span>
+                )}
+              </button>
 
-              <div className="pf__field">
-                <select
-                  value={filters.province_code}
-                  onChange={(e) => setFilters((f) => ({ ...f, province_code: e.target.value }))}
-                  className="pf__select pf__select--province"
-                  aria-label="Provincia"
-                >
-                  {ARGENTINA_PROVINCES.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <button type="submit" className="pf__submit">
+                Buscar
+              </button>
+            </div>
 
-              <div className="pf__divider" aria-hidden />
+            <div className="pf__quick pf__quick--desktop">
+              <LabeledSelect
+                label="Provincia"
+                value={filters.province_code}
+                onChange={(e) => setFilters((f) => ({ ...f, province_code: e.target.value }))}
+              >
+                {ARGENTINA_PROVINCES.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name}
+                  </option>
+                ))}
+              </LabeledSelect>
 
-              <div className="pf__field">
-                <select
-                  value={filters.property_type}
-                  onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
-                  className="pf__select"
-                  aria-label="Tipo de inmueble"
-                >
-                  <option value="">Tipo de inmueble</option>
-                  {PROPERTY_TYPE_GROUPS.map((group) => (
-                    <optgroup key={group.id} label={group.label}>
-                      {group.options.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </div>
+              <LabeledSelect
+                label="Tipo"
+                value={filters.property_type}
+                onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                {PROPERTY_TYPE_GROUPS.map((group) => (
+                  <optgroup key={group.id} label={group.label}>
+                    {group.options.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </LabeledSelect>
 
-              <div className="pf__divider" aria-hidden />
+              <LabeledSelect
+                label="Operación"
+                value={filters.operation}
+                onChange={(e) => setFilters((f) => ({ ...f, operation: e.target.value }))}
+              >
+                <option value="">Todas</option>
+                {OPERATION_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </LabeledSelect>
 
-              <div className="pf__field">
-                <select
-                  value={filters.operation}
-                  onChange={(e) => setFilters((f) => ({ ...f, operation: e.target.value }))}
-                  className="pf__select"
-                  aria-label="Operación"
-                >
-                  <option value="">Venta / Alquiler</option>
-                  {OPERATION_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pf__divider" aria-hidden />
-
-              <div className="pf__field">
-                <select
-                  value={filters.city}
-                  onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
-                  className="pf__select"
-                  aria-label="Zona"
-                >
-                  <option value="">Zona / Localidad</option>
-                  {[...new Set(CITIES_LA_RIOJA)].map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pf__divider" aria-hidden />
+              <LabeledSelect
+                label="Localidad"
+                value={filters.city}
+                onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
+              >
+                <option value="">Todas</option>
+                {[...new Set(CITIES_LA_RIOJA)].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </LabeledSelect>
 
               <button
                 type="button"
-                className={`pf__adv-btn${advancedOpen ? " pf__adv-btn--open" : ""}`}
+                className={`pf__adv-btn pf__adv-btn--inline${advancedOpen ? " pf__adv-btn--open" : ""}`}
                 onClick={() => setAdvancedOpen((o) => !o)}
                 aria-expanded={advancedOpen}
               >
@@ -289,14 +329,10 @@ export default function PropertiesPage() {
                   <path d="m6 9 6 6 6-6" />
                 </svg>
               </button>
-
-              <button type="submit" className="pf__submit">
-                Buscar
-              </button>
             </div>
 
             {advancedOpen && (
-              <div className="pf__advanced">
+              <div className="pf__advanced pf__advanced--desktop">
                 <div className="pf__adv-grid">
                   <label className="pf__adv-field">
                     <span className="pf__adv-label">Precio mínimo</span>
@@ -374,17 +410,40 @@ export default function PropertiesPage() {
                     </div>
                   </div>
                 </div>
-
-                {(hasActiveFilters || hasPolygon) && (
-                  <div className="pf__adv-footer">
-                    <button type="button" className="pf__clear" onClick={clearFilters}>
-                      Limpiar todos los filtros
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </form>
+
+          {filterChips.length > 0 && (
+            <div className="pf__chips" aria-label="Filtros activos">
+              {filterChips.map((chip) => (
+                <span key={chip.id} className="pf__chip">
+                  {chip.label}
+                  <button
+                    type="button"
+                    className="pf__chip-remove"
+                    aria-label={`Quitar filtro ${chip.label}`}
+                    onClick={() => removeChip(chip)}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <button type="button" className="pf__chips-clear" onClick={clearFilters}>
+                Limpiar todo
+              </button>
+            </div>
+          )}
+
+          <PropertiesFilterSheet
+            open={filterSheetOpen}
+            onOpenChange={setFilterSheetOpen}
+            filters={filters}
+            onChange={setFilters}
+            onApply={applyFiltersNow}
+            onClear={clearFilters}
+            activeCount={activeFilterCount}
+          />
 
           <div className="properties-page__results-bar">
             <p className="properties-page__results-meta">

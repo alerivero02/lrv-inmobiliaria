@@ -44,6 +44,7 @@ import { formatPrice } from "../../utils/format";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
 import { PROPERTY_TYPE_GROUPS, TYPE_LABELS } from "../../data/propertyTypes";
+import { MAX_FEATURED_LISTINGS } from "../../constants/featured";
 
 const STATUS_LABELS = {
   active: "Activo",
@@ -222,8 +223,10 @@ export default function ListingsPage() {
 
   const handleToggleFeatured = async (row) => {
     const featuredCount = listings.filter((l) => l.featured).length;
-    if (!row.featured && featuredCount >= 5) {
-      setError("Ya hay 5 anuncios destacados. Quitá uno antes de agregar otro.");
+    if (!row.featured && featuredCount >= MAX_FEATURED_LISTINGS) {
+      setError(
+        `Ya hay ${MAX_FEATURED_LISTINGS} anuncios destacados. Quitá uno antes de agregar otro.`,
+      );
       return;
     }
     try {
