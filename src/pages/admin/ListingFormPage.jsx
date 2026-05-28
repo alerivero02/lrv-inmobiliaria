@@ -10,23 +10,38 @@ import {
 } from "../../api/client";
 import { useToast } from "../../context/ToastContext";
 import {
-  ARGENTINA_PROVINCES,
   CITIES_LA_RIOJA,
-  PROPERTY_TYPES,
+  PROPERTY_CATEGORY,
   STATUS_OPTIONS,
   OPERATION_OPTIONS,
+  getPropertyCategory,
+  getTypesForCategory,
+  defaultPropertyTypeForCategory,
 } from "../../data/cities";
+import {
+  ARGENTINA_PROVINCES,
+  DEFAULT_PROVINCE_CODE,
+  getProvinceByCode,
+  getProvinceByName,
+} from "../../data/provinces";
 import MapPicker from "../../components/MapPicker";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
 import "./ListingFormPage.css";
 
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+
+const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp|heic|heif)$/i;
+const IMAGE_MIME_RE = /^image\/(jpeg|jpg|png|webp|gif|heic|heif)$/i;
+
 function filterImageFiles(fileList) {
   return [...fileList].filter(
-    (f) =>
-      (f.type && f.type.startsWith("image/")) ||
-      /\.(jpe?g|png|gif|webp|heic)$/i.test(f.name),
+    (f) => (f.type && IMAGE_MIME_RE.test(f.type)) || IMAGE_EXT_RE.test(f.name),
   );
+}
+
+function rejectOversizedImages(files) {
+  return files.filter((f) => f.size > MAX_IMAGE_BYTES);
 }
 
 function AddImageUrl({ onAdd }) {
@@ -67,6 +82,7 @@ const emptyForm = {
   address: "",
   city: "",
   province: "La Rioja",
+  province_code: DEFAULT_PROVINCE_CODE,
   lat: null,
   lng: null,
   location_manual: "",
@@ -93,6 +109,7 @@ export default function ListingFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [form, setForm] = useState(emptyForm);
+  const [propertyCategory, setPropertyCategory] = useState(PROPERTY_CATEGORY.PROPIEDAD);
   const [citySource, setCitySource] = useState("list"); // 'list' | 'manual'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -115,6 +132,7 @@ export default function ListingFormPage() {
             address: data.address ?? "",
             city: data.city ?? "",
             province: data.province ?? "La Rioja",
+            province_code: data.province_code ?? DEFAULT_PROVINCE_CODE,
             lat: data.lat ?? null,
             lng: data.lng ?? null,
             location_manual: data.location_manual ?? "",
@@ -135,6 +153,7 @@ export default function ListingFormPage() {
             extras_note: data.extras_note ?? "",
             images: Array.isArray(data.images) ? data.images : [],
           });
+          setPropertyCategory(getPropertyCategory(data.property_type ?? "casa"));
           setCitySource(data.city && CITIES_LA_RIOJA.includes(data.city) ? "list" : "manual");
         }
       })
@@ -148,6 +167,15 @@ export default function ListingFormPage() {
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
+  const handlePropertyCategoryChange = (category) => {
+    setPropertyCategory(category);
+    const types = getTypesForCategory(category);
+    const currentValid = types.some((t) => t.value === form.property_type);
+    if (!currentValid) {
+      update("property_type", defaultPropertyTypeForCategory(category));
+    }
+  };
+
   const [uploadingImages, setUploadingImages] = useState(false);
   const [dropHighlight, setDropHighlight] = useState(false);
   const fileInputRef = useRef(null);
@@ -156,7 +184,13 @@ export default function ListingFormPage() {
     async (rawFiles) => {
       const files = filterImageFiles(rawFiles);
       if (!files.length) {
-        toast.show("No hay imágenes válidas (JPG, PNG, WebP, HEIC…)", "error");
+        toast.show("No hay imágenes válidas (JPG, PNG, WebP, HEIC o GIF)", "error");
+        return;
+      }
+      const oversized = rejectOversizedImages(files);
+      if (oversized.length) {
+        const names = oversized.map((f) => f.name).join(", ");
+        toast.show(`Cada imagen puede pesar hasta 15 MB. Archivo(s) demasiado grande(s): ${names}`, "error");
         return;
       }
       setUploadingImages(true);
@@ -369,21 +403,46 @@ export default function ListingFormPage() {
               placeholder="Descripción detallada del inmueble..."
             />
           </label>
-          <div className="listing-form__row">
+          <fieldset className="listing-form__property-type">
+            <legend className="listing-form__property-type-legend">Categoría del anuncio *</legend>
+            <div className="listing-form__radio-group">
+              <label className="listing-form__radio">
+                <input
+                  type="radio"
+                  name="propertyCategory"
+                  checked={propertyCategory === PROPERTY_CATEGORY.PROPIEDAD}
+                  onChange={() => handlePropertyCategoryChange(PROPERTY_CATEGORY.PROPIEDAD)}
+                />
+                Propiedad
+              </label>
+              <label className="listing-form__radio">
+                <input
+                  type="radio"
+                  name="propertyCategory"
+                  checked={propertyCategory === PROPERTY_CATEGORY.INVERSION}
+                  onChange={() => handlePropertyCategoryChange(PROPERTY_CATEGORY.INVERSION)}
+                />
+                Oportunidad de inversión
+              </label>
+            </div>
             <label>
-              Tipo de inmueble *
+              {propertyCategory === PROPERTY_CATEGORY.INVERSION
+                ? "Tipo de oportunidad *"
+                : "Tipo de propiedad *"}
               <select
                 value={form.property_type}
                 onChange={(e) => update("property_type", e.target.value)}
                 required
               >
-                {PROPERTY_TYPES.map((t) => (
+                {getTypesForCategory(propertyCategory).map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
                   </option>
                 ))}
               </select>
             </label>
+          </fieldset>
+          <div className="listing-form__row">
             <label>
               Operación
               <select value={form.operation} onChange={(e) => update("operation", e.target.value)}>
@@ -548,7 +607,7 @@ export default function ListingFormPage() {
             id="listing-images-input"
             className="listing-form__file-input-hidden"
             type="file"
-            accept=".jpg,.jpeg,.png,.heic,.webp,image/*"
+            accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.gif,image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif"
             multiple
             onChange={handleImageFiles}
             disabled={uploadingImages}
@@ -630,14 +689,19 @@ export default function ListingFormPage() {
             <label>
               Provincia *
               <select
-                value={form.province}
-                onChange={(e) => update("province", e.target.value)}
+                value={form.province_code}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const prov = getProvinceByCode(code);
+                  update("province_code", code);
+                  if (prov) update("province", prov.name);
+                }}
                 required
               >
                 <option value="">Seleccionar provincia...</option>
-                {ARGENTINA_PROVINCES.map((province) => (
-                  <option key={province} value={province}>
-                    {province}
+                {ARGENTINA_PROVINCES.map((prov) => (
+                  <option key={prov.code} value={prov.code}>
+                    {prov.name}
                   </option>
                 ))}
               </select>
@@ -718,8 +782,10 @@ export default function ListingFormPage() {
                   update("location_manual", city);
                   setCitySource("manual");
                 }
-                if (province && ARGENTINA_PROVINCES.includes(province)) {
-                  update("province", province);
+                const matched = province ? getProvinceByName(province) : null;
+                if (matched) {
+                  update("province", matched.name);
+                  update("province_code", matched.code);
                 }
               }}
             />

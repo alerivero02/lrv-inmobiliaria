@@ -123,7 +123,11 @@ export async function migratePg() {
       id              SERIAL PRIMARY KEY,
       title           TEXT    NOT NULL,
       description     TEXT,
-      property_type   TEXT    DEFAULT 'casa',
+      property_type   TEXT    DEFAULT 'casa'
+        CHECK (property_type IN (
+          'casa','departamento','lote','terreno','finca',
+          'local_comercial','fondo_comercio'
+        )),
       status          TEXT    DEFAULT 'active',
       operation       TEXT    DEFAULT 'venta',
       documentation   TEXT,
@@ -283,6 +287,45 @@ export async function migratePg() {
   `);
   await p.query(`UPDATE users SET email_verified = 1 WHERE email_verified IS NULL`);
 
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN province_code TEXT DEFAULT 'AR-F';
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    CREATE INDEX IF NOT EXISTS listings_province_code_idx ON listings (province_code);
+  `);
+  await p.query(`
+    CREATE INDEX IF NOT EXISTS listings_lat_lng_idx ON listings (lat, lng)
+    WHERE lat IS NOT NULL AND lng IS NOT NULL;
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-F'
+    WHERE province_code IS NULL
+      AND (province ILIKE 'La Rioja' OR province IS NULL);
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-C'
+    WHERE province_code IS NULL
+      AND province ILIKE 'Ciudad Aut%';
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-B'
+    WHERE province_code IS NULL AND province ILIKE 'Buenos Aires';
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-X'
+    WHERE province_code IS NULL AND province ILIKE 'C%rdoba';
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-M'
+    WHERE province_code IS NULL AND province ILIKE 'Mendoza';
+  `);
+  await p.query(`
+    UPDATE listings SET province_code = 'AR-S'
+    WHERE province_code IS NULL AND province ILIKE 'Santa Fe';
+  `);
+
   console.log("✅  Base de datos PostgreSQL lista");
 }
 
@@ -306,7 +349,11 @@ function migrateSqlite() {
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       title           TEXT    NOT NULL,
       description     TEXT,
-      property_type   TEXT    DEFAULT 'casa',
+      property_type   TEXT    DEFAULT 'casa'
+        CHECK (property_type IN (
+          'casa','departamento','lote','terreno','finca',
+          'local_comercial','fondo_comercio'
+        )),
       status          TEXT    DEFAULT 'active',
       operation       TEXT    DEFAULT 'venta',
       documentation   TEXT,
@@ -430,6 +477,19 @@ function migrateSqlite() {
   try {
     db.exec("UPDATE users SET email_verified = 1 WHERE email_verified IS NULL");
   } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN province_code TEXT DEFAULT 'AR-F'");
+  } catch {}
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS listings_province_code_idx ON listings (province_code)");
+  } catch {}
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS listings_lat_lng_idx ON listings (lat, lng)");
+  } catch {}
+  db.exec(`
+    UPDATE listings SET province_code = 'AR-F'
+    WHERE province_code IS NULL AND (province = 'La Rioja' OR province IS NULL)
+  `);
   console.log("✅  Base de datos SQLite lista →", process.env.DB_PATH || path.join(__dirname, "lrv.db"));
 }
 

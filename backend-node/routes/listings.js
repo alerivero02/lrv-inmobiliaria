@@ -4,9 +4,25 @@ import fs from "node:fs/promises";
 import multer from "multer";
 import { get, all, run } from "../db.js";
 import { verifyToken } from "../middleware/auth.js";
-import { isAllowedImageMime, optimizeImageToFile } from "../utils/images.js";
+import {
+  IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_REJECT_MESSAGE,
+  isAllowedImageUpload,
+  optimizeImageToFile,
+} from "../utils/images.js";
 import { getUploadsDir } from "../uploadsDir.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { normalizePropertyType } from "../constants/propertyTypes.js";
+import {
+  getProvinceName,
+  isValidProvinceCode,
+  resolveProvinceCode,
+} from "../constants/provinces.js";
+import {
+  applyPolygonFilter,
+  buildPublicListingWhere,
+  paginateArray,
+} from "../utils/listingFilters.js";
 
 const UPLOADS_DIR = getUploadsDir();
 
@@ -27,10 +43,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: { fileSize: IMAGE_UPLOAD_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (!isAllowedImageMime(file.mimetype)) {
-      return cb(new Error("Solo se permiten imágenes JPG/PNG/WebP"));
+    if (!isAllowedImageUpload(file)) {
+      return cb(new Error(IMAGE_UPLOAD_REJECT_MESSAGE));
     }
     return cb(null, true);
   },
@@ -67,21 +83,31 @@ function parseListing(row) {
     price: row.price ?? null,
     lat: row.lat ?? null,
     lng: row.lng ?? null,
+    province_code: row.province_code ?? null,
     rooms: row.rooms ?? null,
     commission_buyer: row.commission_buyer ?? 3.0,
     commission_seller: row.commission_seller ?? 3.0,
   };
 }
 
-// Mapa de ordenamiento seguro (evita SQL injection)
-const ORDER_MAP = {
-  views: "view_count DESC, updated_at DESC",
-  consults: "consult_count DESC, updated_at DESC",
-  destacadas: "featured DESC, (view_count + consult_count * 2) DESC, updated_at DESC",
-  price_asc: "price ASC NULLS LAST",
-  price_desc: "price DESC NULLS LAST",
-  updated: "updated_at DESC",
-};
+function parseMapListing(row) {
+  const imgs = parseJSON(row.images, []);
+  const firstImage = Array.isArray(imgs) && imgs.length ? normalizeUploadUrl(imgs[0]) : null;
+  return {
+    id: row.id,
+    title: row.title,
+    lat: row.lat,
+    lng: row.lng,
+    price: row.price,
+    currency: row.currency,
+    rooms: row.rooms,
+    area_sqm: row.area_sqm,
+    property_type: row.property_type,
+    operation: row.operation,
+    city: row.city,
+    image: firstImage,
+  };
+}
 
 async function ensureFeaturedLimit({ nextFeatured, currentFeatured = false, listingId = null }) {
   if (!nextFeatured || currentFeatured) return;
@@ -101,68 +127,47 @@ const router = Router();
 // ─── PUBLIC ───────────────────────────────────────────────────────────────────
 // IMPORTANTE: rutas estáticas antes de /:id
 
+router.get("/public/map", asyncHandler(async (req, res) => {
+  let filter;
+  try {
+    filter = buildPublicListingWhere({ ...req.query, require_coords: "1" });
+  } catch (err) {
+    return res.status(err.status || 400).json({ detail: err.message });
+  }
+
+  const { where, params, polygon, orderSql } = filter;
+  const rows = await all(
+    `SELECT id, title, lat, lng, price, currency, rooms, area_sqm, property_type, operation, city, images
+     FROM listings ${where} ORDER BY ${orderSql} LIMIT 500`,
+    ...params,
+  );
+  const filtered = applyPolygonFilter(rows, polygon);
+
+  return res.json({
+    items: filtered.map(parseMapListing),
+    total: filtered.length,
+  });
+}));
+
 router.get("/public", asyncHandler(async (req, res) => {
-  const {
-    min_price,
-    max_price,
-    property_type,
-    operation,
-    city,
-    bedrooms,
-    order_by,
-    limit = 20,
-    page = 1,
-  } = req.query;
+  const { limit = 20, page = 1 } = req.query;
 
-  const conds = ["status = 'active'"];
-  const params = [];
-
-  if (min_price) {
-    conds.push("price >= ?");
-    params.push(Number(min_price));
-  }
-  if (max_price) {
-    conds.push("price <= ?");
-    params.push(Number(max_price));
-  }
-  if (property_type) {
-    conds.push("property_type = ?");
-    params.push(property_type);
-  }
-  if (operation) {
-    conds.push("operation = ?");
-    params.push(operation);
-  }
-  if (city) {
-    conds.push("(LOWER(city) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))");
-    params.push(`%${city}%`, `%${city}%`);
-  }
-  if (bedrooms) {
-    conds.push("rooms >= ?");
-    params.push(Number(bedrooms));
-  }
-  if (req.query.min_area) {
-    conds.push("area_sqm >= ?");
-    params.push(Number(req.query.min_area));
-  }
-  if (req.query.has_garage) {
-    conds.push("has_garage = 1");
-  }
-  if (req.query.has_garden) {
-    conds.push("has_garden = 1");
-  }
-  if (req.query.has_pool) {
-    conds.push("has_pool = 1");
-  }
-  if (req.query.search) {
-    conds.push(
-      "(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(city) LIKE LOWER(?))",
-    );
-    params.push(`%${req.query.search}%`, `%${req.query.search}%`, `%${req.query.search}%`);
+  let filter;
+  try {
+    filter = buildPublicListingWhere(req.query);
+  } catch (err) {
+    return res.status(err.status || 400).json({ detail: err.message });
   }
 
-  const where = `WHERE ${conds.join(" AND ")}`;
-  const orderSql = ORDER_MAP[order_by] || ORDER_MAP.updated;
+  const { where, params, polygon, orderSql } = filter;
+
+  if (polygon) {
+    const rows = await all(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`, ...params);
+    const filtered = applyPolygonFilter(rows, polygon);
+    const paged = paginateArray(filtered.map(parseListing), page, limit);
+    return res.json(paged);
+  }
+
   const limitN = Math.min(Number(limit) || 20, 100);
   const pageN = Math.max(Number(page) || 1, 1);
   const offset = (pageN - 1) * limitN;
@@ -241,8 +246,24 @@ router.get("/", verifyToken, asyncHandler(async (req, res) => {
     params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
   }
 
+  if (req.query.province_code) {
+    if (!isValidProvinceCode(req.query.province_code)) {
+      return res.status(400).json({ detail: "Código de provincia inválido" });
+    }
+    conds.push("province_code = ?");
+    params.push(req.query.province_code);
+  }
+
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
-  const orderSql = ORDER_MAP[order_by] || ORDER_MAP.updated;
+  const orderSql =
+    {
+      views: "view_count DESC, updated_at DESC",
+      consults: "consult_count DESC, updated_at DESC",
+      destacadas: "featured DESC, (view_count + consult_count * 2) DESC, updated_at DESC",
+      price_asc: "price ASC NULLS LAST",
+      price_desc: "price DESC NULLS LAST",
+      updated: "updated_at DESC",
+    }[order_by] || "updated_at DESC";
 
   const rows = await all(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`, ...params);
   return res.json(rows.map(parseListing));
@@ -265,6 +286,7 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     address,
     city,
     province,
+    province_code,
     lat,
     lng,
     location_manual,
@@ -290,8 +312,19 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
   if (!province?.trim()) return res.status(422).json({ detail: "La provincia es obligatoria" });
+  const resolvedCode = resolveProvinceCode({ province_code, province });
+  if (!resolvedCode) {
+    return res.status(422).json({ detail: "Código o nombre de provincia inválido" });
+  }
   if (price == null || price === "") return res.status(422).json({ detail: "El precio es obligatorio" });
   if (!currency?.trim()) return res.status(422).json({ detail: "La moneda es obligatoria" });
+
+  let normalizedPropertyType;
+  try {
+    normalizedPropertyType = normalizePropertyType(property_type);
+  } catch (err) {
+    return res.status(err.status || 500).json({ detail: err.message });
+  }
 
   try {
     await ensureFeaturedLimit({ nextFeatured: Boolean(featured) });
@@ -303,22 +336,23 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     `
     INSERT INTO listings
     (title,description,property_type,status,operation,documentation,
-     address,city,province,lat,lng,location_manual,
+     address,city,province,province_code,lat,lng,location_manual,
      rooms,area_sqm,price,currency,
      has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,featured,extras_note,images,
      commission_buyer,commission_seller)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
     title,
     description ?? null,
-    property_type ?? "casa",
+    normalizedPropertyType,
     status ?? "active",
     operation ?? "venta",
     documentation ?? null,
     address ?? null,
     city ?? null,
     province.trim(),
+    resolvedCode,
     lat ?? null,
     lng ?? null,
     location_manual ?? null,
@@ -361,6 +395,7 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
     "address",
     "city",
     "province",
+    "province_code",
     "lat",
     "lng",
     "location_manual",
@@ -397,6 +432,8 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   const nextPrice = "price" in req.body ? req.body.price : existing.price;
   const nextCurrency = "currency" in req.body ? req.body.currency : existing.currency;
   const nextProvince = "province" in req.body ? req.body.province : existing.province;
+  const nextProvinceCode =
+    "province_code" in req.body ? req.body.province_code : existing.province_code;
   if (nextPrice == null || nextPrice === "") {
     return res.status(422).json({ detail: "El precio es obligatorio" });
   }
@@ -405,6 +442,17 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   }
   if (!String(nextProvince || "").trim()) {
     return res.status(422).json({ detail: "La provincia es obligatoria" });
+  }
+  const resolvedPatchCode = resolveProvinceCode({
+    province_code: nextProvinceCode,
+    province: nextProvince,
+  });
+  if (!resolvedPatchCode) {
+    return res.status(422).json({ detail: "Código o nombre de provincia inválido" });
+  }
+  req.body.province_code = resolvedPatchCode;
+  if (!("province" in req.body) && resolvedPatchCode !== existing.province_code) {
+    req.body.province = getProvinceName(resolvedPatchCode);
   }
   try {
     await ensureFeaturedLimit({
@@ -420,11 +468,22 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   const vals = [];
   const nextHasGarage = "has_garage" in req.body ? Boolean(req.body.has_garage) : Boolean(existing.has_garage);
 
+  if ("property_type" in req.body) {
+    try {
+      req.body.property_type = normalizePropertyType(req.body.property_type, { required: true });
+    } catch (err) {
+      return res.status(err.status || 500).json({ detail: err.message });
+    }
+  }
+
   for (const f of FIELDS) {
     if (!(f in req.body)) continue;
     let v = req.body[f];
     if (f === "images") v = JSON.stringify(Array.isArray(v) ? v : []);
     if (f === "province" && typeof v === "string") v = v.trim();
+    if (f === "province_code" && typeof v === "string" && !isValidProvinceCode(v)) {
+      return res.status(422).json({ detail: "Código de provincia inválido" });
+    }
     if (f === "currency" && typeof v === "string") v = v.trim();
     if (f === "price") v = Number(v);
     if (f === "covered_area_sqm") v = v == null || v === "" ? null : Number(v);

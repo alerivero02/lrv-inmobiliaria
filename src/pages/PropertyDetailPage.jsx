@@ -6,9 +6,8 @@ import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import { applyListingSeo, resetListingSeo } from "../utils/seo";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { TYPE_LABELS } from "../data/propertyTypes";
 import "./PropertyDetailPage.css";
-
-const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
 export default function PropertyDetailPage() {

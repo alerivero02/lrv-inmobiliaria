@@ -26,39 +26,27 @@ export const CITIES_LA_RIOJA = [
   "Sañogasta",
 ];
 
-export const PROPERTY_TYPES = [
-  { value: "casa", label: "Casa" },
-  { value: "departamento", label: "Departamento" },
-  { value: "terreno", label: "Terreno" },
-  { value: "local_comercial", label: "Local comercial" },
-];
+export {
+  PROPERTY_TYPES,
+  PROPERTY_TYPE_GROUPS,
+  PROPERTY_CATEGORY,
+  RESIDENTIAL_PROPERTY_TYPES,
+  INVESTMENT_PROPERTY_TYPES,
+  TYPE_LABELS,
+  ALLOWED_PROPERTY_TYPE_VALUES,
+  isInvestmentPropertyType,
+  getPropertyCategory,
+  getTypesForCategory,
+  defaultPropertyTypeForCategory,
+} from "./propertyTypes.js";
 
-export const ARGENTINA_PROVINCES = [
-  "Buenos Aires",
-  "Catamarca",
-  "Chaco",
-  "Chubut",
-  "Ciudad Autónoma de Buenos Aires",
-  "Córdoba",
-  "Corrientes",
-  "Entre Ríos",
-  "Formosa",
-  "Jujuy",
-  "La Pampa",
-  "La Rioja",
-  "Mendoza",
-  "Misiones",
-  "Neuquén",
-  "Río Negro",
-  "Salta",
-  "San Juan",
-  "San Luis",
-  "Santa Cruz",
-  "Santa Fe",
-  "Santiago del Estero",
-  "Tierra del Fuego",
-  "Tucumán",
-];
+export {
+  ARGENTINA_PROVINCES,
+  DEFAULT_PROVINCE_CODE,
+  getProvinceByCode,
+  getProvinceByName,
+  getProvinceName,
+} from "./provinces.js";
 
 export const STATUS_OPTIONS = [
   { value: "active", label: "Activo" },

@@ -19,6 +19,13 @@ import {
   InputAdornment,
   Tooltip,
   Snackbar,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Divider,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
@@ -30,10 +37,13 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import SellIcon from "@mui/icons-material/Sell";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import StarIcon from "@mui/icons-material/Star";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
 import { getListings, deleteListing, updateListing } from "../../api/client";
 import { formatPrice } from "../../utils/format";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
+import { PROPERTY_TYPE_GROUPS, TYPE_LABELS } from "../../data/propertyTypes";
 
 const STATUS_LABELS = {
   active: "Activo",
@@ -42,12 +52,6 @@ const STATUS_LABELS = {
   archived: "Archivado",
   pending_review: "Pend. revisión",
 };
-const TYPE_LABELS = {
-  casa: "Casa",
-  departamento: "Dpto",
-  terreno: "Terreno",
-  local_comercial: "Local comercial",
-};
 const OPERATION_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 const statusColor = {
   active: "success",
@@ -55,6 +59,46 @@ const statusColor = {
   sold: "primary",
   archived: "default",
   pending_review: "warning",
+};
+
+const COLUMN_STORAGE_KEY = "lrv-admin-listings-columns";
+
+const OPTIONAL_COLUMNS = [
+  { id: "property_specs", label: "Ambientes y m²" },
+  { id: "engagement", label: "Vistas y consultas" },
+  { id: "commissions", label: "Comisiones", fields: ["commission_buyer", "commission_seller"] },
+];
+
+const DEFAULT_COLUMN_VISIBILITY = {
+  property_specs: false,
+  engagement: false,
+  commission_buyer: false,
+  commission_seller: false,
+};
+
+function loadColumnVisibility() {
+  try {
+    const stored = localStorage.getItem(COLUMN_STORAGE_KEY);
+    if (!stored) return DEFAULT_COLUMN_VISIBILITY;
+    return { ...DEFAULT_COLUMN_VISIBILITY, ...JSON.parse(stored) };
+  } catch {
+    return DEFAULT_COLUMN_VISIBILITY;
+  }
+}
+
+function formatListingDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+const cellEllipsisSx = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  minWidth: 0,
+  width: "100%",
 };
 
 export default function ListingsPage() {
@@ -72,6 +116,33 @@ export default function ListingsPage() {
     order_by: "updated",
   });
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [columnVisibility, setColumnVisibility] = useState(loadColumnVisibility);
+  const [columnsMenuAnchor, setColumnsMenuAnchor] = useState(null);
+  const [rowMenu, setRowMenu] = useState({ anchor: null, row: null });
+
+  const toggleOptionalColumn = (option, checked) => {
+    setColumnVisibility((prev) => {
+      const next = { ...prev };
+      if (option.fields) {
+        for (const field of option.fields) next[field] = checked;
+      } else {
+        next[option.id] = checked;
+      }
+      try {
+        localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  const isOptionalColumnChecked = (option) => {
+    if (option.fields) return option.fields.every((f) => columnVisibility[f] !== false);
+    return columnVisibility[option.id] !== false;
+  };
+
+  const closeRowMenu = () => setRowMenu({ anchor: null, row: null });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -164,89 +235,136 @@ export default function ListingsPage() {
     }
   };
 
+  const menuRow = rowMenu.row;
+
   const columns = [
     {
       field: "title",
       headerName: "Título",
       flex: 1,
-      minWidth: 180,
+      minWidth: 140,
+      disableColumnMenu: true,
       renderCell: ({ row }) => (
-        <Button
-          component={Link}
-          to={`/admin/editar/${row.id}`}
-          size="small"
-          sx={{ textAlign: "left", textTransform: "none", justifyContent: "flex-start", px: 0 }}
-        >
-          {row.title}
-        </Button>
+        <Tooltip title={row.title} enterDelay={400}>
+          <Button
+            component={Link}
+            to={`/admin/editar/${row.id}`}
+            size="small"
+            sx={{
+              textAlign: "left",
+              textTransform: "none",
+              justifyContent: "flex-start",
+              px: 0,
+              maxWidth: "100%",
+              minWidth: 0,
+              color: "text.primary",
+              fontWeight: 500,
+            }}
+          >
+            <Box component="span" sx={cellEllipsisSx}>
+              {row.title}
+            </Box>
+          </Button>
+        </Tooltip>
       ),
     },
     {
-      field: "property_type",
+      field: "property_summary",
       headerName: "Tipo",
-      width: 90,
-      valueGetter: (v) => TYPE_LABELS[v] || v,
-    },
-    {
-      field: "operation",
-      headerName: "Operación",
-      width: 90,
-      valueGetter: (v) => OPERATION_LABELS[v] || v || "Venta",
+      width: 108,
+      sortable: false,
+      disableColumnMenu: true,
+      valueGetter: (_, row) => {
+        const type = TYPE_LABELS[row.property_type] || row.property_type || "—";
+        const op = OPERATION_LABELS[row.operation] || row.operation || "Venta";
+        return `${type} · ${op}`;
+      },
+      renderCell: ({ value }) => (
+        <Tooltip title={value}>
+          <Typography variant="body2" sx={cellEllipsisSx}>
+            {value}
+          </Typography>
+        </Tooltip>
+      ),
     },
     {
       field: "city",
       headerName: "Ubicación",
-      width: 140,
+      flex: 0.55,
+      minWidth: 96,
+      maxWidth: 200,
+      disableColumnMenu: true,
       valueGetter: (_, row) => [row.city, row.address].filter(Boolean).join(", ") || "—",
+      renderCell: ({ value }) => (
+        <Tooltip title={value}>
+          <Typography variant="body2" color="text.secondary" sx={cellEllipsisSx}>
+            {value}
+          </Typography>
+        </Tooltip>
+      ),
     },
     {
-      field: "rooms",
-      headerName: "Amb.",
-      width: 60,
+      field: "property_specs",
+      headerName: "Ficha",
+      width: 76,
       align: "center",
       headerAlign: "center",
-      type: "number",
-      valueGetter: (v) => v ?? "—",
-    },
-    {
-      field: "area_sqm",
-      headerName: "m²",
-      width: 70,
-      align: "right",
-      headerAlign: "right",
-      type: "number",
-      valueGetter: (v) => v ?? "—",
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: ({ row }) => {
+        const amb = row.rooms != null ? `${row.rooms} amb` : "—";
+        const m2 = row.area_sqm != null ? `${row.area_sqm} m²` : "—";
+        const label = `${amb} · ${m2}`;
+        return (
+          <Tooltip title={label}>
+            <Typography variant="caption" sx={cellEllipsisSx}>
+              {label}
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "price",
       headerName: "Precio",
-      width: 130,
+      width: 112,
       align: "right",
       headerAlign: "right",
+      disableColumnMenu: true,
       renderCell: ({ row }) => (
-        <span style={{ fontWeight: 500 }}>{formatPrice(row.price, row.currency)}</span>
+        <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+          {formatPrice(row.price, row.currency)}
+        </Typography>
       ),
     },
     {
-      field: "view_count",
-      headerName: "Vistas",
-      width: 70,
+      field: "engagement",
+      headerName: "Métricas",
+      width: 88,
       align: "center",
       headerAlign: "center",
-      type: "number",
-    },
-    {
-      field: "consult_count",
-      headerName: "Consultas",
-      width: 90,
-      align: "center",
-      headerAlign: "center",
-      type: "number",
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: ({ row }) => {
+        const label = `${row.view_count ?? 0} vistas · ${row.consult_count ?? 0} consultas`;
+        return (
+          <Tooltip title={label}>
+            <Typography variant="caption" sx={{ lineHeight: 1.3, whiteSpace: "nowrap" }}>
+              <Box component="span" sx={{ display: "block" }}>
+                {row.view_count ?? 0} v.
+              </Box>
+              <Box component="span" sx={{ display: "block", color: "text.secondary" }}>
+                {row.consult_count ?? 0} c.
+              </Box>
+            </Typography>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "commission_buyer",
-      headerName: "Com. Comprador %",
-      width: 155,
+      headerName: "Com. comprador",
+      width: 108,
       type: "number",
       align: "center",
       headerAlign: "center",
@@ -254,16 +372,16 @@ export default function ListingsPage() {
       valueGetter: (v) => v ?? 3.0,
       renderCell: ({ value }) => (
         <Tooltip title="Doble clic para editar">
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, cursor: "pointer" }}>
-            <span>{Number(value).toFixed(1)}%</span>
-          </Box>
+          <Typography variant="caption" sx={{ cursor: "pointer" }}>
+            {Number(value).toFixed(1)}%
+          </Typography>
         </Tooltip>
       ),
     },
     {
       field: "commission_seller",
-      headerName: "Com. Vendedor %",
-      width: 150,
+      headerName: "Com. vendedor",
+      width: 104,
       type: "number",
       align: "center",
       headerAlign: "center",
@@ -271,82 +389,57 @@ export default function ListingsPage() {
       valueGetter: (v) => v ?? 3.0,
       renderCell: ({ value }) => (
         <Tooltip title="Doble clic para editar">
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, cursor: "pointer" }}>
-            <span>{Number(value).toFixed(1)}%</span>
-          </Box>
+          <Typography variant="caption" sx={{ cursor: "pointer" }}>
+            {Number(value).toFixed(1)}%
+          </Typography>
         </Tooltip>
       ),
     },
     {
-      field: "status",
+      field: "status_meta",
       headerName: "Estado",
-      width: 140,
-      renderCell: ({ value }) => (
-        <Chip
-          label={STATUS_LABELS[value] || value}
-          size="small"
-          color={statusColor[value] || "default"}
-          variant="outlined"
-        />
+      width: 124,
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: ({ row }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, minWidth: 0, py: 0.5 }}>
+          <Chip
+            label={STATUS_LABELS[row.status] || row.status}
+            size="small"
+            color={statusColor[row.status] || "default"}
+            variant="outlined"
+            sx={{ height: 22, maxWidth: "100%", "& .MuiChip-label": { px: 0.75, fontSize: "0.7rem" } }}
+          />
+          <Tooltip title={`Actualizado: ${formatListingDate(row.updated_at)}`}>
+            <Typography variant="caption" color="text.secondary" sx={cellEllipsisSx}>
+              {formatListingDate(row.updated_at)}
+            </Typography>
+          </Tooltip>
+        </Box>
       ),
     },
     {
       field: "actions",
-      headerName: "Acciones",
-      width: 230,
+      headerName: "",
+      width: 48,
       sortable: false,
       filterable: false,
+      disableColumnMenu: true,
+      align: "center",
+      headerAlign: "center",
       renderCell: ({ row }) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-          <Tooltip title={row.featured ? "Quitar destacado" : "Marcar como destacado"}>
-            <IconButton
-              size="small"
-              color={row.featured ? "warning" : "default"}
-              onClick={() => handleToggleFeatured(row)}
-            >
-              {row.featured ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-            </IconButton>
-          </Tooltip>
-          {row.status === "active" && (
-            <Tooltip title="Pausar">
-              <IconButton size="small" onClick={() => handleStatusChange(row.id, "paused")}>
-                <PauseCircleOutlineIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          {row.status === "paused" && (
-            <Tooltip title="Activar">
-              <IconButton
-                size="small"
-                color="success"
-                onClick={() => handleStatusChange(row.id, "active")}
-              >
-                <CheckCircleOutlineIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          {row.status !== "sold" && (
-            <Tooltip title="Marcar como vendido">
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => handleStatusChange(row.id, "sold")}
-              >
-                <SellIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Editar">
-            <IconButton component={Link} to={`/admin/editar/${row.id}`} size="small">
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Eliminar">
-            <IconButton size="small" color="error" onClick={() => handleDeleteClick(row)}>
-              <DeleteOutlineIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <Tooltip title="Acciones">
+          <IconButton
+            size="small"
+            aria-label="Acciones del anuncio"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRowMenu({ anchor: e.currentTarget, row });
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
@@ -355,7 +448,7 @@ export default function ListingsPage() {
     <Box>
       <AdminPageHeader
         title="Anuncios"
-        subtitle="Gestioná el portfolio: filtros, comisiones editables en tabla y estados en un clic."
+        subtitle="Tabla compacta: configurá columnas opcionales y acciones desde el menú ⋮."
         actions={
           <Button component={Link} to="/admin/nuevo" variant="contained" startIcon={<AddIcon />} size="medium">
             Nuevo anuncio
@@ -391,10 +484,13 @@ export default function ListingsPage() {
               onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="casa">Casa</MenuItem>
-              <MenuItem value="departamento">Departamento</MenuItem>
-              <MenuItem value="terreno">Terreno</MenuItem>
-              <MenuItem value="local_comercial">Local comercial</MenuItem>
+              {PROPERTY_TYPE_GROUPS.map((group) =>
+                group.options.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
+                )),
+              )}
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 110 } }}>
@@ -457,35 +553,192 @@ export default function ListingsPage() {
       )}
 
       <AdminSurface className="w-full min-w-0 overflow-hidden py-0" contentClassName="p-0">
-        <div className="min-w-0 w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            px: 1.5,
+            py: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<ViewColumnOutlinedIcon fontSize="small" />}
+            onClick={(e) => setColumnsMenuAnchor(e.currentTarget)}
+          >
+            Columnas
+          </Button>
+          <Menu
+            anchorEl={columnsMenuAnchor}
+            open={Boolean(columnsMenuAnchor)}
+            onClose={() => setColumnsMenuAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            slotProps={{ paper: { sx: { minWidth: 220, py: 0.5 } } }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ px: 2, py: 0.75, display: "block" }}>
+              Columnas opcionales
+            </Typography>
+            <Divider />
+            <Box sx={{ px: 1, py: 0.5 }} onClick={(e) => e.stopPropagation()}>
+              {OPTIONAL_COLUMNS.map((option) => (
+                <FormControlLabel
+                  key={option.id}
+                  sx={{ m: 0, width: "100%", px: 1, py: 0.25, display: "flex" }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={isOptionalColumnChecked(option)}
+                      onChange={(e) => toggleOptionalColumn(option, e.target.checked)}
+                    />
+                  }
+                  label={<Typography variant="body2">{option.label}</Typography>}
+                />
+              ))}
+            </Box>
+          </Menu>
+        </Box>
+        <Box className="min-w-0 w-full">
           <DataGrid
             rows={listings}
             columns={columns}
+            columnVisibilityModel={columnVisibility}
+            onColumnVisibilityModelChange={(model) => {
+              setColumnVisibility(model);
+              try {
+                localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(model));
+              } catch {
+                /* ignore */
+              }
+            }}
             loading={loading}
             disableRowSelectionOnClick
+            disableColumnSelector
+            disableColumnMenu
             pageSizeOptions={[25, 50, 100]}
             initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
             processRowUpdate={processRowUpdate}
             onProcessRowUpdateError={(err) => setError(err.message)}
+            rowHeight={56}
             sx={{
               border: "none",
-              minWidth: 720,
+              width: "100%",
               height: { xs: 480, sm: 520, md: 600 },
               "& .MuiDataGrid-main": { borderRadius: 0 },
-              "& .MuiDataGrid-cell": { alignItems: "center", display: "flex" },
+              "& .MuiDataGrid-columnHeader": { px: 1 },
+              "& .MuiDataGrid-cell": {
+                alignItems: "center",
+                display: "flex",
+                px: 1,
+                py: 0.5,
+              },
               "& .MuiDataGrid-cell--editable": {
                 outline: "1px dashed",
                 outlineColor: "primary.light",
                 cursor: "pointer",
               },
+              "& .MuiDataGrid-virtualScroller": { overflowX: "hidden !important" },
             }}
             localeText={{
               noRowsLabel: "No hay anuncios con esos filtros.",
               footerRowSelected: (c) => `${c} fila(s) seleccionada(s)`,
             }}
           />
-        </div>
+        </Box>
       </AdminSurface>
+
+      <Menu
+        anchorEl={rowMenu.anchor}
+        open={Boolean(rowMenu.anchor && menuRow)}
+        onClose={closeRowMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{ paper: { sx: { minWidth: 200 } } }}
+      >
+        {menuRow && (
+          <>
+            <MenuItem
+              onClick={() => {
+                handleToggleFeatured(menuRow);
+                closeRowMenu();
+              }}
+            >
+              <ListItemIcon>
+                {menuRow.featured ? (
+                  <StarIcon fontSize="small" color="warning" />
+                ) : (
+                  <StarBorderIcon fontSize="small" />
+                )}
+              </ListItemIcon>
+              <ListItemText>
+                {menuRow.featured ? "Quitar destacado" : "Marcar como destacado"}
+              </ListItemText>
+            </MenuItem>
+            {menuRow.status === "active" && (
+              <MenuItem
+                onClick={() => {
+                  handleStatusChange(menuRow.id, "paused");
+                  closeRowMenu();
+                }}
+              >
+                <ListItemIcon>
+                  <PauseCircleOutlineIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Pausar</ListItemText>
+              </MenuItem>
+            )}
+            {menuRow.status === "paused" && (
+              <MenuItem
+                onClick={() => {
+                  handleStatusChange(menuRow.id, "active");
+                  closeRowMenu();
+                }}
+              >
+                <ListItemIcon>
+                  <CheckCircleOutlineIcon fontSize="small" color="success" />
+                </ListItemIcon>
+                <ListItemText>Activar</ListItemText>
+              </MenuItem>
+            )}
+            {menuRow.status !== "sold" && (
+              <MenuItem
+                onClick={() => {
+                  handleStatusChange(menuRow.id, "sold");
+                  closeRowMenu();
+                }}
+              >
+                <ListItemIcon>
+                  <SellIcon fontSize="small" color="primary" />
+                </ListItemIcon>
+                <ListItemText>Marcar como vendido</ListItemText>
+              </MenuItem>
+            )}
+            <Divider />
+            <MenuItem component={Link} to={`/admin/editar/${menuRow.id}`} onClick={closeRowMenu}>
+              <ListItemIcon>
+                <EditIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Editar</ListItemText>
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleDeleteClick(menuRow);
+                closeRowMenu();
+              }}
+              sx={{ color: "error.main" }}
+            >
+              <ListItemIcon>
+                <DeleteOutlineIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Eliminar</ListItemText>
+            </MenuItem>
+          </>
+        )}
+      </Menu>
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
         <DialogTitle>¿Eliminar anuncio?</DialogTitle>

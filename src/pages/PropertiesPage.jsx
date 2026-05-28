@@ -1,9 +1,17 @@
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { getPublicListings } from "../api/client";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { getPublicListings, getPublicListingsMap } from "../api/client";
 import FeaturedPropertyCard from "../components/FeaturedPropertyCard";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { CITIES_LA_RIOJA, OPERATION_OPTIONS, PROPERTY_TYPES } from "../data/cities";
+import PropertiesSearchMap from "../components/PropertiesSearchMap";
+import {
+  ARGENTINA_PROVINCES,
+  CITIES_LA_RIOJA,
+  DEFAULT_PROVINCE_CODE,
+  OPERATION_OPTIONS,
+  PROPERTY_TYPE_GROUPS,
+} from "../data/cities";
+import { getProvinceByCode } from "../data/provinces";
 import { useSeo } from "../hooks/useSeo";
 import { lazyWithRetry } from "../utils/lazyRetry";
 import "./PropertiesPage.css";
@@ -16,6 +24,7 @@ const INITIAL_FILTERS = {
   property_type: "",
   operation: "",
   city: "",
+  province_code: DEFAULT_PROVINCE_CODE,
   min_price: "",
   max_price: "",
   min_rooms: "",
@@ -24,6 +33,24 @@ const INITIAL_FILTERS = {
   has_garden: false,
   has_pool: false,
 };
+
+function buildApiParams(filters, polygon) {
+  const params = {};
+  if (filters.search) params.search = filters.search;
+  if (filters.property_type) params.property_type = filters.property_type;
+  if (filters.operation) params.operation = filters.operation;
+  if (filters.city) params.city = filters.city;
+  if (filters.province_code) params.province_code = filters.province_code;
+  if (filters.min_price) params.min_price = Number(filters.min_price);
+  if (filters.max_price) params.max_price = Number(filters.max_price);
+  if (filters.min_rooms) params.bedrooms = Number(filters.min_rooms);
+  if (filters.min_area) params.min_area = Number(filters.min_area);
+  if (filters.has_garage) params.has_garage = true;
+  if (filters.has_garden) params.has_garden = true;
+  if (filters.has_pool) params.has_pool = true;
+  if (polygon?.length) params.polygon = polygon;
+  return params;
+}
 
 export default function PropertiesPage() {
   useSeo({
@@ -34,11 +61,15 @@ export default function PropertiesPage() {
   });
 
   const [listings, setListings] = useState([]);
+  const [mapPins, setMapPins] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mapLoading, setMapLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState(null);
+  const [hoveredListingId, setHoveredListingId] = useState(null);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [polygon, setPolygon] = useState(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const ADVANCED_KEYS = [
@@ -51,35 +82,29 @@ export default function PropertiesPage() {
     "has_pool",
   ];
 
+  const apiParams = useMemo(() => buildApiParams(filters, polygon), [filters, polygon]);
+
   const hasActiveFilters = Object.keys(INITIAL_FILTERS).some((k) => {
     const v = filters[k];
+    if (k === "province_code") return v !== DEFAULT_PROVINCE_CODE;
     return typeof v === "boolean" ? v : v !== "";
   });
   const hasAdvancedActive = ADVANCED_KEYS.some((k) => {
     const v = filters[k];
     return typeof v === "boolean" ? v : v !== "";
   });
+  const hasPolygon = Boolean(polygon?.length);
 
-  const clearFilters = () => setFilters(INITIAL_FILTERS);
+  const clearFilters = () => {
+    setFilters(INITIAL_FILTERS);
+    setPolygon(null);
+  };
 
   const fetchPage = useCallback(
     async (pageNum, reset = false) => {
       setLoading(true);
       try {
-        const params = { limit: LIMIT, page: pageNum };
-        if (filters.search) params.search = filters.search;
-        if (filters.property_type) params.property_type = filters.property_type;
-        if (filters.operation) params.operation = filters.operation;
-        if (filters.city) params.city = filters.city;
-        if (filters.min_price) params.min_price = Number(filters.min_price);
-        if (filters.max_price) params.max_price = Number(filters.max_price);
-        if (filters.min_rooms) params.bedrooms = Number(filters.min_rooms);
-        if (filters.min_area) params.min_area = Number(filters.min_area);
-        if (filters.has_garage) params.has_garage = true;
-        if (filters.has_garden) params.has_garden = true;
-        if (filters.has_pool) params.has_pool = true;
-
-        const data = await getPublicListings(params);
+        const data = await getPublicListings({ ...apiParams, limit: LIMIT, page: pageNum });
         const items = Array.isArray(data?.items) ? data.items : [];
         setListings((prev) => (reset ? items : [...prev, ...items]));
         setHasMore(pageNum < (data?.pages || 1));
@@ -90,29 +115,36 @@ export default function PropertiesPage() {
         setLoading(false);
       }
     },
-    [filters],
+    [apiParams],
   );
+
+  const fetchMapPins = useCallback(async () => {
+    setMapLoading(true);
+    try {
+      const data = await getPublicListingsMap(apiParams);
+      setMapPins(Array.isArray(data?.items) ? data.items : []);
+    } catch (_) {
+      setMapPins([]);
+    } finally {
+      setMapLoading(false);
+    }
+  }, [apiParams]);
 
   useEffect(() => {
     fetchPage(1, true);
-  }, [
-    filters.search,
-    filters.property_type,
-    filters.operation,
-    filters.city,
-    filters.min_price,
-    filters.max_price,
-    filters.min_rooms,
-    filters.min_area,
-    filters.has_garage,
-    filters.has_garden,
-    filters.has_pool,
-  ]);
+  }, [fetchPage]);
+
+  useEffect(() => {
+    fetchMapPins();
+  }, [fetchMapPins]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     fetchPage(1, true);
+    fetchMapPins();
   };
+
+  const provinceLabel = getProvinceByCode(filters.province_code)?.name ?? "La Rioja";
 
   return (
     <>
@@ -120,18 +152,16 @@ export default function PropertiesPage() {
       <main className="properties-page">
         <header className="properties-page__hero">
           <div className="container">
-            <h1 className="properties-page__title">Propiedades — LRV Inmobiliaria La Rioja</h1>
+            <h1 className="properties-page__title">Propiedades — LRV Inmobiliaria</h1>
             <p className="properties-page__subtitle">
-              Buscá por zona, precio, tipo y operación. Todos los inmuebles cuentan con
-              documentación.
+              Buscá en el mapa, dibujá tu zona ideal y filtrá por provincia, precio y tipo de
+              inmueble.
             </p>
           </div>
         </header>
 
         <div className="container">
-          {/* ── Barra de filtros ──────────────────────────────────── */}
           <form onSubmit={handleSearch} className="pf" aria-label="Filtros de búsqueda">
-            {/* Barra principal */}
             <div className="pf__bar">
               <div className="pf__field pf__field--search">
                 <svg
@@ -163,16 +193,37 @@ export default function PropertiesPage() {
 
               <div className="pf__field">
                 <select
+                  value={filters.province_code}
+                  onChange={(e) => setFilters((f) => ({ ...f, province_code: e.target.value }))}
+                  className="pf__select pf__select--province"
+                  aria-label="Provincia"
+                >
+                  {ARGENTINA_PROVINCES.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pf__divider" aria-hidden />
+
+              <div className="pf__field">
+                <select
                   value={filters.property_type}
                   onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
                   className="pf__select"
                   aria-label="Tipo de inmueble"
                 >
                   <option value="">Tipo de inmueble</option>
-                  {PROPERTY_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
+                  {PROPERTY_TYPE_GROUPS.map((group) => (
+                    <optgroup key={group.id} label={group.label}>
+                      {group.options.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -244,7 +295,6 @@ export default function PropertiesPage() {
               </button>
             </div>
 
-            {/* Panel avanzado */}
             {advancedOpen && (
               <div className="pf__advanced">
                 <div className="pf__adv-grid">
@@ -325,7 +375,7 @@ export default function PropertiesPage() {
                   </div>
                 </div>
 
-                {hasActiveFilters && (
+                {(hasActiveFilters || hasPolygon) && (
                   <div className="pf__adv-footer">
                     <button type="button" className="pf__clear" onClick={clearFilters}>
                       Limpiar todos los filtros
@@ -336,61 +386,97 @@ export default function PropertiesPage() {
             )}
           </form>
 
-          {loading && listings.length === 0 ? (
-            <div className="properties-page__skeleton">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="properties-page__card-skeleton">
-                  <div className="properties-page__skeleton-image" />
-                  <div className="properties-page__skeleton-content">
-                    <span className="properties-page__skeleton-line" style={{ width: "40%" }} />
-                    <span className="properties-page__skeleton-line" style={{ width: "90%" }} />
-                    <span className="properties-page__skeleton-line" style={{ width: "70%" }} />
-                    <span className="properties-page__skeleton-line" style={{ width: "50%" }} />
+          <div className="properties-page__results-bar">
+            <p className="properties-page__results-meta">
+              {loading && listings.length === 0
+                ? "Buscando…"
+                : `${listings.length} resultado${listings.length === 1 ? "" : "s"} en ${provinceLabel}`}
+              {hasPolygon ? " · zona dibujada en el mapa" : ""}
+              {mapLoading ? "" : ` · ${mapPins.length} en el mapa`}
+            </p>
+          </div>
+
+          <div className="properties-page__split">
+            <section className="properties-page__list" aria-label="Listado de propiedades">
+              {loading && listings.length === 0 ? (
+                <div className="properties-page__skeleton">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="properties-page__card-skeleton">
+                      <div className="properties-page__skeleton-image" />
+                      <div className="properties-page__skeleton-content">
+                        <span className="properties-page__skeleton-line" style={{ width: "40%" }} />
+                        <span className="properties-page__skeleton-line" style={{ width: "90%" }} />
+                        <span className="properties-page__skeleton-line" style={{ width: "70%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="properties-page__grid grid grid-cols-1 gap-5 sm:grid-cols-2 [&_.property-card]:min-h-[360px]">
+                    {listings.map((p) => (
+                      <div
+                        key={p.id}
+                        className={
+                          hoveredListingId === p.id ? "properties-page__card--hover" : ""
+                        }
+                        onMouseEnter={() => setHoveredListingId(p.id)}
+                        onMouseLeave={() => setHoveredListingId(null)}
+                      >
+                        <FeaturedPropertyCard listing={p} onSelect={setSelectedListingId} />
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="properties-page__grid">
-                {listings.map((p) => (
-                  <FeaturedPropertyCard key={p.id} listing={p} onSelect={setSelectedListingId} />
-                ))}
-              </div>
-              {selectedListingId != null && (
-                <Suspense fallback={null}>
-                  <PropertyDetailModal
-                    listingId={selectedListingId}
-                    onClose={() => setSelectedListingId(null)}
-                  />
-                </Suspense>
+                  {listings.length === 0 && !loading && (
+                    <div className="properties-page__empty">
+                      <p className="properties-page__empty-title">
+                        No hay propiedades con esos filtros
+                      </p>
+                      <p className="properties-page__empty-text">
+                        Probá otra provincia, ampliá la búsqueda o borrá el área dibujada en el
+                        mapa.
+                      </p>
+                      <button type="button" className="btn btn-primary" onClick={clearFilters}>
+                        Limpiar filtros
+                      </button>
+                    </div>
+                  )}
+                  {hasMore && listings.length > 0 && (
+                    <div className="properties-page__load">
+                      <button
+                        type="button"
+                        className="btn btn-outline properties-page__load-btn"
+                        disabled={loading}
+                        onClick={() => fetchPage(page + 1, false)}
+                      >
+                        {loading ? "Cargando…" : "Ver más propiedades"}
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
-              {listings.length === 0 && !loading && (
-                <div className="properties-page__empty">
-                  <p className="properties-page__empty-title">
-                    No hay propiedades con esos filtros
-                  </p>
-                  <p className="properties-page__empty-text">
-                    Probá ampliando la búsqueda o limpiando los filtros.
-                  </p>
-                  <button type="button" className="btn btn-primary" onClick={clearFilters}>
-                    Limpiar filtros
-                  </button>
-                </div>
-              )}
-              {hasMore && listings.length > 0 && (
-                <div className="properties-page__load">
-                  <button
-                    type="button"
-                    className="btn btn-outline properties-page__load-btn"
-                    disabled={loading}
-                    onClick={() => fetchPage(page + 1, false)}
-                  >
-                    {loading ? "Cargando…" : "Ver más propiedades"}
-                  </button>
-                </div>
-              )}
-            </>
+            </section>
+
+            <aside className="properties-page__map-wrap" aria-label="Mapa de búsqueda">
+              <PropertiesSearchMap
+                provinceCode={filters.province_code}
+                mapPins={mapPins}
+                polygon={polygon}
+                onPolygonChange={setPolygon}
+                hoveredId={hoveredListingId}
+                onPinHover={setHoveredListingId}
+                onPinOpen={setSelectedListingId}
+              />
+            </aside>
+          </div>
+
+          {selectedListingId != null && (
+            <Suspense fallback={null}>
+              <PropertyDetailModal
+                listingId={selectedListingId}
+                onClose={() => setSelectedListingId(null)}
+              />
+            </Suspense>
           )}
         </div>
       </main>

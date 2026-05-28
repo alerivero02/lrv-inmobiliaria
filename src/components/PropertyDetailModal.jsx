@@ -5,9 +5,8 @@ import VisitRequestForm from "./VisitRequestForm";
 import PropertyLocationMap from "./PropertyLocationMap";
 import { AGENCY_WHATSAPP, getSiteBaseUrl } from "../config/agency";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { TYPE_LABELS } from "../data/propertyTypes";
 import "./PropertyDetailModal.css";
-
-const TYPE_LABELS = { casa: "Casa", departamento: "Departamento", terreno: "Terreno" };
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
 /** Arma un mensaje con formato tipo card: tipo • operación, título, ubicación, características, precio y link para preview con imagen */

@@ -1,13 +1,7 @@
 import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/format";
+import { TYPE_LABELS } from "../data/propertyTypes";
 import "./PropertyCarousel.css";
-
-const TYPE_LABELS = {
-  casa: "Casa",
-  departamento: "Departamento",
-  terreno: "Terreno",
-  local_comercial: "Local comercial",
-};
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
 /**
