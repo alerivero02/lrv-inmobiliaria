@@ -6,6 +6,7 @@ import AboutSection from "../landing/sections/AboutSection";
 import ContactSection from "../landing/sections/ContactSection";
 import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSection";
 import HeroSection from "../landing/sections/HeroSection";
+import MapSearchSection from "../landing/sections/MapSearchSection";
 import ServicesSection from "../landing/sections/ServicesSection";
 import StatsSection from "../landing/sections/StatsSection";
 import { lazyWithRetry } from "../utils/lazyRetry";
@@ -26,6 +27,7 @@ export default function LandingPage() {
         <StatsSection />
         <AboutSection />
         <ServicesSection />
+        <MapSearchSection />
         <FeaturedPropertiesSection onSelectListing={setSelectedListingId} />
         <ContactSection />
       </main>

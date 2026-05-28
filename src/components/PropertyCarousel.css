@@ -1,5 +1,6 @@
 .properties {
   background: var(--bone);
+  overflow-x: clip;
 }
 
 .properties__header {
@@ -15,10 +16,11 @@
 .properties__carousel {
   position: relative;
   padding: 0 3rem;
+  overflow: hidden;
 }
 
 .properties__carousel .properties__swiper {
-  overflow: visible;
+  overflow: hidden;
   min-height: 420px;
 }
 

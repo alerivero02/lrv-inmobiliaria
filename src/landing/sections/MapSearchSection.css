@@ -1,0 +1,30 @@
+.map-search-section {
+  background: var(--white);
+  padding: 4rem 0;
+  border-top: 1px solid var(--bone-border);
+  border-bottom: 1px solid var(--bone-border);
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+.map-search-section__header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+}
+
+.map-search-section__subtitle {
+  margin: 0 auto;
+}
+
+.map-search-section__map-fallback {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bone);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--bone-border);
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}

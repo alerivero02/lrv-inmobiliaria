@@ -20,6 +20,13 @@ import {
   countActiveFilters,
   INITIAL_PROPERTY_FILTERS,
 } from "../utils/propertyFilters";
+import {
+  clearSearchPolygon,
+  isValidPolygonRing,
+  loadSearchPolygon,
+  ringEquals,
+  saveSearchPolygon,
+} from "../utils/polygonSearch";
 import "./PropertiesPage.css";
 
 const PropertyDetailModal = lazyWithRetry(() => import("../components/PropertyDetailModal"));
@@ -84,7 +91,9 @@ export default function PropertiesPage() {
   const [hoveredListingId, setHoveredListingId] = useState(null);
   const [filters, setFilters] = useState(INITIAL_PROPERTY_FILTERS);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [polygon, setPolygon] = useState(null);
+  const [polygon, setPolygon] = useState(() => loadSearchPolygon());
+  const [mapSectionVisible, setMapSectionVisible] = useState(() => !loadSearchPolygon());
+  const [totalCount, setTotalCount] = useState(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
@@ -115,14 +124,35 @@ export default function PropertiesPage() {
   const hasPolygon = Boolean(polygon?.length);
   const activeFilterCount = countActiveFilters(filters, { hasPolygon });
 
+  const clearPolygon = useCallback(() => {
+    clearSearchPolygon();
+    setPolygon(null);
+    setMapSectionVisible(true);
+  }, []);
+
+  const handlePolygonChange = useCallback((ring) => {
+    if (!ring || !isValidPolygonRing(ring)) {
+      clearSearchPolygon();
+      setPolygon(null);
+      setMapSectionVisible(true);
+      return;
+    }
+    setPolygon((prev) => {
+      if (ringEquals(prev, ring)) return prev;
+      saveSearchPolygon(ring);
+      return ring;
+    });
+    setMapSectionVisible(false);
+  }, []);
+
   const clearFilters = () => {
     setFilters(INITIAL_PROPERTY_FILTERS);
-    setPolygon(null);
+    clearPolygon();
   };
 
   const removeChip = (chip) => {
     if (chip.id === "polygon") {
-      setPolygon(null);
+      clearPolygon();
       return;
     }
     setFilters((f) => ({ ...f, ...chip.clear() }));
@@ -132,9 +162,9 @@ export default function PropertiesPage() {
     () =>
       buildFilterChips(filters, {
         hasPolygon,
-        onClearPolygon: () => setPolygon(null),
+        onClearPolygon: clearPolygon,
       }),
-    [filters, hasPolygon],
+    [filters, hasPolygon, clearPolygon],
   );
 
   const fetchPage = useCallback(
@@ -144,6 +174,7 @@ export default function PropertiesPage() {
         const data = await getPublicListings({ ...apiParams, limit: LIMIT, page: pageNum });
         const items = Array.isArray(data?.items) ? data.items : [];
         setListings((prev) => (reset ? items : [...prev, ...items]));
+        setTotalCount(Number(data?.total ?? items.length));
         setHasMore(pageNum < (data?.pages || 1));
         setPage(pageNum);
       } catch (_) {
@@ -172,8 +203,10 @@ export default function PropertiesPage() {
   }, [fetchPage]);
 
   useEffect(() => {
-    fetchMapPins();
-  }, [fetchMapPins]);
+    if (mapSectionVisible || hasPolygon) {
+      fetchMapPins();
+    }
+  }, [fetchMapPins, mapSectionVisible, hasPolygon]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -445,18 +478,55 @@ export default function PropertiesPage() {
             activeCount={activeFilterCount}
           />
 
+          {hasPolygon && !mapSectionVisible && (
+            <div className="properties-page__zone-bar">
+              <p className="properties-page__zone-text">
+                {loading && listings.length === 0
+                  ? "Buscando en tu zona…"
+                  : `${totalCount} propiedad${totalCount === 1 ? "" : "es"} dentro de tu zona dibujada`}
+              </p>
+              <div className="properties-page__zone-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setMapSectionVisible(true)}
+                >
+                  Editar zona en mapa
+                </button>
+                <button type="button" className="btn btn-outline" onClick={clearPolygon}>
+                  Borrar zona
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div
+            className={`properties-page__map-section${mapSectionVisible ? "" : " properties-page__map-section--hidden"}`}
+            aria-hidden={!mapSectionVisible}
+          >
+            <PropertiesSearchMap
+              provinceCode={filters.province_code}
+              mapPins={mapPins}
+              polygon={polygon}
+              onPolygonChange={handlePolygonChange}
+              variant="search"
+            />
+          </div>
+
           <div className="properties-page__results-bar">
             <p className="properties-page__results-meta">
               {loading && listings.length === 0
                 ? "Buscando…"
-                : `${listings.length} resultado${listings.length === 1 ? "" : "s"} en ${provinceLabel}`}
-              {hasPolygon ? " · zona dibujada en el mapa" : ""}
-              {mapLoading ? "" : ` · ${mapPins.length} en el mapa`}
+                : hasPolygon
+                  ? mapSectionVisible
+                    ? `Dibujá o editá el área en el mapa para filtrar`
+                    : `Mostrando ${listings.length} de ${totalCount} en tu zona`
+                  : `${totalCount || listings.length} resultado${(totalCount || listings.length) === 1 ? "" : "s"} en ${provinceLabel}`}
+              {!hasPolygon && !mapLoading && mapSectionVisible ? ` · ${mapPins.length} en el mapa` : ""}
             </p>
           </div>
 
-          <div className="properties-page__split">
-            <section className="properties-page__list" aria-label="Listado de propiedades">
+          <section className="properties-page__list" aria-label="Listado de propiedades">
               {loading && listings.length === 0 ? (
                 <div className="properties-page__skeleton">
                   {[1, 2, 3, 4].map((i) => (
@@ -514,20 +584,7 @@ export default function PropertiesPage() {
                   )}
                 </>
               )}
-            </section>
-
-            <aside className="properties-page__map-wrap" aria-label="Mapa de búsqueda">
-              <PropertiesSearchMap
-                provinceCode={filters.province_code}
-                mapPins={mapPins}
-                polygon={polygon}
-                onPolygonChange={setPolygon}
-                hoveredId={hoveredListingId}
-                onPinHover={setHoveredListingId}
-                onPinOpen={setSelectedListingId}
-              />
-            </aside>
-          </div>
+          </section>
 
           {selectedListingId != null && (
             <Suspense fallback={null}>

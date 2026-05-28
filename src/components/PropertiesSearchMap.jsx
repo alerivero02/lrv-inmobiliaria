@@ -27,12 +27,16 @@ function PropertiesSearchMapInner({
   mapPins,
   polygon,
   onPolygonChange,
+  onPolygonComplete,
   onPinHover,
   onPinOpen,
   hoveredId,
+  variant = "search",
+  compact = false,
 }) {
   const mapRef = useRef(null);
   const polygonOverlayRef = useRef(null);
+  const listenersBoundOverlayRef = useRef(null);
   const [hoveredPin, setHoveredPin] = useState(null);
   const [drawingReady, setDrawingReady] = useState(false);
 
@@ -60,7 +64,30 @@ function PropertiesSearchMapInner({
     };
   }, [drawingReady]);
 
+  const emitRingFromOverlay = useCallback(
+    (overlay) => {
+      const ring = pathToPolygonRing(overlay.getPath());
+      if (ring) onPolygonChange?.(ring);
+      return ring;
+    },
+    [onPolygonChange],
+  );
+
+  const bindOverlayListeners = useCallback(
+    (overlay) => {
+      if (listenersBoundOverlayRef.current === overlay) return;
+      listenersBoundOverlayRef.current = overlay;
+      const path = overlay.getPath();
+      const push = () => emitRingFromOverlay(overlay);
+      path.addListener("set_at", push);
+      path.addListener("insert_at", push);
+      path.addListener("remove_at", push);
+    },
+    [emitRingFromOverlay],
+  );
+
   const clearDrawnPolygon = useCallback(() => {
+    listenersBoundOverlayRef.current = null;
     if (polygonOverlayRef.current) {
       polygonOverlayRef.current.setMap(null);
       polygonOverlayRef.current = null;
@@ -68,26 +95,22 @@ function PropertiesSearchMapInner({
     onPolygonChange?.(null);
   }, [onPolygonChange]);
 
-  const syncPolygonFromOverlay = useCallback(
-    (overlay) => {
-      const path = overlay.getPath();
-      const ring = pathToPolygonRing(path);
-      onPolygonChange?.(ring);
-      const push = () => syncPolygonFromOverlay(overlay);
-      path.addListener("set_at", push);
-      path.addListener("insert_at", push);
-      path.addListener("remove_at", push);
-    },
-    [onPolygonChange],
-  );
+  const handleRedraw = useCallback(() => {
+    clearDrawnPolygon();
+  }, [clearDrawnPolygon]);
 
   const handlePolygonComplete = useCallback(
     (poly) => {
-      clearDrawnPolygon();
+      if (polygonOverlayRef.current && polygonOverlayRef.current !== poly) {
+        polygonOverlayRef.current.setMap(null);
+      }
+      listenersBoundOverlayRef.current = null;
       polygonOverlayRef.current = poly;
-      syncPolygonFromOverlay(poly);
+      bindOverlayListeners(poly);
+      const ring = emitRingFromOverlay(poly);
+      if (ring) onPolygonComplete?.(ring);
     },
-    [clearDrawnPolygon, syncPolygonFromOverlay],
+    [bindOverlayListeners, emitRingFromOverlay, onPolygonComplete],
   );
 
   useEffect(() => {
@@ -95,6 +118,7 @@ function PropertiesSearchMapInner({
       if (polygonOverlayRef.current) {
         polygonOverlayRef.current.setMap(null);
         polygonOverlayRef.current = null;
+        listenersBoundOverlayRef.current = null;
       }
       return;
     }
@@ -112,20 +136,32 @@ function PropertiesSearchMapInner({
       map: mapRef.current,
     });
     polygonOverlayRef.current = overlay;
-    syncPolygonFromOverlay(overlay);
-  }, [polygon, syncPolygonFromOverlay]);
+    bindOverlayListeners(overlay);
+    emitRingFromOverlay(overlay);
+  }, [polygon, bindOverlayListeners, emitRingFromOverlay]);
 
   useEffect(() => {
     if (!mapRef.current) return;
     const prov = getProvinceByCode(provinceCode);
-    if (prov?.center) {
+    if (prov?.center && !polygon?.length) {
       mapRef.current.panTo(prov.center);
       mapRef.current.setZoom(9);
     }
-  }, [provinceCode]);
+  }, [provinceCode, polygon]);
 
   useEffect(() => {
-    if (!mapPins?.length || !mapRef.current) return;
+    if (!mapRef.current || !window.google?.maps) return;
+
+    if (polygon?.length >= 3) {
+      const bounds = new window.google.maps.LatLngBounds();
+      for (const [lng, lat] of polygon) {
+        bounds.extend({ lat: Number(lat), lng: Number(lng) });
+      }
+      mapRef.current.fitBounds(bounds, 48);
+      return;
+    }
+
+    if (!mapPins?.length) return;
     const bounds = new window.google.maps.LatLngBounds();
     let has = false;
     for (const p of mapPins) {
@@ -134,20 +170,34 @@ function PropertiesSearchMapInner({
       has = true;
     }
     if (has) mapRef.current.fitBounds(bounds, 48);
-  }, [mapPins]);
+  }, [mapPins, polygon]);
 
   const activeHover =
     hoveredPin ?? mapPins?.find((p) => p.id === hoveredId) ?? null;
 
+  const hintText =
+    variant === "landing"
+      ? "Seleccioná el ícono de polígono arriba, dibujá el área y cerrá haciendo clic en el primer punto"
+      : "Dibujá un área en el mapa para ver solo las propiedades dentro";
+
+  const rootClass = ["search-map", compact && "search-map--compact"].filter(Boolean).join(" ");
+
   return (
-    <div className="search-map">
+    <div className={rootClass}>
       <div className="search-map__toolbar">
-        <span className="search-map__hint">Dibujá un área en el mapa para acotar la búsqueda</span>
-        {polygon?.length > 0 && (
-          <button type="button" className="search-map__clear" onClick={clearDrawnPolygon}>
-            Borrar área
-          </button>
-        )}
+        <span className="search-map__hint">{hintText}</span>
+        <div className="search-map__actions">
+          {polygon?.length > 0 && (
+            <>
+              <button type="button" className="search-map__clear" onClick={handleRedraw}>
+                Dibujar de nuevo
+              </button>
+              <button type="button" className="search-map__clear" onClick={clearDrawnPolygon}>
+                Borrar área
+              </button>
+            </>
+          )}
+        </div>
       </div>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
@@ -225,7 +275,9 @@ export default function PropertiesSearchMap(props) {
   if (!apiKey) {
     return (
       <div className="search-map search-map--placeholder">
-        <p>Configurá <code>VITE_GOOGLE_MAPS_API_KEY</code> para usar el mapa interactivo.</p>
+        <p>
+          Configurá <code>VITE_GOOGLE_MAPS_API_KEY</code> para usar el mapa interactivo.
+        </p>
       </div>
     );
   }

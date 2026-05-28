@@ -8,6 +8,11 @@
   background: var(--bone);
 }
 
+.search-map--compact {
+  min-height: 320px;
+  height: 320px;
+}
+
 .search-map--placeholder {
   display: flex;
   align-items: center;
@@ -25,9 +30,17 @@
   right: 0.75rem;
   z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
+  pointer-events: none;
+}
+
+.search-map__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
   pointer-events: none;
 }
 

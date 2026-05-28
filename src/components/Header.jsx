@@ -99,7 +99,9 @@ export default function Header() {
           className={cn(
             "flex items-center gap-8",
             "max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-[100] max-md:w-[min(280px,85vw)] max-md:flex-col max-md:justify-center max-md:gap-6 max-md:bg-bone max-md:shadow-[-4px_0_24px_rgba(0,0,0,0.08)] max-md:transition-transform max-md:duration-lrv",
-            mobileOpen ? "max-md:translate-x-0" : "max-md:translate-x-full",
+            mobileOpen
+              ? "max-md:visible max-md:pointer-events-auto max-md:translate-x-0"
+              : "max-md:invisible max-md:pointer-events-none max-md:translate-x-full",
           )}
           aria-label="Principal"
         >
