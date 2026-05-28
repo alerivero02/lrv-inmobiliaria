@@ -240,6 +240,21 @@ export async function migratePg() {
     EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN referrer_name TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN referrer_lastname TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN referrer_phone TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
     DO $$
     BEGIN
       CREATE UNIQUE INDEX IF NOT EXISTS visits_slot_active_uq
@@ -449,6 +464,15 @@ function migrateSqlite() {
   } catch {}
   try {
     db.exec("ALTER TABLE listings ADD COLUMN lot_polygon TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN referrer_name TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN referrer_lastname TEXT");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN referrer_phone TEXT");
   } catch {}
   try {
     db.exec(`

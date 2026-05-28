@@ -23,30 +23,60 @@ export default function MapSearchSection() {
           <h2 id="map-search-title" className="section-title">
             Encontrá tu próxima propiedad es más fácil con nosotros
           </h2>
-          <p className="section-subtitle map-search-section__subtitle">
-            Usá la herramienta de polígono en el mapa, dibujá el área que te interesa y cerrá el
-            contorno en el primer punto. Te llevamos al listado con las publicaciones dentro de tu
-            zona — y podés ajustar el área cuando quieras.
-          </p>
         </header>
 
-        <Suspense
-          fallback={
-            <div className="map-search-section__map-fallback">
-              <p>Cargando mapa interactivo…</p>
-            </div>
-          }
-        >
-          <PropertiesSearchMap
-            variant="landing"
-            compact
-            provinceCode={DEFAULT_PROVINCE_CODE}
-            mapPins={[]}
-            polygon={null}
-            onPolygonChange={() => {}}
-            onPolygonComplete={handlePolygonComplete}
-          />
-        </Suspense>
+        <div className="map-search-section__grid">
+          <div className="map-search-section__map">
+            <Suspense
+              fallback={
+                <div className="map-search-section__map-fallback">
+                  <p>Cargando mapa interactivo…</p>
+                </div>
+              }
+            >
+              <PropertiesSearchMap
+                variant="landing"
+                provinceCode={DEFAULT_PROVINCE_CODE}
+                mapPins={[]}
+                polygon={null}
+                onPolygonChange={() => {}}
+                onPolygonComplete={handlePolygonComplete}
+              />
+            </Suspense>
+          </div>
+
+          <ol className="map-search-section__steps">
+            <li className="map-search-section__step">
+              <span className="map-search-section__step-num">01</span>
+              <div>
+                <h3 className="map-search-section__step-title">Seleccioná</h3>
+                <p className="map-search-section__step-desc">
+                  Hacé clic en el ícono de polígono en la esquina superior del mapa.
+                </p>
+              </div>
+            </li>
+            <li className="map-search-section__step">
+              <span className="map-search-section__step-num">02</span>
+              <div>
+                <h3 className="map-search-section__step-title">Dibujá tu zona</h3>
+                <p className="map-search-section__step-desc">
+                  Marcá los puntos del área que te interesa y cerrá el contorno haciendo clic en el
+                  primer punto.
+                </p>
+              </div>
+            </li>
+            <li className="map-search-section__step">
+              <span className="map-search-section__step-num">03</span>
+              <div>
+                <h3 className="map-search-section__step-title">¡Listo!</h3>
+                <p className="map-search-section__step-desc">
+                  Te mostraremos automáticamente las publicaciones dentro de tu zona. Podés ajustarla
+                  cuando quieras.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
       </div>
     </section>
   );

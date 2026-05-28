@@ -105,6 +105,9 @@ const emptyForm = {
   extras_note: "",
   images: [],
   lot_polygon: null,
+  referrer_name: "",
+  referrer_lastname: "",
+  referrer_phone: "",
 };
 
 export default function ListingFormPage() {
@@ -156,6 +159,9 @@ export default function ListingFormPage() {
             extras_note: data.extras_note ?? "",
             images: Array.isArray(data.images) ? data.images : [],
             lot_polygon: Array.isArray(data.lot_polygon) ? data.lot_polygon : null,
+            referrer_name: data.referrer_name ?? "",
+            referrer_lastname: data.referrer_lastname ?? "",
+            referrer_phone: data.referrer_phone ?? "",
           });
           setPropertyCategory(getPropertyCategory(data.property_type ?? "casa"));
           setCitySource(data.city && CITIES_LA_RIOJA.includes(data.city) ? "list" : "manual");
@@ -335,6 +341,9 @@ export default function ListingFormPage() {
       documentation: form.documentation || null,
       images: cleanedImages.length ? cleanedImages : null,
       lot_polygon: showLotBoundary && form.lot_polygon?.length ? form.lot_polygon : null,
+      referrer_name: form.referrer_name?.trim() || null,
+      referrer_lastname: form.referrer_lastname?.trim() || null,
+      referrer_phone: form.referrer_phone?.trim() || null,
     };
     if (!payload.city) {
       setError("Indicá la ubicación (ciudad o localidad).");
@@ -609,6 +618,43 @@ export default function ListingFormPage() {
                 type="checkbox"
                 checked={form.featured}
                 onChange={(e) => update("featured", e.target.checked)}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="listing-form__section">
+          <h2>Referente</h2>
+          <p className="listing-form__hint">
+            Datos internos del referente. Solo visibles para el administrador; no se muestran en la
+            ficha pública.
+          </p>
+          <div className="listing-form__row">
+            <label>
+              Nombre
+              <input
+                type="text"
+                value={form.referrer_name}
+                onChange={(e) => update("referrer_name", e.target.value)}
+                placeholder="Ej: Juan"
+              />
+            </label>
+            <label>
+              Apellido
+              <input
+                type="text"
+                value={form.referrer_lastname}
+                onChange={(e) => update("referrer_lastname", e.target.value)}
+                placeholder="Ej: Pérez"
+              />
+            </label>
+            <label>
+              Teléfono
+              <input
+                type="tel"
+                value={form.referrer_phone}
+                onChange={(e) => update("referrer_phone", e.target.value)}
+                placeholder="Ej: 380 412 3456"
               />
             </label>
           </div>

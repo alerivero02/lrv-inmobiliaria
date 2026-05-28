@@ -98,6 +98,14 @@ function parseListing(row) {
   };
 }
 
+/** Serializa un anuncio para respuestas públicas, omitiendo datos del referente (solo admin). */
+function parsePublicListing(row) {
+  const parsed = parseListing(row);
+  if (!parsed) return null;
+  const { referrer_name, referrer_lastname, referrer_phone, ...publicListing } = parsed;
+  return publicListing;
+}
+
 /**
  * Valida y normaliza lot_polygon para tipos land; recalcula area_sqm y centroide si aplica.
  * @returns {{ lot_polygon: string|null, lat, lng, area_sqm, error?: string }}
@@ -208,7 +216,7 @@ router.get("/public", asyncHandler(async (req, res) => {
   if (polygon) {
     const rows = await all(`SELECT * FROM listings ${where} ORDER BY ${orderSql}`, ...params);
     const filtered = applyPolygonFilter(rows, polygon);
-    const paged = paginateArray(filtered.map(parseListing), page, limit);
+    const paged = paginateArray(filtered.map(parsePublicListing), page, limit);
     return res.json(paged);
   }
 
@@ -226,7 +234,7 @@ router.get("/public", asyncHandler(async (req, res) => {
   );
 
   return res.json({
-    items: rows.map(parseListing),
+    items: rows.map(parsePublicListing),
     total,
     page: pageN,
     pages: Math.ceil(total / limitN),
@@ -237,7 +245,7 @@ router.get("/public/:id", asyncHandler(async (req, res) => {
   const row = await get("SELECT * FROM listings WHERE id = ? AND status = 'active'", req.params.id);
   if (!row) return res.status(404).json({ detail: "Anuncio no encontrado" });
   await run("UPDATE listings SET view_count = view_count + 1 WHERE id = ?", req.params.id);
-  return res.json(parseListing({ ...row, view_count: (row.view_count || 0) + 1 }));
+  return res.json(parsePublicListing({ ...row, view_count: (row.view_count || 0) + 1 }));
 }));
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
@@ -353,6 +361,9 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     commission_buyer,
     commission_seller,
     lot_polygon,
+    referrer_name,
+    referrer_lastname,
+    referrer_phone,
   } = req.body;
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
@@ -393,8 +404,8 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
      address,city,province,province_code,lat,lng,location_manual,
      rooms,area_sqm,price,currency,
      has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,lot_polygon,featured,extras_note,images,
-     commission_buyer,commission_seller)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     commission_buyer,commission_seller,referrer_name,referrer_lastname,referrer_phone)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
     title,
@@ -429,6 +440,9 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     JSON.stringify(Array.isArray(images) ? images : []),
     commission_buyer ?? 3.0,
     commission_seller ?? 3.0,
+    referrer_name ?? null,
+    referrer_lastname ?? null,
+    referrer_phone ?? null,
   );
 
   return res
@@ -473,6 +487,9 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
     "images",
     "commission_buyer",
     "commission_seller",
+    "referrer_name",
+    "referrer_lastname",
+    "referrer_phone",
   ];
   const BOOL_FIELDS = new Set([
     "has_garage",

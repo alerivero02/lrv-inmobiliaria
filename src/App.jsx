@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ScrollToTop from "./components/ScrollToTop";
 import { lazyWithRetry } from "./utils/lazyRetry";
 
 const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"));
@@ -34,6 +35,7 @@ function RouteFallback() {
 export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/propiedades" element={<PropertiesPage />} />

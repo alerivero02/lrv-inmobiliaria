@@ -46,10 +46,10 @@ function PropertiesSearchMapInner({
         drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
       },
       polygonOptions: {
-        fillColor: "#9a7b4f",
-        fillOpacity: 0.18,
+        fillColor: "#00a86b",
+        fillOpacity: 0.15,
         strokeWeight: 2,
-        strokeColor: "#6b5340",
+        strokeColor: "#008f5a",
         editable: true,
         clickable: true,
       },
@@ -120,10 +120,10 @@ function PropertiesSearchMapInner({
     const paths = polygon.map(([lng, lat]) => ({ lat, lng }));
     const overlay = new window.google.maps.Polygon({
       paths,
-      fillColor: "#9a7b4f",
-      fillOpacity: 0.18,
+      fillColor: "#00a86b",
+      fillOpacity: 0.15,
       strokeWeight: 2,
-      strokeColor: "#6b5340",
+      strokeColor: "#008f5a",
       editable: true,
       map: mapRef.current,
     });
@@ -224,7 +224,7 @@ function PropertiesSearchMapInner({
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
                 scale: isActive ? 11 : 8,
-                fillColor: isActive ? "#6b5340" : "#9a7b4f",
+                fillColor: isActive ? "#008f5a" : "#00a86b",
                 fillOpacity: 1,
                 strokeColor: "#fff",
                 strokeWeight: 2,
