@@ -1,18 +1,26 @@
+import fs from "node:fs/promises";
 import path from "node:path";
+import convert from "heic-convert";
 import sharp from "sharp";
 
 export const IMAGE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 
 export const IMAGE_UPLOAD_REJECT_MESSAGE =
-  "Solo se permiten imágenes JPG, PNG, WebP, HEIC o GIF (máx. 15 MB cada una)";
+  "Solo se permiten imágenes JPG, PNG, WebP, AVIF, HEIC, HEIF o GIF (máx. 15 MB cada una)";
+
+export const IMAGE_HEIC_PROCESS_ERROR = "No se pudo procesar la foto HEIC/HEIF";
+
+const HEIC_EXTENSIONS = new Set([".heic", ".heif", ".hif"]);
 
 const ALLOWED_MIMES = new Set([
   "image/jpeg",
   "image/jpg",
   "image/pjpeg",
+  "image/jfif",
   "image/png",
   "image/x-png",
   "image/webp",
+  "image/avif",
   "image/heic",
   "image/heif",
   "image/gif",
@@ -21,17 +29,34 @@ const ALLOWED_MIMES = new Set([
 const ALLOWED_EXTENSIONS = new Set([
   ".jpg",
   ".jpeg",
+  ".jfif",
   ".png",
   ".webp",
+  ".avif",
   ".heic",
   ".heif",
+  ".hif",
   ".gif",
 ]);
+
+const BLOCKED_MIMES = new Set(["image/heic-sequence", "image/heif-sequence"]);
+
+const BLOCKED_EXTENSIONS = new Set([".mov", ".mp4", ".m4v"]);
 
 const GENERIC_MIMES = new Set(["", "application/octet-stream"]);
 
 function extensionOf(filename) {
   return path.extname(filename || "").toLowerCase();
+}
+
+function isBlockedUpload(file) {
+  const mime = (file.mimetype || "").toLowerCase();
+  const ext = extensionOf(file.originalname);
+
+  if (mime.startsWith("video/")) return true;
+  if (BLOCKED_MIMES.has(mime)) return true;
+  if (BLOCKED_EXTENSIONS.has(ext)) return true;
+  return false;
 }
 
 function getMaxWidth() {
@@ -59,6 +84,8 @@ export function isAllowedImageMime(mime) {
  * @param {{ mimetype?: string, originalname?: string }} file
  */
 export function isAllowedImageUpload(file) {
+  if (isBlockedUpload(file)) return false;
+
   const mime = (file.mimetype || "").toLowerCase();
   const ext = extensionOf(file.originalname);
 
@@ -69,18 +96,38 @@ export function isAllowedImageUpload(file) {
   return false;
 }
 
+async function loadSharpPipeline(inputPath) {
+  const ext = extensionOf(inputPath);
+
+  if (HEIC_EXTENSIONS.has(ext)) {
+    const inputBuffer = await fs.readFile(inputPath);
+    try {
+      const jpegBuffer = await convert({
+        buffer: inputBuffer,
+        format: "JPEG",
+        quality: 0.92,
+      });
+      return sharp(Buffer.from(jpegBuffer), { failOn: "none" });
+    } catch {
+      throw new Error(IMAGE_HEIC_PROCESS_ERROR);
+    }
+  }
+
+  return sharp(inputPath, { failOn: "none" });
+}
+
 export async function optimizeImageToFile(inputPath, outputDir, outputBaseNameNoExt) {
   const format = getFormat();
-  const ext = format === "avif" ? ".avif" : ".webp";
-  const outPath = path.join(outputDir, `${outputBaseNameNoExt}${ext}`);
+  const outExt = format === "avif" ? ".avif" : ".webp";
+  const outPath = path.join(outputDir, `${outputBaseNameNoExt}${outExt}`);
 
   const maxWidth = getMaxWidth();
   const quality = getQuality();
 
-  let pipeline = sharp(inputPath, { failOn: "none" })
-    .rotate() // respeta EXIF orientation
+  let pipeline = (await loadSharpPipeline(inputPath))
+    .rotate()
     .resize({ width: maxWidth, withoutEnlargement: true })
-    .withMetadata({ orientation: undefined }); // no mantener orientación; evita problemas
+    .withMetadata({ orientation: undefined });
 
   pipeline =
     format === "avif"

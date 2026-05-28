@@ -7,7 +7,11 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_REJECT_MESSAGE } from "./utils/images.js";
+import {
+  IMAGE_HEIC_PROCESS_ERROR,
+  IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_REJECT_MESSAGE,
+} from "./utils/images.js";
 
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
@@ -243,6 +247,17 @@ export function createApp() {
     const msg = typeof err?.message === "string" ? err.message : "Error interno";
     if (msg === IMAGE_UPLOAD_REJECT_MESSAGE || msg.startsWith("Solo se permiten imágenes")) {
       return res.status(400).json({ detail: msg });
+    }
+    if (
+      msg === IMAGE_HEIC_PROCESS_ERROR ||
+      /heif:|unsupported codec|input buffer|unsupported image format/i.test(msg)
+    ) {
+      return res.status(400).json({
+        detail:
+          msg === IMAGE_HEIC_PROCESS_ERROR
+            ? msg
+            : "No se pudo procesar la imagen. Probá con JPG, PNG o WebP.",
+      });
     }
 
     const status = msg.startsWith("CORS:") ? 403 : 500;

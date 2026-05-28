@@ -33,8 +33,8 @@ import "./ListingFormPage.css";
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
-const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp|heic|heif)$/i;
-const IMAGE_MIME_RE = /^image\/(jpeg|jpg|png|webp|gif|heic|heif)$/i;
+const IMAGE_EXT_RE = /\.(jpe?g|jfif|png|gif|webp|avif|heic|heif|hif)$/i;
+const IMAGE_MIME_RE = /^image\/(jpeg|jpg|jfif|png|webp|avif|gif|heic|heif)$/i;
 
 function filterImageFiles(fileList) {
   return [...fileList].filter(
@@ -207,7 +207,7 @@ export default function ListingFormPage() {
     async (rawFiles) => {
       const files = filterImageFiles(rawFiles);
       if (!files.length) {
-        toast.show("No hay imágenes válidas (JPG, PNG, WebP, HEIC o GIF)", "error");
+        toast.show("No hay imágenes válidas (JPG, PNG, WebP, AVIF, HEIC, HEIF o GIF)", "error");
         return;
       }
       const oversized = rejectOversizedImages(files);
@@ -671,7 +671,7 @@ export default function ListingFormPage() {
             id="listing-images-input"
             className="listing-form__file-input-hidden"
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.gif,image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif"
+            accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,.heic,.heif,.hif,.gif,image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,image/gif"
             multiple
             onChange={handleImageFiles}
             disabled={uploadingImages}
