@@ -113,7 +113,10 @@ export default function PropertyDetailModal({ listingId, onClose }) {
     }
   };
 
-  const hasMapCoords = listing?.lat != null && listing?.lng != null;
+  const hasLotPolygon =
+    Array.isArray(listing?.lot_polygon) && listing.lot_polygon.length >= 3;
+  const hasMapCoords =
+    (listing?.lat != null && listing?.lng != null) || hasLotPolygon;
   const googleMapsLink = hasMapCoords
     ? `https://www.google.com/maps?q=${listing.lat},${listing.lng}`
     : null;
@@ -232,6 +235,12 @@ export default function PropertyDetailModal({ listingId, onClose }) {
               <ul>
                 <li>
                   <strong>Superficie:</strong> {listing.area_sqm} m²
+                  {hasLotPolygon && (
+                    <span className="property-detail-modal__area-note">
+                      {" "}
+                      (medida según perímetro en mapa)
+                    </span>
+                  )}
                 </li>
                 {listing.rooms != null && (
                   <li>
@@ -265,9 +274,10 @@ export default function PropertyDetailModal({ listingId, onClose }) {
                 <h3>Ubicación</h3>
                 <div className="property-detail-modal__map-wrap">
                   <PropertyLocationMap
-                    key={`${listing.id}-${listing.lat}-${listing.lng}`}
+                    key={`${listing.id}-${listing.lat}-${listing.lng}-${hasLotPolygon}`}
                     lat={listing.lat}
                     lng={listing.lng}
+                    lotPolygon={listing.lot_polygon}
                   />
                 </div>
                 {googleMapsLink && (

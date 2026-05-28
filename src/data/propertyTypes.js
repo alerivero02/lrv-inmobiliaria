@@ -39,6 +39,14 @@ export const ALLOWED_PROPERTY_TYPE_VALUES = PROPERTY_TYPES.map((t) => t.value);
 
 export const TYPE_LABELS = Object.fromEntries(PROPERTY_TYPES.map((t) => [t.value, t.label]));
 
+export const LAND_PROPERTY_TYPES = ["terreno", "lote", "finca"];
+
+const LAND_VALUES = new Set(LAND_PROPERTY_TYPES);
+
+export function isLandPropertyType(propertyType) {
+  return LAND_VALUES.has(String(propertyType || "").trim().toLowerCase());
+}
+
 export function isInvestmentPropertyType(propertyType) {
   return INVESTMENT_VALUES.has(propertyType);
 }

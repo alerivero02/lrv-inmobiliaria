@@ -15,7 +15,14 @@ export const ALLOWED_PROPERTY_TYPES = [
   ...INVESTMENT_PROPERTY_TYPES,
 ];
 
+export const LAND_PROPERTY_TYPES = ["terreno", "lote", "finca"];
+
 const ALLOWED_SET = new Set(ALLOWED_PROPERTY_TYPES);
+const LAND_SET = new Set(LAND_PROPERTY_TYPES);
+
+export function isLandPropertyType(propertyType) {
+  return LAND_SET.has(String(propertyType || "").trim().toLowerCase());
+}
 
 /**
  * Valida y normaliza el tipo de propiedad.

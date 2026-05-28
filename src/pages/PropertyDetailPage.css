@@ -145,6 +145,28 @@
   margin-bottom: 0.75rem;
 }
 
+.detail-page__map-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--bone-border);
+}
+
+.detail-page__map-wrap .property-detail-modal__map-canvas {
+  height: 320px;
+}
+
+.detail-page__map-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--green-strong);
+  font-size: 0.9375rem;
+}
+
+.detail-page__area-note {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
 .detail-page__back {
   margin-top: 1rem;
 }

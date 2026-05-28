@@ -1,11 +1,38 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, MarkerF, Polygon, useJsApiLoader } from "@react-google-maps/api";
 import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
+import { polygonCentroid, ringToLatLngPaths } from "../utils/polygonRing";
 
 const MAP_STYLE = { width: "100%", height: "100%" };
 
-function PropertyLocationMapInner({ lat, lng, googleMapsApiKey }) {
-  const position = useMemo(() => ({ lat: Number(lat), lng: Number(lng) }), [lat, lng]);
+const LOT_POLYGON_OPTIONS = {
+  fillColor: "#9a7b4f",
+  fillOpacity: 0.22,
+  strokeWeight: 2,
+  strokeColor: "#6b5340",
+  clickable: false,
+  editable: false,
+};
+
+function PropertyLocationMapInner({ lat, lng, lotPolygon, googleMapsApiKey }) {
+  const hasPin =
+    lat != null && lng != null && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
+  const hasLotPolygon = Array.isArray(lotPolygon) && lotPolygon.length >= 3;
+
+  const pinPosition = useMemo(() => {
+    if (hasPin) return { lat: Number(lat), lng: Number(lng) };
+    if (hasLotPolygon) {
+      const c = polygonCentroid(lotPolygon);
+      if (c) return c;
+    }
+    return null;
+  }, [hasPin, hasLotPolygon, lat, lng, lotPolygon]);
+
+  const polygonPaths = useMemo(
+    () => (hasLotPolygon ? ringToLatLngPaths(lotPolygon) : []),
+    [hasLotPolygon, lotPolygon],
+  );
+
   const wrapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
@@ -14,12 +41,31 @@ function PropertyLocationMapInner({ lat, lng, googleMapsApiKey }) {
     googleMapsApiKey,
   });
 
+  const fitMapToContent = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !window.google?.maps) return;
+
+    if (hasLotPolygon && polygonPaths.length >= 3) {
+      const bounds = new window.google.maps.LatLngBounds();
+      for (const p of polygonPaths) {
+        bounds.extend(p);
+      }
+      map.fitBounds(bounds, 40);
+      return;
+    }
+
+    if (pinPosition) {
+      map.setCenter(pinPosition);
+      map.setZoom(15);
+    }
+  }, [hasLotPolygon, polygonPaths, pinPosition]);
+
   const resizeAndRecenter = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!map || !window.google?.maps?.event) return;
     window.google.maps.event.trigger(map, "resize");
-    map.setCenter(position);
-  }, [position]);
+    fitMapToContent();
+  }, [fitMapToContent]);
 
   const onMapLoad = useCallback(
     (map) => {
@@ -41,6 +87,11 @@ function PropertyLocationMapInner({ lat, lng, googleMapsApiKey }) {
     return () => ro.disconnect();
   }, [isLoaded, resizeAndRecenter]);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+    fitMapToContent();
+  }, [isLoaded, fitMapToContent, lotPolygon, lat, lng]);
+
   if (loadError) {
     return <p className="property-detail-modal__map-fallback">No se pudo cargar el mapa.</p>;
   }
@@ -49,27 +100,39 @@ function PropertyLocationMapInner({ lat, lng, googleMapsApiKey }) {
     return <p className="property-detail-modal__map-fallback">Cargando mapa…</p>;
   }
 
+  if (!pinPosition && !hasLotPolygon) {
+    return (
+      <p className="property-detail-modal__map-fallback">
+        Ubicación aproximada: usá “Abrir en Google Maps” debajo.
+      </p>
+    );
+  }
+
   return (
     <div ref={wrapRef} className="property-detail-modal__map-canvas">
       <GoogleMap
         mapContainerStyle={MAP_STYLE}
-        center={position}
+        center={pinPosition ?? { lat: -29.41, lng: -66.85 }}
         zoom={15}
         onLoad={onMapLoad}
         options={{
           gestureHandling: "cooperative",
           streetViewControl: false,
-          mapTypeControl: false,
+          mapTypeControl: true,
+          mapTypeId: hasLotPolygon ? "hybrid" : "roadmap",
           fullscreenControl: true,
         }}
       >
-        <MarkerF position={position} />
+        {hasLotPolygon && polygonPaths.length >= 3 && (
+          <Polygon paths={polygonPaths} options={LOT_POLYGON_OPTIONS} />
+        )}
+        {pinPosition && <MarkerF position={pinPosition} />}
       </GoogleMap>
     </div>
   );
 }
 
-export default function PropertyLocationMap({ lat, lng }) {
+export default function PropertyLocationMap({ lat, lng, lotPolygon }) {
   const googleMapsApiKey = getGoogleMapsApiKey();
   if (!googleMapsApiKey) {
     return (
@@ -79,6 +142,11 @@ export default function PropertyLocationMap({ lat, lng }) {
     );
   }
   return (
-    <PropertyLocationMapInner lat={lat} lng={lng} googleMapsApiKey={googleMapsApiKey} />
+    <PropertyLocationMapInner
+      lat={lat}
+      lng={lng}
+      lotPolygon={lotPolygon}
+      googleMapsApiKey={googleMapsApiKey}
+    />
   );
 }

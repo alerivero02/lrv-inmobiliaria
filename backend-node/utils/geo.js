@@ -67,3 +67,67 @@ export function filterRowsByPolygon(rows, polygon) {
       pointInPolygon(Number(row.lng), Number(row.lat), polygon),
   );
 }
+
+const EARTH_RADIUS_M = 6378137;
+
+function toRad(deg) {
+  return (deg * Math.PI) / 180;
+}
+
+/** Anillo sin vértice de cierre duplicado. */
+export function openPolygonRing(ring) {
+  if (!ring?.length) return [];
+  const pts = [...ring];
+  const first = pts[0];
+  const last = pts[pts.length - 1];
+  if (first[0] === last[0] && first[1] === last[1]) pts.pop();
+  return pts;
+}
+
+/**
+ * Normaliza polígono persistido: array [[lng,lat],...] o JSON string / GeoJSON Polygon.
+ */
+export function normalizeLotPolygon(raw) {
+  if (raw == null || raw === "") return null;
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (Array.isArray(parsed?.coordinates?.[0])) {
+    return parsePolygonQuery(JSON.stringify(parsed));
+  }
+  if (Array.isArray(parsed)) {
+    return parsePolygonQuery(JSON.stringify(parsed));
+  }
+  return null;
+}
+
+/** Área en m² (equivalente a google.maps.geometry.spherical.computeArea). */
+export function computePolygonAreaSqm(ring) {
+  const pts = openPolygonRing(ring);
+  if (pts.length < MIN_POLYGON_VERTICES) return 0;
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [lng1, lat1] = pts[i];
+    const [lng2, lat2] = pts[(i + 1) % pts.length];
+    area += toRad(lng2 - lng1) * (2 + Math.sin(toRad(lat1)) + Math.sin(toRad(lat2)));
+  }
+  return Math.abs((area * EARTH_RADIUS_M * EARTH_RADIUS_M) / 2);
+}
+
+/** Centroide simple del anillo (promedio de vértices). */
+export function polygonCentroid(ring) {
+  const pts = openPolygonRing(ring);
+  if (!pts.length) return null;
+  let sumLng = 0;
+  let sumLat = 0;
+  for (const [lng, lat] of pts) {
+    sumLng += lng;
+    sumLat += lat;
+  }
+  return { lng: sumLng / pts.length, lat: sumLat / pts.length };
+}

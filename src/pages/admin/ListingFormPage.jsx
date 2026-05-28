@@ -25,6 +25,8 @@ import {
   getProvinceByName,
 } from "../../data/provinces";
 import MapPicker from "../../components/MapPicker";
+import LotBoundaryPicker from "../../components/LotBoundaryPicker";
+import { isLandPropertyType } from "../../data/propertyTypes";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
 import "./ListingFormPage.css";
@@ -102,6 +104,7 @@ const emptyForm = {
   featured: false,
   extras_note: "",
   images: [],
+  lot_polygon: null,
 };
 
 export default function ListingFormPage() {
@@ -152,6 +155,7 @@ export default function ListingFormPage() {
             featured: data.featured ?? false,
             extras_note: data.extras_note ?? "",
             images: Array.isArray(data.images) ? data.images : [],
+            lot_polygon: Array.isArray(data.lot_polygon) ? data.lot_polygon : null,
           });
           setPropertyCategory(getPropertyCategory(data.property_type ?? "casa"));
           setCitySource(data.city && CITIES_LA_RIOJA.includes(data.city) ? "list" : "manual");
@@ -172,9 +176,22 @@ export default function ListingFormPage() {
     const types = getTypesForCategory(category);
     const currentValid = types.some((t) => t.value === form.property_type);
     if (!currentValid) {
-      update("property_type", defaultPropertyTypeForCategory(category));
+      const nextType = defaultPropertyTypeForCategory(category);
+      update("property_type", nextType);
+      if (!isLandPropertyType(nextType)) {
+        update("lot_polygon", null);
+      }
     }
   };
+
+  const handlePropertyTypeChange = (nextType) => {
+    update("property_type", nextType);
+    if (!isLandPropertyType(nextType)) {
+      update("lot_polygon", null);
+    }
+  };
+
+  const showLotBoundary = isLandPropertyType(form.property_type);
 
   const [uploadingImages, setUploadingImages] = useState(false);
   const [dropHighlight, setDropHighlight] = useState(false);
@@ -317,6 +334,7 @@ export default function ListingFormPage() {
       operation: form.operation || "venta",
       documentation: form.documentation || null,
       images: cleanedImages.length ? cleanedImages : null,
+      lot_polygon: showLotBoundary && form.lot_polygon?.length ? form.lot_polygon : null,
     };
     if (!payload.city) {
       setError("Indicá la ubicación (ciudad o localidad).");
@@ -431,7 +449,7 @@ export default function ListingFormPage() {
                 : "Tipo de propiedad *"}
               <select
                 value={form.property_type}
-                onChange={(e) => update("property_type", e.target.value)}
+                onChange={(e) => handlePropertyTypeChange(e.target.value)}
                 required
               >
                 {getTypesForCategory(propertyCategory).map((t) => (
@@ -764,31 +782,70 @@ export default function ListingFormPage() {
             />
           </label>
           <div className="listing-form__map-section">
-            <p className="listing-form__hint" style={{ marginBottom: 8 }}>
-              <strong>Ubicación en el mapa</strong> — Buscá la dirección, hacé clic en el mapa o
-              arrastrá el pin para ajustar la posición.
-            </p>
-            <MapPicker
-              lat={form.lat}
-              lng={form.lng}
-              onChange={(nextLat, nextLng) => {
-                update("lat", nextLat);
-                update("lng", nextLng);
-              }}
-              onAddressSelect={({ address, city, province }) => {
-                if (address) update("address", address);
-                if (city) {
-                  update("city", city);
-                  update("location_manual", city);
-                  setCitySource("manual");
-                }
-                const matched = province ? getProvinceByName(province) : null;
-                if (matched) {
-                  update("province", matched.name);
-                  update("province_code", matched.code);
-                }
-              }}
-            />
+            {showLotBoundary ? (
+              <>
+                <p className="listing-form__hint" style={{ marginBottom: 8 }}>
+                  <strong>Perímetro del lote</strong> — Dibujá el polígono en el mapa; los m² se
+                  calculan del perímetro. Podés ajustar el número de superficie a mano si hace falta.
+                  El pin opcional marca un punto de referencia (acceso, esquina).
+                </p>
+                <LotBoundaryPicker
+                  provinceCode={form.province_code}
+                  polygon={form.lot_polygon}
+                  lat={form.lat}
+                  lng={form.lng}
+                  onPolygonChange={(ring) => update("lot_polygon", ring)}
+                  onAreaComputed={(sqm) => {
+                    if (sqm != null) update("area_sqm", sqm);
+                  }}
+                  onPositionChange={(nextLat, nextLng) => {
+                    update("lat", nextLat);
+                    update("lng", nextLng);
+                  }}
+                  onAddressSelect={({ address, city, province }) => {
+                    if (address) update("address", address);
+                    if (city) {
+                      update("city", city);
+                      update("location_manual", city);
+                      setCitySource("manual");
+                    }
+                    const matched = province ? getProvinceByName(province) : null;
+                    if (matched) {
+                      update("province", matched.name);
+                      update("province_code", matched.code);
+                    }
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <p className="listing-form__hint" style={{ marginBottom: 8 }}>
+                  <strong>Ubicación en el mapa</strong> — Buscá la dirección, hacé clic en el mapa o
+                  arrastrá el pin para ajustar la posición.
+                </p>
+                <MapPicker
+                  lat={form.lat}
+                  lng={form.lng}
+                  onChange={(nextLat, nextLng) => {
+                    update("lat", nextLat);
+                    update("lng", nextLng);
+                  }}
+                  onAddressSelect={({ address, city, province }) => {
+                    if (address) update("address", address);
+                    if (city) {
+                      update("city", city);
+                      update("location_manual", city);
+                      setCitySource("manual");
+                    }
+                    const matched = province ? getProvinceByName(province) : null;
+                    if (matched) {
+                      update("province", matched.name);
+                      update("province_code", matched.code);
+                    }
+                  }}
+                />
+              </>
+            )}
             <div className="listing-form__row" style={{ marginTop: 8 }}>
               <label>
                 Latitud

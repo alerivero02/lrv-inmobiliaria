@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import PropertyLocationMap from "../components/PropertyLocationMap";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import { applyListingSeo, resetListingSeo } from "../utils/seo";
@@ -58,9 +59,13 @@ export default function PropertyDetailPage() {
   };
 
   const images = listing?.images?.length ? listing.images : [];
-  const mapUrl =
+  const hasLotPolygon =
+    Array.isArray(listing?.lot_polygon) && listing.lot_polygon.length >= 3;
+  const hasMapSection =
+    (listing?.lat != null && listing?.lng != null) || hasLotPolygon;
+  const googleMapsLink =
     listing?.lat != null && listing?.lng != null
-      ? `https://www.google.com/maps?q=${listing.lat},${listing.lng}&output=embed`
+      ? `https://www.google.com/maps?q=${listing.lat},${listing.lng}`
       : null;
 
   if (loading) {
@@ -183,6 +188,9 @@ export default function PropertyDetailPage() {
             <ul>
               <li>
                 <strong>Superficie:</strong> {listing.area_sqm} m²
+                {hasLotPolygon && (
+                  <span className="detail-page__area-note"> (medida según perímetro en mapa)</span>
+                )}
               </li>
               {listing.rooms != null && (
                 <li>
@@ -211,19 +219,26 @@ export default function PropertyDetailPage() {
             )}
           </section>
 
-          {mapUrl && (
+          {hasMapSection && (
             <section className="detail-page__map">
               <h2>Ubicación</h2>
-              <iframe
-                title="Mapa de ubicación"
-                src={mapUrl}
-                width="100%"
-                height="300"
-                style={{ border: 0, borderRadius: "var(--radius)" }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              <div className="detail-page__map-wrap">
+                <PropertyLocationMap
+                  lat={listing.lat}
+                  lng={listing.lng}
+                  lotPolygon={listing.lot_polygon}
+                />
+              </div>
+              {googleMapsLink && (
+                <a
+                  className="detail-page__map-link"
+                  href={googleMapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir en Google Maps
+                </a>
+              )}
             </section>
           )}
 

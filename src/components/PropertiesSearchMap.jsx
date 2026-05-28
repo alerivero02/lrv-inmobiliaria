@@ -9,18 +9,10 @@ import {
 import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
 import { getProvinceByCode } from "../data/provinces";
 import PropertyMapPopover from "./PropertyMapPopover";
+import { pathToPolygonRing } from "../utils/polygonRing";
 import "./PropertiesSearchMap.css";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
-
-function pathToPolygonRing(path) {
-  const ring = path.getArray().map((ll) => [ll.lng(), ll.lat()]);
-  if (ring.length < 3) return null;
-  const first = ring[0];
-  const last = ring[ring.length - 1];
-  if (first[0] !== last[0] || first[1] !== last[1]) ring.push([...first]);
-  return ring;
-}
 
 function PropertiesSearchMapInner({
   provinceCode,

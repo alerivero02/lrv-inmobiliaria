@@ -12,7 +12,12 @@ import {
 } from "../utils/images.js";
 import { getUploadsDir } from "../uploadsDir.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { normalizePropertyType } from "../constants/propertyTypes.js";
+import { isLandPropertyType, normalizePropertyType } from "../constants/propertyTypes.js";
+import {
+  computePolygonAreaSqm,
+  normalizeLotPolygon,
+  polygonCentroid,
+} from "../utils/geo.js";
 import {
   getProvinceName,
   isValidProvinceCode,
@@ -68,6 +73,7 @@ function parseJSON(val, fallback = []) {
 function parseListing(row) {
   if (!row) return null;
   const imgs = parseJSON(row.images, []);
+  const lotPolygon = normalizeLotPolygon(row.lot_polygon);
   return {
     ...row,
     images: Array.isArray(imgs) ? imgs.map(normalizeUploadUrl) : imgs,
@@ -81,6 +87,7 @@ function parseListing(row) {
     featured: Boolean(row.featured),
     garage_count: row.garage_count ?? null,
     covered_area_sqm: row.covered_area_sqm ?? null,
+    lot_polygon: lotPolygon,
     price: row.price ?? null,
     lat: row.lat ?? null,
     lng: row.lng ?? null,
@@ -88,6 +95,40 @@ function parseListing(row) {
     rooms: row.rooms ?? null,
     commission_buyer: row.commission_buyer ?? 3.0,
     commission_seller: row.commission_seller ?? 3.0,
+  };
+}
+
+/**
+ * Valida y normaliza lot_polygon para tipos land; recalcula area_sqm y centroide si aplica.
+ * @returns {{ lot_polygon: string|null, lat, lng, area_sqm, error?: string }}
+ */
+function resolveLotPolygonFields({ propertyType, lot_polygon, lat, lng, area_sqm }) {
+  const isLand = isLandPropertyType(propertyType);
+  if (!isLand) {
+    return { lot_polygon: null, lat: lat ?? null, lng: lng ?? null, area_sqm: area_sqm ?? 0 };
+  }
+
+  if (lot_polygon == null || lot_polygon === "") {
+    return { lot_polygon: null, lat: lat ?? null, lng: lng ?? null, area_sqm: area_sqm ?? 0 };
+  }
+
+  const ring = normalizeLotPolygon(lot_polygon);
+  if (!ring) {
+    return { error: "El perímetro del lote no es válido (mínimo 3 vértices)." };
+  }
+
+  const centroid = polygonCentroid(ring);
+  const computedArea = Math.round(computePolygonAreaSqm(ring) * 100) / 100;
+  const nextLat =
+    lat != null && lat !== "" && !Number.isNaN(Number(lat)) ? Number(lat) : centroid?.lat ?? null;
+  const nextLng =
+    lng != null && lng !== "" && !Number.isNaN(Number(lng)) ? Number(lng) : centroid?.lng ?? null;
+
+  return {
+    lot_polygon: JSON.stringify(ring),
+    lat: nextLat,
+    lng: nextLng,
+    area_sqm: computedArea,
   };
 }
 
@@ -311,6 +352,7 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     images,
     commission_buyer,
     commission_seller,
+    lot_polygon,
   } = req.body;
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
@@ -335,15 +377,24 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     return res.status(err.status || 500).json({ detail: err.message });
   }
 
+  const lotFields = resolveLotPolygonFields({
+    propertyType: normalizedPropertyType,
+    lot_polygon,
+    lat,
+    lng,
+    area_sqm,
+  });
+  if (lotFields.error) return res.status(422).json({ detail: lotFields.error });
+
   const { lastInsertRowid } = await run(
     `
     INSERT INTO listings
     (title,description,property_type,status,operation,documentation,
      address,city,province,province_code,lat,lng,location_manual,
      rooms,area_sqm,price,currency,
-     has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,featured,extras_note,images,
+     has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,lot_polygon,featured,extras_note,images,
      commission_buyer,commission_seller)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
     title,
@@ -356,11 +407,11 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     city ?? null,
     province.trim(),
     resolvedCode,
-    lat ?? null,
-    lng ?? null,
+    lotFields.lat,
+    lotFields.lng,
     location_manual ?? null,
     rooms ?? null,
-    area_sqm ?? 0,
+    lotFields.area_sqm,
     Number(price),
     currency.trim(),
     has_garage ? 1 : 0,
@@ -372,6 +423,7 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     has_terrace ? 1 : 0,
     has_garage ? (garage_count == null || garage_count === "" ? null : Number(garage_count)) : null,
     covered_area_sqm == null || covered_area_sqm === "" ? null : Number(covered_area_sqm),
+    lotFields.lot_polygon,
     featured ? 1 : 0,
     extras_note ?? null,
     JSON.stringify(Array.isArray(images) ? images : []),
@@ -415,6 +467,7 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
     "has_terrace",
     "garage_count",
     "covered_area_sqm",
+    "lot_polygon",
     "featured",
     "extras_note",
     "images",
@@ -479,10 +532,35 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
     }
   }
 
+  const effectivePropertyType = req.body.property_type ?? existing.property_type;
+  if (!isLandPropertyType(effectivePropertyType)) {
+    req.body.lot_polygon = null;
+  } else if ("lot_polygon" in req.body) {
+    const lotFields = resolveLotPolygonFields({
+      propertyType: effectivePropertyType,
+      lot_polygon: req.body.lot_polygon,
+      lat: "lat" in req.body ? req.body.lat : existing.lat,
+      lng: "lng" in req.body ? req.body.lng : existing.lng,
+      area_sqm: "area_sqm" in req.body ? req.body.area_sqm : existing.area_sqm,
+    });
+    if (lotFields.error) return res.status(422).json({ detail: lotFields.error });
+    req.body.lot_polygon = lotFields.lot_polygon;
+    if (lotFields.lot_polygon) {
+      req.body.area_sqm = lotFields.area_sqm;
+      if (!("lat" in req.body)) req.body.lat = lotFields.lat;
+      if (!("lng" in req.body)) req.body.lng = lotFields.lng;
+    }
+  }
+
   for (const f of FIELDS) {
     if (!(f in req.body)) continue;
     let v = req.body[f];
     if (f === "images") v = JSON.stringify(Array.isArray(v) ? v : []);
+    if (f === "lot_polygon") {
+      if (v == null || v === "") v = null;
+      else if (Array.isArray(v)) v = JSON.stringify(v);
+      else if (typeof v === "object") v = JSON.stringify(v);
+    }
     if (f === "province" && typeof v === "string") v = v.trim();
     if (f === "province_code" && typeof v === "string" && !isValidProvinceCode(v)) {
       return res.status(422).json({ detail: "Código de provincia inválido" });

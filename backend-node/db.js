@@ -150,6 +150,7 @@ export async function migratePg() {
       has_terrace     INTEGER DEFAULT 0,
       garage_count    INTEGER,
       covered_area_sqm DOUBLE PRECISION,
+      lot_polygon     TEXT,
       featured        INTEGER DEFAULT 0,
       extras_note     TEXT,
       images          TEXT    DEFAULT '[]',
@@ -231,6 +232,11 @@ export async function migratePg() {
   await p.query(`
     DO $$ BEGIN
       ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN lot_polygon TEXT;
     EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
@@ -376,6 +382,7 @@ function migrateSqlite() {
       has_terrace     INTEGER DEFAULT 0,
       garage_count    INTEGER,
       covered_area_sqm REAL,
+      lot_polygon     TEXT,
       featured        INTEGER DEFAULT 0,
       extras_note     TEXT,
       images          TEXT    DEFAULT '[]',
@@ -439,6 +446,9 @@ function migrateSqlite() {
   } catch {}
   try {
     db.exec("ALTER TABLE listings ADD COLUMN featured INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    db.exec("ALTER TABLE listings ADD COLUMN lot_polygon TEXT");
   } catch {}
   try {
     db.exec(`
