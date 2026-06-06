@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Autocomplete,
-  DrawingManager,
   GoogleMap,
   MarkerF,
   useJsApiLoader,
@@ -9,6 +8,7 @@ import {
 import { Alert, Box, Typography } from "@mui/material";
 import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
 import { getProvinceByCode } from "../data/provinces";
+import { useMapPolygonDrawing } from "../hooks/useMapPolygonDrawing";
 import {
   computeRingAreaSqm,
   pathToPolygonRing,
@@ -54,7 +54,7 @@ function LotBoundaryPickerInner({
   const polygonOverlayRef = useRef(null);
   const listenersBoundOverlayRef = useRef(null);
   const autocompleteRef = useRef(null);
-  const [drawingReady, setDrawingReady] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [searchError, setSearchError] = useState("");
 
   const center = useMemo(() => {
@@ -65,18 +65,6 @@ function LotBoundaryPickerInner({
   const hasPin =
     lat != null && lng != null && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
   const pinPosition = hasPin ? { lat: Number(lat), lng: Number(lng) } : null;
-
-  const drawingOptions = useMemo(() => {
-    if (!drawingReady || !window.google?.maps?.drawing) return null;
-    return {
-      drawingControl: true,
-      drawingControlOptions: {
-        position: window.google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
-      },
-      polygonOptions: POLYGON_STYLE,
-    };
-  }, [drawingReady]);
 
   const emitFromOverlay = useCallback(
     (overlay) => {
@@ -136,6 +124,22 @@ function LotBoundaryPickerInner({
     },
     [bindOverlayListeners, emitFromOverlay],
   );
+
+  const canDraw = mapReady && !polygon?.length;
+  const {
+    isDrawing,
+    draftPointCount,
+    startDrawing,
+    cancelDrawing,
+    confirmDrawing,
+    handleMapClick: handleDrawMapClick,
+    handleMapDblClick,
+  } = useMapPolygonDrawing({
+    mapRef,
+    active: canDraw,
+    polygonStyle: POLYGON_STYLE,
+    onComplete: handlePolygonComplete,
+  });
 
   useEffect(() => {
     if (!polygon?.length) {
@@ -211,14 +215,37 @@ function LotBoundaryPickerInner({
     <Box className="lot-boundary-picker">
       <div className="lot-boundary-picker__toolbar">
         <span className="lot-boundary-picker__hint">
-          Usá el ícono de polígono para dibujar el perímetro del lote. Podés editar los vértices
-          después.
+          {isDrawing
+            ? "Marcá vértices en el mapa. Clic en el primer punto, doble clic o «Finalizar» para cerrar el perímetro."
+            : "Dibujá el perímetro del lote en el mapa. Podés editar los vértices después."}
         </span>
-        {polygon?.length > 0 && (
-          <button type="button" className="lot-boundary-picker__clear" onClick={clearPolygon}>
-            Borrar perímetro
-          </button>
-        )}
+        <div className="lot-boundary-picker__actions">
+          {canDraw && !isDrawing && (
+            <button type="button" className="lot-boundary-picker__clear" onClick={startDrawing}>
+              Dibujar perímetro
+            </button>
+          )}
+          {isDrawing && (
+            <>
+              <button
+                type="button"
+                className="lot-boundary-picker__clear"
+                onClick={confirmDrawing}
+                disabled={draftPointCount < 3}
+              >
+                Finalizar
+              </button>
+              <button type="button" className="lot-boundary-picker__clear" onClick={cancelDrawing}>
+                Cancelar
+              </button>
+            </>
+          )}
+          {polygon?.length > 0 && !isDrawing && (
+            <button type="button" className="lot-boundary-picker__clear" onClick={clearPolygon}>
+              Borrar perímetro
+            </button>
+          )}
+        </div>
       </div>
       <Box
         className="lot-boundary-picker__map-wrap"
@@ -237,19 +264,22 @@ function LotBoundaryPickerInner({
           zoom={pinPosition ? 16 : 9}
           onLoad={(map) => {
             mapRef.current = map;
-            setDrawingReady(true);
+            setMapReady(true);
           }}
           onClick={(e) => {
+            if (handleDrawMapClick(e)) return;
             const nextLat = e.latLng?.lat();
             const nextLng = e.latLng?.lng();
             if (nextLat == null || nextLng == null) return;
             onPositionChange?.(nextLat, nextLng);
           }}
+          onDblClick={handleMapDblClick}
           options={{
             mapTypeControl: true,
             mapTypeId: "hybrid",
             streetViewControl: false,
             fullscreenControl: true,
+            draggableCursor: isDrawing ? "crosshair" : undefined,
           }}
         >
           <Box
@@ -278,16 +308,6 @@ function LotBoundaryPickerInner({
               />
             </Autocomplete>
           </Box>
-
-          {drawingOptions && (
-            <DrawingManager
-              drawingMode={
-                polygon?.length ? null : window.google.maps.drawing.OverlayType.POLYGON
-              }
-              options={drawingOptions}
-              onPolygonComplete={handlePolygonComplete}
-            />
-          )}
 
           {pinPosition && (
             <MarkerF

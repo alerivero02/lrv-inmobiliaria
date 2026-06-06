@@ -69,3 +69,8 @@
 .search-map__clear:hover {
   background: var(--bone);
 }
+
+.search-map__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

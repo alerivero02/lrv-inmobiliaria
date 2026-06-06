@@ -51,7 +51,7 @@ export default function MapSearchSection() {
               <div>
                 <h3 className="map-search-section__step-title">Seleccioná</h3>
                 <p className="map-search-section__step-desc">
-                  Hacé clic en el ícono de polígono en la esquina superior del mapa.
+                  Tocá «Dibujar área» en la barra superior del mapa.
                 </p>
               </div>
             </li>

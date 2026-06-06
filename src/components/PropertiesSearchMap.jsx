@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  DrawingManager,
   GoogleMap,
   MarkerF,
   OverlayView,
@@ -8,11 +7,21 @@ import {
 } from "@react-google-maps/api";
 import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
 import { getProvinceByCode } from "../data/provinces";
+import { useMapPolygonDrawing } from "../hooks/useMapPolygonDrawing";
 import PropertyMapPopover from "./PropertyMapPopover";
 import { pathToPolygonRing } from "../utils/polygonRing";
 import "./PropertiesSearchMap.css";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
+
+const SEARCH_POLYGON_STYLE = {
+  fillColor: "#00a86b",
+  fillOpacity: 0.15,
+  strokeWeight: 2,
+  strokeColor: "#008f5a",
+  editable: true,
+  clickable: true,
+};
 
 function PropertiesSearchMapInner({
   provinceCode,
@@ -30,31 +39,12 @@ function PropertiesSearchMapInner({
   const polygonOverlayRef = useRef(null);
   const listenersBoundOverlayRef = useRef(null);
   const [hoveredPin, setHoveredPin] = useState(null);
-  const [drawingReady, setDrawingReady] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   const center = useMemo(() => {
     const prov = getProvinceByCode(provinceCode);
     return prov?.center ?? { lat: -29.41, lng: -66.85 };
   }, [provinceCode]);
-
-  const drawingOptions = useMemo(() => {
-    if (!drawingReady || !window.google?.maps?.drawing) return null;
-    return {
-      drawingControl: true,
-      drawingControlOptions: {
-        position: window.google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
-      },
-      polygonOptions: {
-        fillColor: "#00a86b",
-        fillOpacity: 0.15,
-        strokeWeight: 2,
-        strokeColor: "#008f5a",
-        editable: true,
-        clickable: true,
-      },
-    };
-  }, [drawingReady]);
 
   const emitRingFromOverlay = useCallback(
     (overlay) => {
@@ -87,10 +77,6 @@ function PropertiesSearchMapInner({
     onPolygonChange?.(null);
   }, [onPolygonChange]);
 
-  const handleRedraw = useCallback(() => {
-    clearDrawnPolygon();
-  }, [clearDrawnPolygon]);
-
   const handlePolygonComplete = useCallback(
     (poly) => {
       if (polygonOverlayRef.current && polygonOverlayRef.current !== poly) {
@@ -104,6 +90,28 @@ function PropertiesSearchMapInner({
     },
     [bindOverlayListeners, emitRingFromOverlay, onPolygonComplete],
   );
+
+  const canDraw = mapReady && !polygon?.length;
+  const {
+    isDrawing,
+    draftPointCount,
+    startDrawing,
+    cancelDrawing,
+    confirmDrawing,
+    handleMapClick,
+    handleMapDblClick,
+  } = useMapPolygonDrawing({
+    mapRef,
+    active: canDraw,
+    polygonStyle: SEARCH_POLYGON_STYLE,
+    onComplete: handlePolygonComplete,
+  });
+
+  const handleRedraw = useCallback(() => {
+    cancelDrawing();
+    clearDrawnPolygon();
+    startDrawing();
+  }, [cancelDrawing, clearDrawnPolygon, startDrawing]);
 
   useEffect(() => {
     if (!polygon?.length) {
@@ -120,11 +128,7 @@ function PropertiesSearchMapInner({
     const paths = polygon.map(([lng, lat]) => ({ lat, lng }));
     const overlay = new window.google.maps.Polygon({
       paths,
-      fillColor: "#00a86b",
-      fillOpacity: 0.15,
-      strokeWeight: 2,
-      strokeColor: "#008f5a",
-      editable: true,
+      ...SEARCH_POLYGON_STYLE,
       map: mapRef.current,
     });
     polygonOverlayRef.current = overlay;
@@ -167,12 +171,21 @@ function PropertiesSearchMapInner({
   const activeHover =
     hoveredPin ?? mapPins?.find((p) => p.id === hoveredId) ?? null;
 
-  const hintText =
-    variant === "landing" ? null : "Dibujá un área en el mapa para ver solo las propiedades dentro";
+  const hintText = isDrawing
+    ? "Hacé clic en el mapa para marcar vértices. Clic en el primer punto, doble clic o «Finalizar» para cerrar."
+    : variant === "landing"
+      ? null
+      : "Dibujá un área en el mapa para ver solo las propiedades dentro";
 
-  const showToolbar = hintText || polygon?.length > 0;
+  const showToolbar = hintText || polygon?.length > 0 || canDraw;
 
-  const rootClass = ["search-map", compact && "search-map--compact"].filter(Boolean).join(" ");
+  const rootClass = [
+    "search-map",
+    compact && "search-map--compact",
+    isDrawing && "search-map--drawing",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={rootClass}>
@@ -180,7 +193,27 @@ function PropertiesSearchMapInner({
       <div className="search-map__toolbar">
         {hintText && <span className="search-map__hint">{hintText}</span>}
         <div className="search-map__actions">
-          {polygon?.length > 0 && (
+          {canDraw && !isDrawing && (
+            <button type="button" className="search-map__clear" onClick={startDrawing}>
+              Dibujar área
+            </button>
+          )}
+          {isDrawing && (
+            <>
+              <button
+                type="button"
+                className="search-map__clear"
+                onClick={confirmDrawing}
+                disabled={draftPointCount < 3}
+              >
+                Finalizar
+              </button>
+              <button type="button" className="search-map__clear" onClick={cancelDrawing}>
+                Cancelar
+              </button>
+            </>
+          )}
+          {polygon?.length > 0 && !isDrawing && (
             <>
               <button type="button" className="search-map__clear" onClick={handleRedraw}>
                 Dibujar de nuevo
@@ -199,22 +232,17 @@ function PropertiesSearchMapInner({
         zoom={11}
         onLoad={(map) => {
           mapRef.current = map;
-          setDrawingReady(true);
+          setMapReady(true);
         }}
+        onClick={handleMapClick}
+        onDblClick={handleMapDblClick}
         options={{
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: true,
+          draggableCursor: isDrawing ? "crosshair" : undefined,
         }}
       >
-        {drawingOptions && (
-          <DrawingManager
-            drawingMode={polygon?.length ? null : window.google.maps.drawing.OverlayType.POLYGON}
-            options={drawingOptions}
-            onPolygonComplete={handlePolygonComplete}
-          />
-        )}
-
         {mapPins?.map((pin) => {
           if (pin.lat == null || pin.lng == null) return null;
           const pos = { lat: Number(pin.lat), lng: Number(pin.lng) };
