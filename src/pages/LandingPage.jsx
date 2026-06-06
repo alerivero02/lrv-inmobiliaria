@@ -25,10 +25,10 @@ export default function LandingPage() {
       <main>
         <HeroSection />
         <StatsSection />
-        <AboutSection />
-        <ServicesSection />
         <MapSearchSection />
         <FeaturedPropertiesSection onSelectListing={setSelectedListingId} />
+        <AboutSection />
+        <ServicesSection />
         <ContactSection />
       </main>
       <Footer />

@@ -1,0 +1,257 @@
+.map-demo-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(1px);
+  cursor: pointer;
+  animation: mapDemoFadeIn 0.35s ease-out both;
+}
+
+.map-demo-overlay--out {
+  animation: mapDemoFadeOut 0.4s ease-in forwards;
+  pointer-events: none;
+}
+
+.map-demo-overlay--reduced {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.map-demo-overlay__toolbar-pulse {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(220px, 55%);
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid rgba(0, 143, 90, 0.5);
+  box-shadow: 0 0 0 0 rgba(0, 168, 107, 0.35);
+  animation: mapDemoToolbarPulse 1.2s ease-in-out infinite;
+}
+
+.map-demo-overlay__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.map-demo-overlay__vertex {
+  fill: #fff;
+  stroke: #008f5a;
+  stroke-width: 0.8;
+  opacity: 0;
+  animation: mapDemoVertexIn 0.35s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+  animation-delay: calc(0.9s + var(--i, 0) * 0.55s);
+}
+
+.map-demo-overlay__stroke {
+  fill: none;
+  stroke: #008f5a;
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mapDemoDrawStroke 1.8s ease-out 2.1s forwards;
+}
+
+.map-demo-overlay__stroke--done {
+  stroke-dashoffset: 0;
+}
+
+.map-demo-overlay__fill {
+  fill: rgba(0, 168, 107, 0.18);
+  stroke: none;
+  opacity: 0;
+  animation: mapDemoFillIn 0.5s ease-out 3.4s forwards;
+}
+
+.map-demo-overlay__fill--static {
+  animation: none;
+  opacity: 1;
+}
+
+.map-demo-overlay__cursor {
+  position: absolute;
+  width: 18px;
+  height: 22px;
+  pointer-events: none;
+  opacity: 0;
+  animation: mapDemoCursorMove 2.2s ease-in-out 0.9s forwards;
+}
+
+.map-demo-overlay__cursor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #008f5a;
+  clip-path: polygon(0 0, 0 100%, 55% 78%);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.map-demo-overlay__cursor::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 143, 90, 0.2);
+  transform: translate(-30%, -30%);
+}
+
+.map-demo-overlay__tooltip {
+  position: absolute;
+  bottom: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text, #1a2e26);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-demo-overlay__badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: #008f5a;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 143, 90, 0.35);
+  animation: mapDemoBadgePop 0.45s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) 4.2s both;
+  pointer-events: none;
+}
+
+.map-demo-overlay--reduced .map-demo-overlay__badge {
+  display: none;
+}
+
+.map-demo-overlay__skip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #5a7a6e);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--bone-border, rgba(0, 0, 0, 0.08));
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s ease;
+}
+
+.map-demo-overlay__skip:hover {
+  background: #fff;
+}
+
+@keyframes mapDemoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mapDemoFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes mapDemoToolbarPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 168, 107, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 168, 107, 0);
+  }
+}
+
+@keyframes mapDemoVertexIn {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes mapDemoDrawStroke {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes mapDemoFillIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mapDemoCursorMove {
+  0% {
+    opacity: 0;
+    left: 38%;
+    top: 42%;
+  }
+  8% { opacity: 1; }
+  22% { left: 38%; top: 42%; }
+  35% { left: 58%; top: 36%; }
+  55% { left: 68%; top: 58%; }
+  75% { left: 48%; top: 68%; }
+  92% {
+    opacity: 1;
+    left: 38%;
+    top: 42%;
+  }
+  100% {
+    opacity: 0;
+    left: 38%;
+    top: 42%;
+  }
+}
+
+@keyframes mapDemoBadgePop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-demo-overlay {
+    animation: none;
+  }
+
+  .map-demo-overlay__toolbar-pulse,
+  .map-demo-overlay__vertex,
+  .map-demo-overlay__stroke,
+  .map-demo-overlay__fill,
+  .map-demo-overlay__cursor,
+  .map-demo-overlay__badge {
+    animation: none !important;
+  }
+
+  .map-demo-overlay__vertex {
+    opacity: 0;
+  }
+}

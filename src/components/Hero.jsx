@@ -144,7 +144,7 @@ export default function Hero() {
           </div>
 
           <div className="lrvh-cta-row">
-            <a className="lrvh-btn lrvh-btn--primary" href="#propiedades">
+            <a className="lrvh-btn lrvh-btn--primary" href="#buscar-mapa">
               <span>Explorar propiedades</span>
               <svg
                 width="18"

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import MapDrawingDemoOverlay from "../../components/MapDrawingDemoOverlay";
 import { DEFAULT_PROVINCE_CODE } from "../../data/cities";
 import { lazyWithRetry } from "../../utils/lazyRetry";
 import { saveSearchPolygon } from "../../utils/polygonSearch";
@@ -21,12 +22,13 @@ export default function MapSearchSection() {
       <div className="container">
         <header className="map-search-section__header">
           <h2 id="map-search-title" className="section-title">
-            Encontrá tu próxima propiedad es más fácil con nosotros
+            Encontrar tu próxima propiedad es más fácil con nosotros
           </h2>
         </header>
 
         <div className="map-search-section__grid">
           <div className="map-search-section__map">
+            <MapDrawingDemoOverlay />
             <Suspense
               fallback={
                 <div className="map-search-section__map-fallback">
