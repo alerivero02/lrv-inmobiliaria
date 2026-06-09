@@ -21,9 +21,6 @@ export default function MobileNavDrawer({ open, onClose, title = "Menú", childr
           <h2 id="mnd-title" className="mnd-title">
             {title}
           </h2>
-          <button type="button" className="mnd-close" aria-label="Cerrar" onClick={onClose}>
-            ×
-          </button>
         </header>
         <nav className="mnd-body" aria-label="Principal">
           {children}

@@ -205,7 +205,8 @@ export default function Header() {
       id="inicio"
       className={cn(
         "fixed inset-x-0 top-0 z-[100] py-4 transition-[background-color,box-shadow] duration-lrv",
-        scrolled && "bg-bone/95 shadow-lrv backdrop-blur-xl",
+        mobileOpen && "z-[201]",
+        (mobileOpen || scrolled) && "bg-bone/95 shadow-lrv backdrop-blur-xl",
       )}
     >
       <div className="container flex items-center justify-between">
@@ -231,7 +232,9 @@ export default function Header() {
 
         <button
           type="button"
-          className="flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden"
+          className={cn(
+            "relative flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden",
+          )}
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav-drawer"
           aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
