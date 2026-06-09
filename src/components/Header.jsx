@@ -2,14 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import MobileNavDrawer from "./MobileNavDrawer";
 
 const navLinks = [
   { href: "#inicio", to: "/", label: "Inicio" },
@@ -76,12 +69,7 @@ export default function Header() {
   };
 
   const mobileLinkClass = (link) =>
-    cn(
-      "block w-full border-b border-bone-border/60 px-5 py-3.5 text-left text-base font-medium text-lrv-text transition-colors duration-lrv last:border-b-0",
-      "hover:bg-lrv-green-light hover:text-lrv-green",
-      isLinkActive(link) &&
-        "border-l-[3px] border-lrv-green bg-lrv-green-light pl-[calc(1.25rem-3px)] text-lrv-green",
-    );
+    cn("mnd-link", isLinkActive(link) && "mnd-link--active");
 
   const renderNavLink = (link) => {
     if (isPortal) {
@@ -243,12 +231,9 @@ export default function Header() {
 
         <button
           type="button"
-          className={cn(
-            "relative flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden",
-            mobileOpen ? "z-[111]" : "z-[1]",
-          )}
+          className="flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden"
           aria-expanded={mobileOpen}
-          aria-controls="mobile-nav-sheet"
+          aria-controls="mobile-nav-drawer"
           aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
           onClick={() => setMobileOpen((open) => !open)}
         >
@@ -272,39 +257,21 @@ export default function Header() {
           />
         </button>
 
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent
-            id="mobile-nav-sheet"
-            side="right"
-            showCloseButton
-            overlayClassName="z-[105] bg-black/45"
-            className="z-[110] flex h-full w-[min(300px,88vw)] flex-col gap-0 border-none bg-white p-0 shadow-[-8px_0_32px_rgba(0,0,0,0.12)] sm:max-w-none"
-          >
-            <SheetHeader className="border-b border-bone-border px-5 py-4">
-              <SheetTitle className="font-display text-lg font-semibold text-lrv-text">
-                Menú
-              </SheetTitle>
-              <SheetDescription className="sr-only">
-                Navegación principal del sitio
-              </SheetDescription>
-            </SheetHeader>
-            <nav
-              className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
-              aria-label="Principal"
+        <MobileNavDrawer
+          open={mobileOpen}
+          onClose={closeMobile}
+          footer={
+            <button
+              type="button"
+              className="btn btn-primary w-full"
+              onClick={(e) => goToSection(e, "#contacto")}
             >
-              {mobileNavLinks.map(renderMobileNavLink)}
-            </nav>
-            <SheetFooter className="shrink-0 border-t border-bone-border px-5 py-4">
-              <button
-                type="button"
-                className="btn btn-primary w-full"
-                onClick={(e) => goToSection(e, "#contacto")}
-              >
-                Contacto
-              </button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+              Contacto
+            </button>
+          }
+        >
+          {mobileNavLinks.map(renderMobileNavLink)}
+        </MobileNavDrawer>
       </div>
     </header>
   );
