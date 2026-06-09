@@ -96,6 +96,7 @@ export default function PropertiesPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search), SEARCH_DEBOUNCE_MS);
@@ -170,6 +171,7 @@ export default function PropertiesPage() {
   const fetchPage = useCallback(
     async (pageNum, reset = false) => {
       setLoading(true);
+      if (reset) setFetchError("");
       try {
         const data = await getPublicListings({ ...apiParams, limit: LIMIT, page: pageNum });
         const items = Array.isArray(data?.items) ? data.items : [];
@@ -178,6 +180,13 @@ export default function PropertiesPage() {
         setHasMore(pageNum < (data?.pages || 1));
         setPage(pageNum);
       } catch (_) {
+        if (reset) {
+          setFetchError(
+            "No pudimos cargar las propiedades. Verificá tu conexión e intentá de nuevo.",
+          );
+          setListings([]);
+          setTotalCount(0);
+        }
         setHasMore(false);
       } finally {
         setLoading(false);
@@ -207,6 +216,11 @@ export default function PropertiesPage() {
       fetchMapPins();
     }
   }, [fetchMapPins, mapSectionVisible, hasPolygon]);
+
+  const retryFetch = () => {
+    fetchPage(1, true);
+    if (mapSectionVisible || hasPolygon) fetchMapPins();
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -527,7 +541,15 @@ export default function PropertiesPage() {
           </div>
 
           <section className="properties-page__list" aria-label="Listado de propiedades">
-              {loading && listings.length === 0 ? (
+              {fetchError && !loading && listings.length === 0 ? (
+                <div className="properties-page__empty">
+                  <p className="properties-page__empty-title">No pudimos cargar las propiedades</p>
+                  <p className="properties-page__empty-text">{fetchError}</p>
+                  <button type="button" className="btn btn-primary" onClick={retryFetch}>
+                    Reintentar
+                  </button>
+                </div>
+              ) : loading && listings.length === 0 ? (
                 <div className="properties-page__skeleton">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="properties-page__card-skeleton">

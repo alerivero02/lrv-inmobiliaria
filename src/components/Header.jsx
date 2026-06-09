@@ -5,6 +5,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -21,6 +23,8 @@ const navLinks = [
 const linkClass =
   "text-[0.9375rem] font-medium text-lrv-text transition-colors duration-lrv hover:text-lrv-green";
 
+const scrollOnlyPaths = ["/", "/demo/la-rioja"];
+
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,8 +34,8 @@ export default function Header() {
   const isMobile = useIsMobile();
   const isPortal = location.pathname.startsWith("/propiedades");
 
-  const scrollOnlyPaths = ["/", "/demo/la-rioja"];
   const links = isPortal ? navLinks : navLinks.slice(0, 5);
+  const mobileNavLinks = links.filter((link) => link.href !== "#contacto");
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -55,6 +59,30 @@ export default function Header() {
     }
     navigate({ pathname: "/", hash: href.replace("#", "") });
   };
+
+  const isLinkActive = (link) => {
+    if (link.to === "/propiedades" || link.href === "#propiedades") {
+      return location.pathname.startsWith("/propiedades");
+    }
+    if (link.href === "#inicio" || link.to === "/") {
+      if (scrollOnlyPaths.includes(location.pathname)) {
+        return !location.hash || location.hash === "#inicio";
+      }
+      return location.pathname === "/" && !location.hash;
+    }
+    if (scrollOnlyPaths.includes(location.pathname)) {
+      return location.hash === link.href;
+    }
+    return false;
+  };
+
+  const mobileLinkClass = (link) =>
+    cn(
+      "block w-full border-b border-bone-border/60 px-5 py-3.5 text-left text-base font-medium text-lrv-text transition-colors duration-lrv last:border-b-0",
+      "hover:bg-lrv-green-light hover:text-lrv-green",
+      isLinkActive(link) &&
+        "border-l-[3px] border-lrv-green bg-lrv-green-light pl-[calc(1.25rem-3px)] text-lrv-green",
+    );
 
   const renderNavLink = (link) => {
     if (isPortal) {
@@ -94,6 +122,64 @@ export default function Header() {
 
     return (
       <a key={link.href} href={link.href} className={linkClass} onClick={closeMobile}>
+        {link.label}
+      </a>
+    );
+  };
+
+  const renderMobileNavLink = (link) => {
+    if (isPortal) {
+      if (link.to === "/") {
+        return (
+          <button
+            key={link.to}
+            type="button"
+            className={mobileLinkClass(link)}
+            onClick={goToTopOrHome}
+          >
+            {link.label}
+          </button>
+        );
+      }
+      if (link.to === "/propiedades") {
+        return (
+          <Link
+            key={link.to}
+            to="/propiedades"
+            className={mobileLinkClass(link)}
+            onClick={closeMobile}
+          >
+            {link.label}
+          </Link>
+        );
+      }
+      return (
+        <button
+          key={link.href}
+          type="button"
+          className={mobileLinkClass(link)}
+          onClick={(e) => goToSection(e, link.href)}
+        >
+          {link.label}
+        </button>
+      );
+    }
+
+    if (link.href === "#inicio") {
+      return (
+        <a key="inicio" href="/" className={mobileLinkClass(link)} onClick={goToTopOrHome}>
+          {link.label}
+        </a>
+      );
+    }
+
+    return (
+      <a
+        key={link.href}
+        href={link.href}
+        className={mobileLinkClass(link)}
+        onClick={closeMobile}
+      >
         {link.label}
       </a>
     );
@@ -187,17 +273,39 @@ export default function Header() {
           <SheetContent
             side="right"
             showCloseButton
-            className="flex w-[min(280px,85vw)] flex-col justify-center gap-6 border-none bg-bone shadow-[-4px_0_24px_rgba(0,0,0,0.08)] sm:max-w-none"
+            overlayClassName="bg-black/45"
+            className="flex w-[min(300px,88vw)] flex-col gap-0 border-none bg-white p-0 shadow-[-8px_0_32px_rgba(0,0,0,0.12)] sm:max-w-none"
           >
-            <SheetHeader className="sr-only">
-              <SheetTitle>Menú</SheetTitle>
+            <SheetHeader className="border-b border-bone-border px-5 py-4">
+              <SheetTitle className="font-display text-lg font-semibold text-lrv-text">
+                Menú
+              </SheetTitle>
+              <SheetDescription className="sr-only">
+                Navegación principal del sitio
+              </SheetDescription>
             </SheetHeader>
-            <nav
-              className="flex flex-col items-center gap-6"
-              aria-label="Principal"
-            >
-              {links.map(renderNavLink)}
+            <nav className="flex flex-1 flex-col overflow-y-auto" aria-label="Principal">
+              {mobileNavLinks.map(renderMobileNavLink)}
             </nav>
+            <SheetFooter className="border-t border-bone-border px-5 py-4">
+              {isPortal ? (
+                <button
+                  type="button"
+                  className="btn btn-primary w-full"
+                  onClick={(e) => goToSection(e, "#contacto")}
+                >
+                  Contacto
+                </button>
+              ) : (
+                <a
+                  href="#contacto"
+                  className="btn btn-primary w-full"
+                  onClick={closeMobile}
+                >
+                  Contacto
+                </a>
+              )}
+            </SheetFooter>
           </SheetContent>
         </Sheet>
       </div>

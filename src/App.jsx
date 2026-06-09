@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import { lazyWithRetry } from "./utils/lazyRetry";
@@ -34,9 +35,10 @@ function RouteFallback() {
 
 export default function App() {
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <ScrollToTop />
-      <Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
+        <ScrollToTop />
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/propiedades" element={<PropertiesPage />} />
         <Route path="/propiedades/:id" element={<PropertyDetailPage />} />
@@ -63,7 +65,8 @@ export default function App() {
           <Route path="usuarios" element={<UsersPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
