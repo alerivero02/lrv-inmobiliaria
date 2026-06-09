@@ -9,7 +9,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 
 const navLinks = [
@@ -242,39 +241,44 @@ export default function Header() {
           {links.map(renderNavLink)}
         </nav>
 
+        <button
+          type="button"
+          className={cn(
+            "relative flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden",
+            mobileOpen ? "z-[111]" : "z-[1]",
+          )}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav-sheet"
+          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          <span
+            className={cn(
+              "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
+              mobileOpen && "translate-y-[7px] rotate-45",
+            )}
+          />
+          <span
+            className={cn(
+              "block h-0.5 w-full rounded-sm bg-lrv-text transition-opacity duration-lrv",
+              mobileOpen && "opacity-0",
+            )}
+          />
+          <span
+            className={cn(
+              "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
+              mobileOpen && "-translate-y-[7px] -rotate-45",
+            )}
+          />
+        </button>
+
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <button
-              type="button"
-              className="flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden"
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
-            >
-              <span
-                className={cn(
-                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
-                  mobileOpen && "translate-y-[7px] rotate-45",
-                )}
-              />
-              <span
-                className={cn(
-                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-opacity duration-lrv",
-                  mobileOpen && "opacity-0",
-                )}
-              />
-              <span
-                className={cn(
-                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
-                  mobileOpen && "-translate-y-[7px] -rotate-45",
-                )}
-              />
-            </button>
-          </SheetTrigger>
           <SheetContent
+            id="mobile-nav-sheet"
             side="right"
             showCloseButton
-            overlayClassName="bg-black/45"
-            className="flex w-[min(300px,88vw)] flex-col gap-0 border-none bg-white p-0 shadow-[-8px_0_32px_rgba(0,0,0,0.12)] sm:max-w-none"
+            overlayClassName="z-[105] bg-black/45"
+            className="z-[110] flex h-full w-[min(300px,88vw)] flex-col gap-0 border-none bg-white p-0 shadow-[-8px_0_32px_rgba(0,0,0,0.12)] sm:max-w-none"
           >
             <SheetHeader className="border-b border-bone-border px-5 py-4">
               <SheetTitle className="font-display text-lg font-semibold text-lrv-text">
@@ -284,27 +288,20 @@ export default function Header() {
                 Navegación principal del sitio
               </SheetDescription>
             </SheetHeader>
-            <nav className="flex flex-1 flex-col overflow-y-auto" aria-label="Principal">
+            <nav
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
+              aria-label="Principal"
+            >
               {mobileNavLinks.map(renderMobileNavLink)}
             </nav>
-            <SheetFooter className="border-t border-bone-border px-5 py-4">
-              {isPortal ? (
-                <button
-                  type="button"
-                  className="btn btn-primary w-full"
-                  onClick={(e) => goToSection(e, "#contacto")}
-                >
-                  Contacto
-                </button>
-              ) : (
-                <a
-                  href="#contacto"
-                  className="btn btn-primary w-full"
-                  onClick={closeMobile}
-                >
-                  Contacto
-                </a>
-              )}
+            <SheetFooter className="shrink-0 border-t border-bone-border px-5 py-4">
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                onClick={(e) => goToSection(e, "#contacto")}
+              >
+                Contacto
+              </button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
