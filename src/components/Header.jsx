@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const navLinks = [
   { href: "#inicio", to: "/", label: "Inicio" },
@@ -19,19 +27,76 @@ export default function Header() {
   const [heroInView, setHeroInView] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const isPortal = location.pathname.startsWith("/propiedades");
 
   const scrollOnlyPaths = ["/", "/demo/la-rioja"];
+  const links = isPortal ? navLinks : navLinks.slice(0, 5);
+
+  const closeMobile = () => setMobileOpen(false);
 
   const goToTopOrHome = (e) => {
     e.preventDefault();
-    setMobileOpen(false);
+    closeMobile();
     if (scrollOnlyPaths.includes(location.pathname)) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     navigate("/");
     window.scrollTo(0, 0);
+  };
+
+  const goToSection = (e, href) => {
+    e.preventDefault();
+    closeMobile();
+    if (scrollOnlyPaths.includes(location.pathname)) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    navigate({ pathname: "/", hash: href.replace("#", "") });
+  };
+
+  const renderNavLink = (link) => {
+    if (isPortal) {
+      if (link.to === "/") {
+        return (
+          <button key={link.to} type="button" className={linkClass} onClick={goToTopOrHome}>
+            {link.label}
+          </button>
+        );
+      }
+      if (link.to === "/propiedades") {
+        return (
+          <Link key={link.to} to="/propiedades" className={linkClass} onClick={closeMobile}>
+            {link.label}
+          </Link>
+        );
+      }
+      return (
+        <button
+          key={link.href}
+          type="button"
+          className={linkClass}
+          onClick={(e) => goToSection(e, link.href)}
+        >
+          {link.label}
+        </button>
+      );
+    }
+
+    if (link.href === "#inicio") {
+      return (
+        <a key="inicio" href="/" className={linkClass} onClick={goToTopOrHome}>
+          {link.label}
+        </a>
+      );
+    }
+
+    return (
+      <a key={link.href} href={link.href} className={linkClass} onClick={closeMobile}>
+        {link.label}
+      </a>
+    );
   };
 
   useEffect(() => {
@@ -55,11 +120,12 @@ export default function Header() {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
 
   return (
     <header
@@ -86,84 +152,54 @@ export default function Header() {
           />
         </a>
 
-        {mobileOpen && (
-          <button
-            type="button"
-            className="fixed inset-0 z-[99] bg-black/20 md:hidden"
-            aria-label="Cerrar menú"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
-
-        <nav
-          className={cn(
-            "flex items-center gap-8",
-            "max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-[100] max-md:w-[min(280px,85vw)] max-md:flex-col max-md:justify-center max-md:gap-6 max-md:bg-bone max-md:shadow-[-4px_0_24px_rgba(0,0,0,0.08)] max-md:transition-transform max-md:duration-lrv",
-            mobileOpen
-              ? "max-md:visible max-md:pointer-events-auto max-md:translate-x-0"
-              : "max-md:invisible max-md:pointer-events-none max-md:translate-x-full",
-          )}
-          aria-label="Principal"
-        >
-          {(isPortal ? navLinks : navLinks.slice(0, 5)).map((link) =>
-            isPortal ? (
-              link.to === "/" ? (
-                <Link key={link.to} to="/" className={linkClass} onClick={goToTopOrHome}>
-                  {link.label}
-                </Link>
-              ) : (
-                <Link
-                  key={link.to || link.href}
-                  to={link.to}
-                  className={linkClass}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              )
-            ) : link.href === "#inicio" ? (
-              <a key="inicio" href="/" className={linkClass} onClick={goToTopOrHome}>
-                {link.label}
-              </a>
-            ) : (
-              <a
-                key={link.href}
-                href={link.href}
-                className={linkClass}
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </a>
-            ),
-          )}
+        <nav className="hidden items-center gap-8 md:flex" aria-label="Principal">
+          {links.map(renderNavLink)}
         </nav>
 
-        <button
-          type="button"
-          className="hidden h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 max-md:flex"
-          aria-expanded={mobileOpen}
-          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          <span
-            className={cn(
-              "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
-              mobileOpen && "translate-y-[7px] rotate-45",
-            )}
-          />
-          <span
-            className={cn(
-              "block h-0.5 w-full rounded-sm bg-lrv-text transition-opacity duration-lrv",
-              mobileOpen && "opacity-0",
-            )}
-          />
-          <span
-            className={cn(
-              "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
-              mobileOpen && "-translate-y-[7px] -rotate-45",
-            )}
-          />
-        </button>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              className="flex h-7 w-7 flex-col justify-center gap-[5px] border-0 bg-transparent p-0 md:hidden"
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            >
+              <span
+                className={cn(
+                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
+                  mobileOpen && "translate-y-[7px] rotate-45",
+                )}
+              />
+              <span
+                className={cn(
+                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-opacity duration-lrv",
+                  mobileOpen && "opacity-0",
+                )}
+              />
+              <span
+                className={cn(
+                  "block h-0.5 w-full rounded-sm bg-lrv-text transition-[transform,opacity] duration-lrv",
+                  mobileOpen && "-translate-y-[7px] -rotate-45",
+                )}
+              />
+            </button>
+          </SheetTrigger>
+          <SheetContent
+            side="right"
+            showCloseButton
+            className="flex w-[min(280px,85vw)] flex-col justify-center gap-6 border-none bg-bone shadow-[-4px_0_24px_rgba(0,0,0,0.08)] sm:max-w-none"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Menú</SheetTitle>
+            </SheetHeader>
+            <nav
+              className="flex flex-col items-center gap-6"
+              aria-label="Principal"
+            >
+              {links.map(renderNavLink)}
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );
