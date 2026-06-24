@@ -180,18 +180,60 @@
 @media (max-width: 900px) {
   .about__grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.75rem;
   }
 
   .about__visual {
     order: -1;
-    max-width: 420px;
+    max-width: min(420px, 100%);
     margin: 0 auto;
     width: 100%;
   }
 
   .about__figure {
-    max-height: min(480px, 65vh);
+    max-height: min(420px, 62vh);
+  }
+
+  .about__content {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .about__eyebrow {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    row-gap: 0.35rem;
+  }
+
+  .about__chips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .about__chip {
+    padding: 0.5rem 0.65rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .about__chip-value {
+    font-size: 1rem;
+  }
+
+  .about__chip-label {
+    font-size: 0.6875rem;
+  }
+
+  .about__list li {
+    font-size: 0.875rem;
+  }
+
+  .about__cta {
+    width: 100%;
+    justify-content: center;
   }
 }
 

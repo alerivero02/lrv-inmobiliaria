@@ -149,41 +149,41 @@ export default function Services() {
                 </SwiperSlide>
               ))}
             </Swiper>
-
-            <aside
-              className="services__panel glass-panel glass-panel--overlay-right glass-panel--on-dark"
-              aria-label="Categorías de servicios"
-            >
-              <p className="services__panel-label">Explorá por categoría</p>
-              <ul className="services__categories" role="list">
-                {slides.map((slide, index) => {
-                  const Icon = slide.icon;
-                  const isActive = index === activeIndex;
-                  return (
-                    <li key={slide.id}>
-                      <button
-                        type="button"
-                        className={`services__category${isActive ? " services__category--active" : ""}`}
-                        onClick={() => handleCategoryClick(index)}
-                        aria-current={isActive ? "true" : undefined}
-                      >
-                        <span className="services__category-icon" aria-hidden="true">
-                          <Icon className="size-5" strokeWidth={1.75} />
-                        </span>
-                        <span className="services__category-text">
-                          <span className="services__category-title">{slide.title}</span>
-                          <span className="services__category-desc">{slide.description}</span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="services__live-caption" aria-live="polite" aria-atomic="true">
-                {active.title}: {active.description}
-              </p>
-            </aside>
           </div>
+
+          <aside
+            className="services__panel glass-panel glass-panel--overlay-right glass-panel--on-dark"
+            aria-label="Categorías de servicios"
+          >
+            <p className="services__panel-label">Explorá por categoría</p>
+            <ul className="services__categories" role="list">
+              {slides.map((slide, index) => {
+                const Icon = slide.icon;
+                const isActive = index === activeIndex;
+                return (
+                  <li key={slide.id}>
+                    <button
+                      type="button"
+                      className={`services__category${isActive ? " services__category--active" : ""}`}
+                      onClick={() => handleCategoryClick(index)}
+                      aria-current={isActive ? "true" : undefined}
+                    >
+                      <span className="services__category-icon" aria-hidden="true">
+                        <Icon className="size-5" strokeWidth={1.75} />
+                      </span>
+                      <span className="services__category-text">
+                        <span className="services__category-title">{slide.title}</span>
+                        <span className="services__category-desc">{slide.description}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="services__live-caption" aria-live="polite" aria-atomic="true">
+              {active.title}: {active.description}
+            </p>
+          </aside>
         </div>
       </div>
     </section>
