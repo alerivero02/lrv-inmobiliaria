@@ -130,6 +130,9 @@ export const adminTheme = createTheme({
       },
     },
     MuiDialog: {
+      defaultProps: {
+        transitionDuration: { enter: 200, exit: 150 },
+      },
       styleOverrides: {
         paper: { borderRadius: "var(--radius)", border: "1px solid #e4e4e7" },
       },

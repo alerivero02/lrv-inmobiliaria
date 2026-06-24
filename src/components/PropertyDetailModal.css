@@ -95,7 +95,22 @@
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--green-strong);
-  margin: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.property-detail-modal__full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--green-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.property-detail-modal__full-link:hover {
+  color: var(--green-strong-hover);
 }
 
 .property-detail-modal__gallery-block {

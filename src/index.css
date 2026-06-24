@@ -24,6 +24,32 @@
   --transition: 0.25s ease;
   --font-sans: "DM Sans", system-ui, sans-serif;
   --font-display: "Playfair Display", Georgia, serif;
+  --gold-accent: #c9a84c;
+  --green-deep: #0d3b2e;
+  --reveal-duration: 0.55s;
+  --reveal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Scroll reveal (Contact + Services) */
+.reveal {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition:
+    opacity var(--reveal-duration) var(--reveal-ease),
+    transform var(--reveal-duration) var(--reveal-ease);
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 *,

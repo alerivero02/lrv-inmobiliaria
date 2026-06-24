@@ -384,7 +384,7 @@ export default function AdminAppLayout() {
           <SidebarRail />
         </Sidebar>
         <SidebarInset
-          className="theme bg-muted/30 min-h-0 min-h-svh max-w-full overflow-x-hidden"
+          className="theme bg-muted/30 min-h-0 min-h-dvh max-w-full overflow-x-hidden"
           data-admin-shell
         >
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur-md sm:px-4 md:px-6">

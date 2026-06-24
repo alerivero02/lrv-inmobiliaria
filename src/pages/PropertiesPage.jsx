@@ -524,6 +524,9 @@ export default function PropertiesPage() {
               polygon={polygon}
               onPolygonChange={handlePolygonChange}
               variant="search"
+              hoveredId={hoveredListingId}
+              onPinHover={setHoveredListingId}
+              onPinOpen={setSelectedListingId}
             />
           </div>
 
@@ -581,11 +584,11 @@ export default function PropertiesPage() {
                   {listings.length === 0 && !loading && (
                     <div className="properties-page__empty">
                       <p className="properties-page__empty-title">
-                        No hay propiedades con esos filtros
+                        No hay propiedades con esos filtros en {provinceLabel}
                       </p>
                       <p className="properties-page__empty-text">
-                        Probá otra provincia, ampliá la búsqueda o borrá el área dibujada en el
-                        mapa.
+                        Probá ampliar la búsqueda, cambiar el tipo de inmueble o borrá el área
+                        dibujada en el mapa para ver más opciones en La Rioja.
                       </p>
                       <button type="button" className="btn btn-primary" onClick={clearFilters}>
                         Limpiar filtros

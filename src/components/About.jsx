@@ -1,61 +1,53 @@
-import { useEffect, useRef, useState } from "react";
-import { usePointerTilt } from "../hooks/usePointerTilt";
-import "./Hero.css";
+import { Link } from "react-router-dom";
+import { Check, Handshake, MapPin, ShieldCheck, ArrowRight } from "lucide-react";
+import { useInView } from "../hooks/useInView";
 import "./About.css";
 
+const HIGHLIGHTS = [
+  { icon: Check, text: "+11 años de experiencia en el mercado" },
+  { icon: MapPin, text: "Amplio portfolio en La Rioja y alrededores" },
+  { icon: Handshake, text: "Atención personalizada y seguimiento" },
+  { icon: ShieldCheck, text: "Venta y alquiler con transparencia en cada paso" },
+];
+
+const TRUST_CHIPS = [
+  { value: "+11", label: "años" },
+  { value: "+350", label: "operaciones" },
+  { value: "99,9%", label: "satisfacción" },
+];
+
 export default function About() {
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const wrapRef = useRef(null);
-
-  usePointerTilt({
-    boundsRef: wrapRef,
-    cardRef: wrapRef,
-    enabled: !reduceMotion,
-    coeffX: 5,
-    coeffY: 5,
-    rotYMul: -0.5,
-    rotXMul: 0.3,
-  });
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mq.matches);
-    const onMq = () => setReduceMotion(mq.matches);
-    mq.addEventListener("change", onMq);
-    return () => {
-      mq.removeEventListener("change", onMq);
-    };
-  }, []);
+  const { ref: gridRef, isInView } = useInView({ threshold: 0.2 });
 
   return (
-    <section
-      className={`section about ${reduceMotion ? "about--reduced" : ""}`}
-      id="nosotros"
-      aria-labelledby="about-title"
-    >
+    <section className="section about texture-bone" id="nosotros" aria-labelledby="about-title">
       <div className="container">
-        <div className="about__grid">
+        <div
+          ref={gridRef}
+          className={`about__grid reveal${isInView ? " reveal--visible" : ""}`}
+        >
           <div className="about__visual">
             <figure className="about__figure">
-              <div ref={wrapRef} className="lrvh-card-wrap about__card-wrap">
-                <div className="lrvh-main-card about__hero-card">
-                  <div className="lrvh-card-glow" aria-hidden="true" />
-                  <img
-                    src="/EnzoRivero.png"
-                    alt="Enzo Rivero, agente inmobiliario, dueño y administrador de LRV"
-                    className="lrvh-property-img"
-                    width={800}
-                    height={800}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="lrvh-card-shine" aria-hidden="true" />
-                </div>
-              </div>
+              <img
+                src="/EnzoRivero.png"
+                alt="Enzo Rivero, agente inmobiliario, dueño y administrador de LRV"
+                className="about__photo"
+                width={800}
+                height={1000}
+                loading="lazy"
+                decoding="async"
+              />
             </figure>
+            <p className="about__caption">Enzo Rivero · Fundador</p>
           </div>
+
           <div className="about__content">
-            <h2 id="about-title" className="section-title">
+            <p className="about__eyebrow">
+              <span className="about__eyebrow-line" aria-hidden="true" />
+              LRV Inmobiliaria · La Rioja
+              <span className="about__eyebrow-line" aria-hidden="true" />
+            </p>
+            <h2 id="about-title" className="section-title about__title">
               Nosotros
             </h2>
             <p className="section-subtitle about__subtitle">
@@ -67,11 +59,27 @@ export default function About() {
               asesoramiento profesional y transparencia en cada operación.
             </p>
             <ul className="about__list" role="list">
-              <li>+11 años de experiencia en el mercado</li>
-              <li>Amplio portfolio de propiedades</li>
-              <li>Atención personalizada y seguimiento</li>
-              <li>Venta y alquiler: acompañamos todo el proceso</li>
+              {HIGHLIGHTS.map(({ icon: Icon, text }) => (
+                <li key={text}>
+                  <span className="about__list-icon" aria-hidden="true">
+                    <Icon className="size-4" strokeWidth={2} />
+                  </span>
+                  {text}
+                </li>
+              ))}
             </ul>
+            <div className="about__chips" aria-label="Indicadores de confianza">
+              {TRUST_CHIPS.map((chip) => (
+                <div key={chip.label} className="about__chip">
+                  <span className="about__chip-value tabular-nums">{chip.value}</span>
+                  <span className="about__chip-label">{chip.label}</span>
+                </div>
+              ))}
+            </div>
+            <Link to="/propiedades" className="about__cta">
+              Ver propiedades
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import VisitRequestForm from "./VisitRequestForm";
@@ -163,6 +165,13 @@ export default function PropertyDetailModal({ listingId, onClose }) {
                 {[listing.city, listing.address].filter(Boolean).join(" — ")}
               </p>
               <p className="property-detail-modal__price">{formatPrice(listing.price)}</p>
+              <Link
+                to={`/propiedades/${listing.id}`}
+                className="property-detail-modal__full-link"
+              >
+                <ExternalLink className="size-4" aria-hidden="true" />
+                Ver ficha completa
+              </Link>
             </div>
 
             {nImages > 0 && (

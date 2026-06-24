@@ -44,6 +44,9 @@
   stroke: #008f5a;
   stroke-width: 0.8;
   opacity: 0;
+}
+
+.map-demo-overlay--playing .map-demo-overlay__vertex {
   animation: mapDemoVertexIn 0.35s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
   animation-delay: calc(0.9s + var(--i, 0) * 0.55s);
 }
@@ -55,6 +58,9 @@
   stroke-linejoin: round;
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
+}
+
+.map-demo-overlay--playing .map-demo-overlay__stroke:not(.map-demo-overlay__stroke--done) {
   animation: mapDemoDrawStroke 1.8s ease-out 2.1s forwards;
 }
 
@@ -66,6 +72,9 @@
   fill: rgba(0, 168, 107, 0.18);
   stroke: none;
   opacity: 0;
+}
+
+.map-demo-overlay--playing .map-demo-overlay__fill:not(.map-demo-overlay__fill--static) {
   animation: mapDemoFillIn 0.5s ease-out 3.4s forwards;
 }
 
@@ -80,6 +89,9 @@
   height: 22px;
   pointer-events: none;
   opacity: 0;
+}
+
+.map-demo-overlay--playing .map-demo-overlay__cursor {
   animation: mapDemoCursorMove 2.2s ease-in-out 0.9s forwards;
 }
 
@@ -133,8 +145,11 @@
   background: #008f5a;
   border-radius: 999px;
   box-shadow: 0 6px 20px rgba(0, 143, 90, 0.35);
-  animation: mapDemoBadgePop 0.45s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) 4.2s both;
   pointer-events: none;
+}
+
+.map-demo-overlay--playing .map-demo-overlay__badge {
+  animation: mapDemoBadgePop 0.45s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) 4.2s both;
 }
 
 .map-demo-overlay--reduced .map-demo-overlay__badge {

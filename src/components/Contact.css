@@ -1,47 +1,112 @@
+.section.contact {
+  padding-bottom: 6.5rem;
+}
+
 .contact {
-  background: var(--white);
+  background: linear-gradient(180deg, var(--bone) 0%, var(--white) 12rem);
+  border-top: 1px solid var(--bone-border);
 }
 
-/* ── Grid dos columnas ─────────────────────────────────────── */
-.contact__grid {
-  display: grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap: 5rem;
-  align-items: start;
+.contact__header {
+  text-align: center;
+  max-width: 36rem;
+  margin: 0 auto 2.75rem;
 }
 
-/* ── Columna info ─────────────────────────────────────────── */
 .contact__eyebrow {
-  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--green-strong);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+
+.contact__eyebrow-line {
+  display: block;
+  width: 28px;
+  height: 2px;
+  background: var(--gold-accent);
+  border-radius: 1px;
 }
 
 .contact__title {
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.12;
   color: var(--text);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.875rem;
+  text-wrap: balance;
 }
 
-.contact__body {
-  font-size: 1rem;
+.contact__lead {
+  font-size: 1.0625rem;
   color: var(--text-muted);
-  line-height: 1.7;
-  margin-bottom: 2rem;
-  max-width: 32ch;
+  line-height: 1.65;
+  margin: 0;
+  text-wrap: pretty;
 }
 
-/* ── Botón WhatsApp ─────────────────────────────────────── */
+.contact__grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(340px, 1.1fr);
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+  align-items: stretch;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.contact__aside {
+  display: block;
+}
+
+.contact__figure {
+  margin: 0;
+  aspect-ratio: 16 / 10;
+  max-height: 220px;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.contact__figure-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.contact__aside-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--white);
+  border: 1px solid var(--bone-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.contact__aside-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 1.625rem 1.75rem;
+}
+
 .contact__wa-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
-  padding: 0.8rem 1.5rem;
+  width: 100%;
+  padding: 0.85rem 1.5rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: #fff;
@@ -52,14 +117,14 @@
     background var(--transition),
     transform var(--transition),
     box-shadow var(--transition);
-  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
-  margin-bottom: 2.5rem;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.28);
+  margin-bottom: 1rem;
 }
 
 .contact__wa-btn:hover {
   background: #1ebe5d;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.38);
 }
 
 .contact__wa-icon {
@@ -68,30 +133,30 @@
   flex-shrink: 0;
 }
 
-/* ── Meta info ─────────────────────────────────────────── */
 .contact__meta {
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
-  padding-top: 1.5rem;
+  padding-top: 1.125rem;
   border-top: 1px solid var(--bone-border);
 }
 
 .contact__meta-item {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  font-size: 0.9375rem;
+  gap: 0.15rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
   line-height: 1.5;
 }
 
 .contact__meta-item strong {
   color: var(--text);
+  font-weight: 700;
 }
 
 .contact__meta-label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -99,32 +164,79 @@
   opacity: 0.5;
 }
 
-/* ── Columna form ─────────────────────────────────────── */
 .contact__form-wrap {
-  background: var(--bone);
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
   border: 1px solid var(--bone-border);
-  border-radius: calc(var(--radius) * 2);
-  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  padding-bottom: clamp(2rem, 3.5vw, 2.75rem);
+  box-shadow: var(--shadow-lg);
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+.contact__form-wrap .vrf {
+  flex: 1;
+}
+
+.contact__form-wrap .vrf__fdatepicker-input {
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--bone-border);
+  border-radius: var(--radius);
+  background: var(--bone);
+  font-weight: 500;
+  caret-color: auto;
+}
+
+.contact__form-wrap .vrf__fdatepicker-input:hover,
+.contact__form-wrap .vrf__fdatepicker-input:focus {
+  border-color: var(--green-strong);
+  box-shadow: 0 0 0 3px var(--green-strong-light);
+  color: var(--text);
+}
+
+.contact__form-wrap .vrf__fdatepicker-input:focus-visible {
+  border-radius: var(--radius);
+}
+
+.contact__form-wrap .vrf__submit {
+  width: 100%;
+  align-self: stretch;
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 900px) {
-  .contact__grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
+  .contact {
+    background: var(--bone);
   }
 
-  .contact__body {
-    max-width: none;
+  .contact__grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .contact__figure {
+    max-height: none;
+    aspect-ratio: 16 / 9;
+  }
+
+  .contact__header {
+    margin-bottom: 2rem;
   }
 }
 
 @media (max-width: 520px) {
   .contact__form-wrap {
-    padding: 1.5rem;
+    padding: 1.375rem;
   }
 
   .contact__title {
     font-size: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact__wa-btn:hover {
+    transform: none;
   }
 }

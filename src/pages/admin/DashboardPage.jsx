@@ -28,20 +28,15 @@ function SectionTitle({ eyebrow, title, description }) {
   return (
     <div className="mb-4 space-y-1">
       <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{eyebrow}</p>
-      <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+      <h2 className="font-heading text-lg font-semibold tracking-tight text-balance text-foreground">{title}</h2>
       {description ? <p className="max-w-2xl text-sm text-muted-foreground">{description}</p> : null}
     </div>
   );
 }
 
-function KpiTile({ label, value, icon: Icon, accentClass, iconStyle, warn }) {
-  return (
-    <div
-      className={cn(
-        "group relative flex flex-col rounded-xl border border-border/80 bg-card p-4 shadow-sm ring-1 ring-foreground/5 transition-all duration-200",
-        "hover:-translate-y-0.5 hover:shadow-md",
-      )}
-    >
+function KpiTile({ label, value, icon: Icon, accentClass, iconStyle, warn, to }) {
+  const inner = (
+    <>
       <div
         className={cn(
           "mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-border/60 bg-muted/50",
@@ -49,7 +44,7 @@ function KpiTile({ label, value, icon: Icon, accentClass, iconStyle, warn }) {
         )}
         style={iconStyle}
       >
-        <Icon className="size-5" strokeWidth={2} />
+        <Icon className="size-5" strokeWidth={2} aria-hidden />
       </div>
       <p className="text-xs font-medium leading-snug text-muted-foreground">{label}</p>
       <p
@@ -60,28 +55,60 @@ function KpiTile({ label, value, icon: Icon, accentClass, iconStyle, warn }) {
       >
         {value}
       </p>
-    </div>
+    </>
   );
+
+  const className = cn(
+    "group relative flex flex-col rounded-xl border border-border/80 bg-card p-4 shadow-sm ring-1 ring-foreground/5 transition-[transform,box-shadow,background-color] duration-200",
+    "hover:-translate-y-0.5 hover:border-border hover:bg-muted/30 hover:shadow-md",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className={cn(className, "cursor-pointer")} aria-label={`${label}: ${value}`}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
 
-function PortfolioTile({ label, value, subtext, icon: Icon, accent }) {
-  return (
-    <div className="flex flex-col rounded-xl border border-border/80 bg-card p-4 shadow-sm ring-1 ring-foreground/5 transition-shadow hover:shadow-md">
+function PortfolioTile({ label, value, subtext, icon: Icon, accent, to }) {
+  const inner = (
+    <>
       <div className="mb-3 flex items-start justify-between gap-2">
         <p className="text-xs font-medium leading-snug text-muted-foreground">{label}</p>
         <div
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/50 bg-muted/40"
           style={{ color: accent }}
         >
-          <Icon className="size-4" strokeWidth={2} />
+          <Icon className="size-4" strokeWidth={2} aria-hidden />
         </div>
       </div>
       <p className="font-heading text-lg font-semibold tabular-nums leading-tight" style={{ color: accent }}>
         {value}
       </p>
       {subtext ? <p className="mt-1.5 text-[0.7rem] leading-snug text-muted-foreground">{subtext}</p> : null}
-    </div>
+    </>
   );
+
+  const className = cn(
+    "flex flex-col rounded-xl border border-border/80 bg-card p-4 shadow-sm ring-1 ring-foreground/5 transition-[box-shadow,background-color,border-color] duration-200",
+    "hover:border-border hover:bg-muted/30 hover:shadow-md",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className={cn(className, "cursor-pointer")} aria-label={`${label}: ${value}`}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
 
 export default function DashboardPage() {
@@ -142,6 +169,7 @@ export default function DashboardPage() {
       icon: Home,
       accentClass: "text-primary",
       iconStyle: { color: theme.palette.primary.main },
+      to: "/admin/anuncios?status=active",
     },
     {
       label: "Visitas del mes",
@@ -149,6 +177,7 @@ export default function DashboardPage() {
       icon: CalendarDays,
       accentClass: "text-sky-700",
       iconStyle: { color: theme.palette.info.main },
+      to: "/admin/visitas",
     },
     {
       label: "Pendientes de confirmar",
@@ -157,6 +186,7 @@ export default function DashboardPage() {
       accentClass: "text-amber-700",
       iconStyle: { color: theme.palette.warning.main },
       warn: true,
+      to: "/admin/visitas",
     },
     {
       label: "Vendidas / alquiladas",
@@ -164,6 +194,7 @@ export default function DashboardPage() {
       icon: CircleDollarSign,
       accentClass: "text-emerald-700",
       iconStyle: { color: theme.palette.success.main },
+      to: "/admin/anuncios?status=sold",
     },
     {
       label: "Tasa de conversión",
@@ -171,6 +202,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       accentClass: "text-zinc-700",
       iconStyle: { color: theme.palette.secondary.main },
+      to: "/admin/anuncios?status=sold",
     },
   ];
 
@@ -181,6 +213,7 @@ export default function DashboardPage() {
       subtext: `${stats.listings_with_price} propiedades con precio`,
       icon: Landmark,
       accent: theme.palette.primary.main,
+      to: "/admin/anuncios?status=active",
     },
     {
       label: "Margen potencial total",
@@ -188,6 +221,7 @@ export default function DashboardPage() {
       subtext: "Comisiones comprador + vendedor",
       icon: Wallet,
       accent: "#0369a1",
+      to: "/admin/contabilidad",
     },
     {
       label: "Com. comprador (potencial)",
@@ -195,6 +229,7 @@ export default function DashboardPage() {
       subtext: "Sobre propiedades activas",
       icon: Percent,
       accent: "#6d28d9",
+      to: "/admin/contabilidad",
     },
     {
       label: "Com. vendedor (potencial)",
@@ -202,6 +237,7 @@ export default function DashboardPage() {
       subtext: "Sobre propiedades activas",
       icon: Percent,
       accent: "#b45309",
+      to: "/admin/contabilidad",
     },
     {
       label: "Precio promedio",
@@ -209,6 +245,7 @@ export default function DashboardPage() {
       subtext: "Propiedades activas con precio",
       icon: BarChart3,
       accent: "#0f766e",
+      to: "/admin/anuncios?status=active",
     },
     {
       label: "Comisiones ganadas (vendidas)",
@@ -216,6 +253,7 @@ export default function DashboardPage() {
       subtext: `Portfolio vendido: ${fmtARS(stats.sold_portfolio_value)}`,
       icon: BadgeCheck,
       accent: "#b91c1c",
+      to: "/admin/contabilidad",
     },
   ];
 

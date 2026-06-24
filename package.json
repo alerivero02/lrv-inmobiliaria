@@ -12,6 +12,7 @@
     "dev:all:sqlite": "cross-env JWT_SECRET=dev-local-jwt-secret-change-me CORS_ORIGINS=http://localhost:5173 FRONTEND_URL=http://localhost:5173 VITE_API_URL=/api concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend-node\" \"vite\"",
     "build": "node scripts/seo-assets.mjs && vite build",
     "preview": "vite preview",
+    "test:production": "node scripts/production-smoke.mjs",
     "lint": "biome lint .",
     "format": "biome format . --write"
   },
