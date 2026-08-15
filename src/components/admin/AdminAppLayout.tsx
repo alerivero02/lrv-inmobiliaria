@@ -19,6 +19,7 @@ import {
   Landmark,
   LayoutDashboard,
   LogOut,
+  MessageSquareQuote,
   PlusCircle,
   Users,
 } from "lucide-react";
@@ -62,6 +63,7 @@ const mainNav = [
   { to: "/admin/anuncios", end: false, label: "Anuncios", Icon: FileText },
   { to: "/admin/nuevo", end: false, label: "Nuevo anuncio", Icon: PlusCircle },
   { to: "/admin/visitas", end: false, label: "Visitas", Icon: Calendar },
+  { to: "/admin/resenas", end: false, label: "Reseñas", Icon: MessageSquareQuote },
   { to: "/admin/contabilidad", end: false, label: "Contabilidad", Icon: Landmark },
 ] as const;
 
@@ -109,7 +111,11 @@ function AdminSidebarNav({
 }) {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const [counts, setCounts] = useState({ pending_visits: 0, pending_listings: 0 });
+  const [counts, setCounts] = useState({
+    pending_visits: 0,
+    pending_listings: 0,
+    pending_reviews: 0,
+  });
   const [pwdOpen, setPwdOpen] = useState(false);
   const [curPw, setCurPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -119,6 +125,7 @@ function AdminSidebarNav({
   const [pwdSnack, setPwdSnack] = useState("");
 
   const visitasActive = matchPath({ path: "/admin/visitas", end: false }, pathname) !== null;
+  const resenasActive = matchPath({ path: "/admin/resenas", end: false }, pathname) !== null;
   const publicacionesActive = pathname === "/admin/anuncios" && search.includes("pending_review");
 
   const sidebarNav = useMemo(() => {
@@ -216,6 +223,19 @@ function AdminSidebarNav({
                     {counts.pending_listings > 0 ? (
                       <SidebarMenuBadge className="bg-amber-500/20 text-amber-800 dark:text-amber-200">
                         {counts.pending_listings}
+                      </SidebarMenuBadge>
+                    ) : null}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={resenasActive} tooltip="Reseñas">
+                  <NavLink to="/admin/resenas" onClick={onNavClick}>
+                    <MessageSquareQuote className="size-4 shrink-0" />
+                    <span>Reseñas</span>
+                    {counts.pending_reviews > 0 ? (
+                      <SidebarMenuBadge className="bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                        {counts.pending_reviews}
                       </SidebarMenuBadge>
                     ) : null}
                   </NavLink>

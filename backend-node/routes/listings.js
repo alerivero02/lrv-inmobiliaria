@@ -12,7 +12,7 @@ import {
 } from "../utils/images.js";
 import { getUploadsDir } from "../uploadsDir.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { isLandPropertyType, normalizePropertyType } from "../constants/propertyTypes.js";
+import { isLandPropertyType, normalizePropertyType, normalizeInvestmentTag } from "../constants/propertyTypes.js";
 import {
   computePolygonAreaSqm,
   normalizeLotPolygon,
@@ -156,6 +156,7 @@ function parseMapListing(row) {
     operation: row.operation,
     city: row.city,
     image: firstImage,
+    investment_tag: row.investment_tag ?? null,
   };
 }
 
@@ -189,7 +190,7 @@ router.get("/public/map", asyncHandler(async (req, res) => {
 
   const { where, params, polygon, orderSql } = filter;
   const rows = await all(
-    `SELECT id, title, lat, lng, price, currency, rooms, area_sqm, property_type, operation, city, images
+    `SELECT id, title, lat, lng, price, currency, rooms, area_sqm, property_type, operation, city, images, investment_tag
      FROM listings ${where} ORDER BY ${orderSql} LIMIT 500`,
     ...params,
   );
@@ -283,6 +284,12 @@ router.get("/", verifyToken, asyncHandler(async (req, res) => {
     conds.push("property_type = ?");
     params.push(property_type);
   }
+  if (req.query.investment_tag) {
+    conds.push("investment_tag = ?");
+    params.push(String(req.query.investment_tag).trim().toLowerCase());
+  } else if (req.query.investment === "1" || req.query.investment === true || req.query.investment === 1) {
+    conds.push("investment_tag IS NOT NULL AND investment_tag != ''");
+  }
   if (operation) {
     conds.push("operation = ?");
     params.push(operation);
@@ -364,6 +371,7 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
     referrer_name,
     referrer_lastname,
     referrer_phone,
+    investment_tag,
   } = req.body;
 
   if (!title) return res.status(422).json({ detail: "El título es obligatorio" });
@@ -376,8 +384,10 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
   if (!currency?.trim()) return res.status(422).json({ detail: "La moneda es obligatoria" });
 
   let normalizedPropertyType;
+  let normalizedInvestmentTag;
   try {
     normalizedPropertyType = normalizePropertyType(property_type);
+    normalizedInvestmentTag = normalizeInvestmentTag(investment_tag);
   } catch (err) {
     return res.status(err.status || 500).json({ detail: err.message });
   }
@@ -400,17 +410,18 @@ router.post("/", verifyToken, asyncHandler(async (req, res) => {
   const { lastInsertRowid } = await run(
     `
     INSERT INTO listings
-    (title,description,property_type,status,operation,documentation,
+    (title,description,property_type,investment_tag,status,operation,documentation,
      address,city,province,province_code,lat,lng,location_manual,
      rooms,area_sqm,price,currency,
      has_garage,has_garden,has_pool,has_patio,has_balcony,has_quincho,has_terrace,garage_count,covered_area_sqm,lot_polygon,featured,extras_note,images,
      commission_buyer,commission_seller,referrer_name,referrer_lastname,referrer_phone)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
     title,
     description ?? null,
     normalizedPropertyType,
+    normalizedInvestmentTag,
     status ?? "active",
     operation ?? "venta",
     documentation ?? null,
@@ -458,6 +469,7 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
     "title",
     "description",
     "property_type",
+    "investment_tag",
     "status",
     "operation",
     "documentation",
@@ -544,6 +556,14 @@ router.patch("/:id", verifyToken, asyncHandler(async (req, res) => {
   if ("property_type" in req.body) {
     try {
       req.body.property_type = normalizePropertyType(req.body.property_type, { required: true });
+    } catch (err) {
+      return res.status(err.status || 500).json({ detail: err.message });
+    }
+  }
+
+  if ("investment_tag" in req.body) {
+    try {
+      req.body.investment_tag = normalizeInvestmentTag(req.body.investment_tag);
     } catch (err) {
       return res.status(err.status || 500).json({ detail: err.message });
     }

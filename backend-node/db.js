@@ -123,11 +123,8 @@ export async function migratePg() {
       id              SERIAL PRIMARY KEY,
       title           TEXT    NOT NULL,
       description     TEXT,
-      property_type   TEXT    DEFAULT 'casa'
-        CHECK (property_type IN (
-          'casa','departamento','lote','terreno','finca',
-          'local_comercial','fondo_comercio'
-        )),
+      property_type   TEXT    DEFAULT 'casa',
+      investment_tag  TEXT,
       status          TEXT    DEFAULT 'active',
       operation       TEXT    DEFAULT 'venta',
       documentation   TEXT,
@@ -186,6 +183,33 @@ export async function migratePg() {
       notes       TEXT,
       listing_id  INTEGER REFERENCES listings(id) ON DELETE SET NULL,
       created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id            SERIAL PRIMARY KEY,
+      visit_id      INTEGER REFERENCES visits(id) ON DELETE SET NULL,
+      invite_id     INTEGER,
+      author_name   TEXT    NOT NULL,
+      author_email  TEXT    NOT NULL,
+      author_phone  TEXT,
+      rating        INTEGER NOT NULL,
+      body          TEXT    NOT NULL,
+      status        TEXT    DEFAULT 'pending',
+      created_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at    TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS review_invites (
+      id              SERIAL PRIMARY KEY,
+      token           TEXT    UNIQUE NOT NULL,
+      client_name     TEXT    NOT NULL,
+      client_email    TEXT,
+      client_phone    TEXT,
+      listing_id      INTEGER REFERENCES listings(id) ON DELETE SET NULL,
+      note            TEXT,
+      used_at         TIMESTAMPTZ,
+      expires_at      TIMESTAMPTZ,
+      created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
@@ -314,6 +338,41 @@ export async function migratePg() {
     EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE listings ADD COLUMN investment_tag TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  // Quitar CHECK viejo de property_type para poder remapear (validación en API).
+  await p.query(`
+    DO $$
+    DECLARE
+      r RECORD;
+    BEGIN
+      FOR r IN
+        SELECT c.conname
+        FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        WHERE t.relname = 'listings'
+          AND c.contype = 'c'
+          AND pg_get_constraintdef(c.oid) ILIKE '%property_type%'
+      LOOP
+        EXECUTE format('ALTER TABLE listings DROP CONSTRAINT IF EXISTS %I', r.conname);
+      END LOOP;
+    END $$;
+  `);
+  await p.query(`
+    UPDATE listings SET investment_tag = 'finca'
+    WHERE property_type = 'finca' AND (investment_tag IS NULL OR investment_tag = '');
+    UPDATE listings SET investment_tag = 'local_comercial'
+    WHERE property_type = 'local_comercial' AND (investment_tag IS NULL OR investment_tag = '');
+    UPDATE listings SET investment_tag = 'fondo_comercio'
+    WHERE property_type = 'fondo_comercio' AND (investment_tag IS NULL OR investment_tag = '');
+    UPDATE listings SET property_type = 'lotes_terrenos'
+    WHERE property_type IN ('lote', 'terreno', 'finca');
+    UPDATE listings SET property_type = 'casa'
+    WHERE property_type IN ('local_comercial', 'fondo_comercio');
+  `);
+  await p.query(`
     CREATE INDEX IF NOT EXISTS listings_province_code_idx ON listings (province_code);
   `);
   await p.query(`
@@ -347,6 +406,40 @@ export async function migratePg() {
     WHERE province_code IS NULL AND province ILIKE 'Santa Fe';
   `);
 
+  await p.query(`
+    CREATE INDEX IF NOT EXISTS reviews_status_rating_idx
+    ON reviews (status, rating DESC, created_at DESC);
+  `);
+  await p.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS reviews_visit_id_uq
+    ON reviews (visit_id)
+    WHERE visit_id IS NOT NULL;
+  `);
+  await p.query(`
+    DO $$ BEGIN
+      ALTER TABLE reviews ADD COLUMN invite_id INTEGER;
+    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS review_invites (
+      id              SERIAL PRIMARY KEY,
+      token           TEXT    UNIQUE NOT NULL,
+      client_name     TEXT    NOT NULL,
+      client_email    TEXT,
+      client_phone    TEXT,
+      listing_id      INTEGER REFERENCES listings(id) ON DELETE SET NULL,
+      note            TEXT,
+      used_at         TIMESTAMPTZ,
+      expires_at      TIMESTAMPTZ,
+      created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await p.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS reviews_invite_id_uq
+    ON reviews (invite_id)
+    WHERE invite_id IS NOT NULL;
+  `);
+
   console.log("✅  Base de datos PostgreSQL lista");
 }
 
@@ -370,11 +463,8 @@ function migrateSqlite() {
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       title           TEXT    NOT NULL,
       description     TEXT,
-      property_type   TEXT    DEFAULT 'casa'
-        CHECK (property_type IN (
-          'casa','departamento','lote','terreno','finca',
-          'local_comercial','fondo_comercio'
-        )),
+      property_type   TEXT    DEFAULT 'casa',
+      investment_tag  TEXT,
       status          TEXT    DEFAULT 'active',
       operation       TEXT    DEFAULT 'venta',
       documentation   TEXT,
@@ -433,6 +523,33 @@ function migrateSqlite() {
       notes       TEXT,
       listing_id  INTEGER REFERENCES listings(id) ON DELETE SET NULL,
       created_at  TEXT    DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      visit_id      INTEGER REFERENCES visits(id) ON DELETE SET NULL,
+      invite_id     INTEGER,
+      author_name   TEXT    NOT NULL,
+      author_email  TEXT    NOT NULL,
+      author_phone  TEXT,
+      rating        INTEGER NOT NULL,
+      body          TEXT    NOT NULL,
+      status        TEXT    DEFAULT 'pending',
+      created_at    TEXT    DEFAULT (datetime('now')),
+      updated_at    TEXT    DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS review_invites (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      token           TEXT    UNIQUE NOT NULL,
+      client_name     TEXT    NOT NULL,
+      client_email    TEXT,
+      client_phone    TEXT,
+      listing_id      INTEGER REFERENCES listings(id) ON DELETE SET NULL,
+      note            TEXT,
+      used_at         TEXT,
+      expires_at      TEXT,
+      created_at      TEXT    DEFAULT (datetime('now'))
     );
   `);
   try {
@@ -515,6 +632,115 @@ function migrateSqlite() {
     db.exec("ALTER TABLE listings ADD COLUMN province_code TEXT DEFAULT 'AR-F'");
   } catch {}
   try {
+    db.exec("ALTER TABLE listings ADD COLUMN investment_tag TEXT");
+  } catch {}
+
+  // Si el CHECK viejo sigue en el DDL, rebuild sin CHECK y remapea tipos.
+  const listingsDdl = db.prepare(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'listings'",
+  ).get();
+  const hasLegacyTypeCheck =
+    typeof listingsDdl?.sql === "string" &&
+    (listingsDdl.sql.includes("'lote'") || listingsDdl.sql.includes("'terreno'"));
+  const legacyTypeCount = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM listings
+       WHERE property_type IN ('lote','terreno','finca','local_comercial','fondo_comercio')`,
+    )
+    .get()?.n;
+  if (hasLegacyTypeCheck || Number(legacyTypeCount) > 0) {
+    db.exec("PRAGMA foreign_keys = OFF");
+    db.exec("BEGIN");
+    try {
+      db.exec(`
+        CREATE TABLE listings__types_v2 (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          title           TEXT    NOT NULL,
+          description     TEXT,
+          property_type   TEXT    DEFAULT 'casa',
+          investment_tag  TEXT,
+          status          TEXT    DEFAULT 'active',
+          operation       TEXT    DEFAULT 'venta',
+          documentation   TEXT,
+          address         TEXT,
+          city            TEXT,
+          province        TEXT    DEFAULT 'La Rioja',
+          lat             REAL,
+          lng             REAL,
+          location_manual TEXT,
+          rooms           INTEGER,
+          area_sqm        REAL    DEFAULT 0,
+          price           REAL,
+          currency        TEXT    DEFAULT 'ARS',
+          has_garage      INTEGER DEFAULT 0,
+          has_garden      INTEGER DEFAULT 0,
+          has_pool        INTEGER DEFAULT 0,
+          has_patio       INTEGER DEFAULT 0,
+          has_balcony     INTEGER DEFAULT 0,
+          has_quincho     INTEGER DEFAULT 0,
+          has_terrace     INTEGER DEFAULT 0,
+          garage_count    INTEGER,
+          covered_area_sqm REAL,
+          lot_polygon     TEXT,
+          featured        INTEGER DEFAULT 0,
+          extras_note     TEXT,
+          images          TEXT    DEFAULT '[]',
+          view_count        INTEGER DEFAULT 0,
+          consult_count     INTEGER DEFAULT 0,
+          commission_buyer  REAL    DEFAULT 3.0,
+          commission_seller REAL    DEFAULT 3.0,
+          created_at        TEXT    DEFAULT (datetime('now')),
+          updated_at        TEXT    DEFAULT (datetime('now')),
+          referrer_name     TEXT,
+          referrer_lastname TEXT,
+          referrer_phone    TEXT,
+          province_code     TEXT    DEFAULT 'AR-F'
+        );
+        INSERT INTO listings__types_v2 (
+          id, title, description, property_type, investment_tag, status, operation,
+          documentation, address, city, province, lat, lng, location_manual, rooms,
+          area_sqm, price, currency, has_garage, has_garden, has_pool, has_patio,
+          has_balcony, has_quincho, has_terrace, garage_count, covered_area_sqm,
+          lot_polygon, featured, extras_note, images, view_count, consult_count,
+          commission_buyer, commission_seller, created_at, updated_at,
+          referrer_name, referrer_lastname, referrer_phone, province_code
+        )
+        SELECT
+          id, title, description,
+          CASE property_type
+            WHEN 'lote' THEN 'lotes_terrenos'
+            WHEN 'terreno' THEN 'lotes_terrenos'
+            WHEN 'finca' THEN 'lotes_terrenos'
+            WHEN 'local_comercial' THEN 'casa'
+            WHEN 'fondo_comercio' THEN 'casa'
+            ELSE property_type
+          END,
+          CASE
+            WHEN property_type = 'finca' THEN 'finca'
+            WHEN property_type = 'local_comercial' THEN 'local_comercial'
+            WHEN property_type = 'fondo_comercio' THEN 'fondo_comercio'
+            ELSE investment_tag
+          END,
+          status, operation, documentation, address, city, province, lat, lng,
+          location_manual, rooms, area_sqm, price, currency, has_garage, has_garden,
+          has_pool, has_patio, has_balcony, has_quincho, has_terrace, garage_count,
+          covered_area_sqm, lot_polygon, featured, extras_note, images, view_count,
+          consult_count, commission_buyer, commission_seller, created_at, updated_at,
+          referrer_name, referrer_lastname, referrer_phone, province_code
+        FROM listings;
+        DROP TABLE listings;
+        ALTER TABLE listings__types_v2 RENAME TO listings;
+      `);
+      db.exec("COMMIT");
+    } catch (err) {
+      db.exec("ROLLBACK");
+      throw err;
+    } finally {
+      db.exec("PRAGMA foreign_keys = ON");
+    }
+  }
+
+  try {
     db.exec("CREATE INDEX IF NOT EXISTS listings_province_code_idx ON listings (province_code)");
   } catch {}
   try {
@@ -524,6 +750,45 @@ function migrateSqlite() {
     UPDATE listings SET province_code = 'AR-F'
     WHERE province_code IS NULL AND (province = 'La Rioja' OR province IS NULL)
   `);
+  try {
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS reviews_status_rating_idx
+      ON reviews (status, rating, created_at)
+    `);
+  } catch {}
+  try {
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS reviews_visit_id_uq
+      ON reviews (visit_id)
+      WHERE visit_id IS NOT NULL
+    `);
+  } catch {}
+  try {
+    db.exec("ALTER TABLE reviews ADD COLUMN invite_id INTEGER");
+  } catch {}
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS review_invites (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        token           TEXT    UNIQUE NOT NULL,
+        client_name     TEXT    NOT NULL,
+        client_email    TEXT,
+        client_phone    TEXT,
+        listing_id      INTEGER REFERENCES listings(id) ON DELETE SET NULL,
+        note            TEXT,
+        used_at         TEXT,
+        expires_at      TEXT,
+        created_at      TEXT    DEFAULT (datetime('now'))
+      )
+    `);
+  } catch {}
+  try {
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS reviews_invite_id_uq
+      ON reviews (invite_id)
+      WHERE invite_id IS NOT NULL
+    `);
+  } catch {}
   console.log("✅  Base de datos SQLite lista →", process.env.DB_PATH || path.join(__dirname, "lrv.db"));
 }
 

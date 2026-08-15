@@ -334,6 +334,84 @@ export async function updateVisit(id, data) {
   return res.json();
 }
 
+// Reseñas (público: featured + enviar; admin: listar / moderar)
+export async function getFeaturedReviews() {
+  const res = await fetch(`${API_BASE}/reviews/featured`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "No se pudieron cargar las reseñas");
+  }
+  return res.json();
+}
+
+export async function createReview(data) {
+  const res = await fetch(`${API_BASE}/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "No se pudo enviar la reseña");
+  return body;
+}
+
+export async function getReviews(params = {}) {
+  const q = new URLSearchParams(params).toString();
+  const res = await apiFetch(`/reviews?${q}`);
+  if (!res.ok) throw new Error("Error al cargar reseñas");
+  return res.json();
+}
+
+export async function updateReview(id, data) {
+  const res = await apiFetch(`/reviews/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+  if (!res) return;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Error al actualizar reseña");
+  }
+  return res.json();
+}
+
+export async function deleteReview(id) {
+  const res = await apiFetch(`/reviews/${id}`, { method: "DELETE" });
+  if (!res) return;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Error al eliminar reseña");
+  }
+  return res.json();
+}
+
+export async function getReviewInvite(token) {
+  const res = await fetch(`${API_BASE}/reviews/invite/${encodeURIComponent(token)}`);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || "Invitación no válida");
+  return body;
+}
+
+export async function getReviewInvites(params = {}) {
+  const q = new URLSearchParams(params).toString();
+  const res = await apiFetch(`/reviews/invites?${q}`);
+  if (!res.ok) throw new Error("Error al cargar invitaciones");
+  return res.json();
+}
+
+export async function createReviewInvite(data) {
+  const res = await apiFetch("/reviews/invites", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!res) return;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Error al crear invitación");
+  }
+  return res.json();
+}
+
 // Contabilidad (admin)
 export async function getTransactions(params = {}) {
   const q = new URLSearchParams(params).toString();

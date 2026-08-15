@@ -78,7 +78,8 @@ const demos = [
     title: "Terreno en Chilecito — consultar precio",
     description:
       "Lote amplio en barrio en desarrollo, todos los servicios. Ideal para construir vivienda o invertir.",
-    property_type: "terreno",
+    property_type: "lotes_terrenos",
+    investment_tag: null,
     status: "active",
     operation: "venta",
     city: "Chilecito",
@@ -145,7 +146,8 @@ const demos = [
     title: "Lote en esquina — Villa Unión",
     description:
       "Terreno en esquina con excelente exposición. Servicios de luz, agua y gas en la cuadra. Documentación al día.",
-    property_type: "lote",
+    property_type: "lotes_terrenos",
+    investment_tag: null,
     status: "active",
     operation: "venta",
     city: "Villa Unión",
@@ -164,7 +166,8 @@ const demos = [
     title: "Finca productiva en Famatina",
     description:
       "Campo con casa principal, galpón y monte de olivos. Acceso por ruta pavimentada. Oportunidad para producción o descanso.",
-    property_type: "finca",
+    property_type: "lotes_terrenos",
+    investment_tag: "finca",
     status: "active",
     operation: "venta",
     city: "Famatina",
@@ -184,7 +187,8 @@ const demos = [
     title: "Local comercial sobre peatonal",
     description:
       "Local a la calle con vidriera amplia y depósito trasero. Zona de alto tránsito, ideal gastronomía o retail.",
-    property_type: "local_comercial",
+    property_type: "casa",
+    investment_tag: "local_comercial",
     status: "active",
     operation: "alquiler",
     city: "La Rioja Capital",
@@ -206,15 +210,16 @@ if (count === 0) {
     await run(
       `
     INSERT INTO listings
-    (title,description,property_type,status,operation,
+    (title,description,property_type,investment_tag,status,operation,
      city,address,province,lat,lng,area_sqm,rooms,price,currency,
      has_garage,has_garden,has_pool,has_balcony,has_quincho,garage_count,featured,extras_note,images)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     RETURNING id
   `,
       d.title,
       d.description,
       d.property_type,
+      d.investment_tag ?? null,
       d.status,
       d.operation,
       d.city,

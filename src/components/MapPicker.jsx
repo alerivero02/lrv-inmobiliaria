@@ -6,7 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
-import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
+import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions, mergeMapOptions } from "../config/googleMaps";
 
 const LA_RIOJA_CENTER = { lat: -29.41, lng: -66.85 };
 const mapContainerStyle = { width: "100%", height: "100%" };
@@ -117,6 +117,11 @@ function MapPickerWithKey({ googleMapsApiKey, lat, lng, onChange, onAddressSelec
             if (nextLat == null || nextLng == null) return;
             updatePosition(nextLat, nextLng);
           }}
+          options={mergeMapOptions({
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+          })}
         >
           <Box
             sx={{

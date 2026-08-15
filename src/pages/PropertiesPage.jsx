@@ -10,7 +10,8 @@ import {
   CITIES_LA_RIOJA,
   DEFAULT_PROVINCE_CODE,
   OPERATION_OPTIONS,
-  PROPERTY_TYPE_GROUPS,
+  PROPERTY_TYPES,
+  INVESTMENT_TAGS,
 } from "../data/cities";
 import { getProvinceByCode } from "../data/provinces";
 import { useSeo } from "../hooks/useSeo";
@@ -48,6 +49,7 @@ function buildApiParams(filters, polygon) {
   const params = {};
   if (filters.search) params.search = filters.search;
   if (filters.property_type) params.property_type = filters.property_type;
+  if (filters.investment_tag) params.investment_tag = filters.investment_tag;
   if (filters.operation) params.operation = filters.operation;
   if (filters.city) params.city = filters.city;
   if (filters.province_code) params.province_code = filters.province_code;
@@ -316,14 +318,23 @@ export default function PropertiesPage() {
                 onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
               >
                 <option value="">Todos</option>
-                {PROPERTY_TYPE_GROUPS.map((group) => (
-                  <optgroup key={group.id} label={group.label}>
-                    {group.options.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </optgroup>
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </LabeledSelect>
+
+              <LabeledSelect
+                label="Inversión"
+                value={filters.investment_tag}
+                onChange={(e) => setFilters((f) => ({ ...f, investment_tag: e.target.value }))}
+              >
+                <option value="">Todas</option>
+                {INVESTMENT_TAGS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </LabeledSelect>
 

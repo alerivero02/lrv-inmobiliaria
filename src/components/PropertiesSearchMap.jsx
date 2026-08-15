@@ -5,7 +5,7 @@ import {
   OverlayView,
   useJsApiLoader,
 } from "@react-google-maps/api";
-import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
+import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions, mergeMapOptions } from "../config/googleMaps";
 import { getProvinceByCode } from "../data/provinces";
 import { useMapPolygonDrawing } from "../hooks/useMapPolygonDrawing";
 import PropertyMapPopover from "./PropertyMapPopover";
@@ -38,8 +38,37 @@ function PropertiesSearchMapInner({
   const mapRef = useRef(null);
   const polygonOverlayRef = useRef(null);
   const listenersBoundOverlayRef = useRef(null);
+  const hoverClearTimerRef = useRef(null);
   const [hoveredPin, setHoveredPin] = useState(null);
   const [mapReady, setMapReady] = useState(false);
+
+  const clearHoverSoon = useCallback(() => {
+    if (hoverClearTimerRef.current) clearTimeout(hoverClearTimerRef.current);
+    hoverClearTimerRef.current = setTimeout(() => {
+      setHoveredPin(null);
+      onPinHover?.(null);
+      hoverClearTimerRef.current = null;
+    }, 180);
+  }, [onPinHover]);
+
+  const keepHover = useCallback(
+    (pin) => {
+      if (hoverClearTimerRef.current) {
+        clearTimeout(hoverClearTimerRef.current);
+        hoverClearTimerRef.current = null;
+      }
+      setHoveredPin(pin);
+      onPinHover?.(pin.id);
+    },
+    [onPinHover],
+  );
+
+  useEffect(
+    () => () => {
+      if (hoverClearTimerRef.current) clearTimeout(hoverClearTimerRef.current);
+    },
+    [],
+  );
 
   const center = useMemo(() => {
     const prov = getProvinceByCode(provinceCode);
@@ -236,12 +265,12 @@ function PropertiesSearchMapInner({
         }}
         onClick={handleMapClick}
         onDblClick={handleMapDblClick}
-        options={{
+        options={mergeMapOptions({
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: true,
           draggableCursor: isDrawing ? "crosshair" : undefined,
-        }}
+        })}
       >
         {mapPins?.map((pin) => {
           if (pin.lat == null || pin.lng == null) return null;
@@ -260,14 +289,8 @@ function PropertiesSearchMapInner({
                 strokeWeight: 2,
               }}
               zIndex={isActive ? 1000 : 1}
-              onMouseOver={() => {
-                setHoveredPin(pin);
-                onPinHover?.(pin.id);
-              }}
-              onMouseOut={() => {
-                setHoveredPin(null);
-                onPinHover?.(null);
-              }}
+              onMouseOver={() => keepHover(pin)}
+              onMouseOut={clearHoverSoon}
               onClick={() => onPinOpen?.(pin.id)}
             />
           );
@@ -279,7 +302,12 @@ function PropertiesSearchMapInner({
             mapPaneName={OverlayView.FLOAT_PANE}
             getPixelPositionOffset={(w, h) => ({ x: -(w / 2), y: -h - 14 })}
           >
-            <PropertyMapPopover listing={activeHover} onOpen={onPinOpen} />
+            <div
+              onMouseEnter={() => keepHover(activeHover)}
+              onMouseLeave={clearHoverSoon}
+            >
+              <PropertyMapPopover listing={activeHover} onOpen={onPinOpen} />
+            </div>
           </OverlayView>
         )}
       </GoogleMap>

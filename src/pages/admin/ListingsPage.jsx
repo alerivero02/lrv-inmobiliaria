@@ -43,7 +43,7 @@ import { getListings, deleteListing, updateListing } from "../../api/client";
 import { formatPrice } from "../../utils/format";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
-import { PROPERTY_TYPE_GROUPS, TYPE_LABELS } from "../../data/propertyTypes";
+import { PROPERTY_TYPES, INVESTMENT_TAGS, TYPE_LABELS, INVESTMENT_TAG_LABELS } from "../../data/propertyTypes";
 import { MAX_FEATURED_LISTINGS } from "../../constants/featured";
 
 const STATUS_LABELS = {
@@ -111,6 +111,7 @@ export default function ListingsPage() {
   const [filters, setFilters] = useState({
     status: searchParams.get("status") || "",
     property_type: "",
+    investment_tag: "",
     operation: "",
     city: "",
     search: "",
@@ -152,6 +153,7 @@ export default function ListingsPage() {
       const params = {};
       if (filters.status) params.status = filters.status;
       if (filters.property_type) params.property_type = filters.property_type;
+      if (filters.investment_tag) params.investment_tag = filters.investment_tag;
       if (filters.operation) params.operation = filters.operation;
       if (filters.city) params.city = filters.city;
       if (filters.search) params.search = filters.search;
@@ -166,6 +168,7 @@ export default function ListingsPage() {
   }, [
     filters.status,
     filters.property_type,
+    filters.investment_tag,
     filters.operation,
     filters.city,
     filters.search,
@@ -280,7 +283,8 @@ export default function ListingsPage() {
       valueGetter: (_, row) => {
         const type = TYPE_LABELS[row.property_type] || row.property_type || "—";
         const op = OPERATION_LABELS[row.operation] || row.operation || "Venta";
-        return `${type} · ${op}`;
+        const inv = INVESTMENT_TAG_LABELS[row.investment_tag];
+        return inv ? `${type} · ${op} · ${inv}` : `${type} · ${op}`;
       },
       renderCell: ({ value }) => (
         <Tooltip title={value}>
@@ -487,13 +491,26 @@ export default function ListingsPage() {
               onChange={(e) => setFilters((f) => ({ ...f, property_type: e.target.value }))}
             >
               <MenuItem value="">Todos</MenuItem>
-              {PROPERTY_TYPE_GROUPS.map((group) =>
-                group.options.map((t) => (
-                  <MenuItem key={t.value} value={t.value}>
-                    {t.label}
-                  </MenuItem>
-                )),
-              )}
+              {PROPERTY_TYPES.map((t) => (
+                <MenuItem key={t.value} value={t.value}>
+                  {t.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 140 } }}>
+            <InputLabel>Inversión</InputLabel>
+            <Select
+              value={filters.investment_tag}
+              label="Inversión"
+              onChange={(e) => setFilters((f) => ({ ...f, investment_tag: e.target.value }))}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {INVESTMENT_TAGS.map((t) => (
+                <MenuItem key={t.value} value={t.value}>
+                  {t.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 110 } }}>

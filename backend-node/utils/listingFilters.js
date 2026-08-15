@@ -38,6 +38,12 @@ export function buildPublicListingWhere(query) {
     conds.push("property_type = ?");
     params.push(property_type);
   }
+  if (query.investment_tag) {
+    conds.push("investment_tag = ?");
+    params.push(String(query.investment_tag).trim().toLowerCase());
+  } else if (query.investment === "1" || query.investment === true || query.investment === 1) {
+    conds.push("investment_tag IS NOT NULL AND investment_tag != ''");
+  }
   if (operation) {
     conds.push("operation = ?");
     params.push(operation);

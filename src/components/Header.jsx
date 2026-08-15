@@ -9,6 +9,7 @@ const navLinks = [
   { href: "#nosotros", to: "/nosotros", label: "Nosotros" },
   { href: "#servicios", to: "/servicios", label: "Servicios" },
   { href: "#propiedades", to: "/propiedades", label: "Propiedades" },
+  { href: "#resenas", to: "/", label: "Reseñas" },
   { href: "#contacto", to: "/contacto", label: "Contacto" },
 ];
 
@@ -26,7 +27,7 @@ export default function Header() {
   const isMobile = useIsMobile();
   const isPortal = location.pathname.startsWith("/propiedades");
 
-  const links = isPortal ? navLinks : navLinks.slice(0, 5);
+  const links = isPortal ? navLinks.filter((l) => l.href !== "#resenas") : navLinks;
   const mobileNavLinks = links.filter((link) => link.href !== "#contacto");
 
   const closeMobile = () => setMobileOpen(false);

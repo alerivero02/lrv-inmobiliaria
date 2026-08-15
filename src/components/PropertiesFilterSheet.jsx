@@ -3,7 +3,8 @@ import {
   ARGENTINA_PROVINCES,
   CITIES_LA_RIOJA,
   OPERATION_OPTIONS,
-  PROPERTY_TYPE_GROUPS,
+  PROPERTY_TYPES,
+  INVESTMENT_TAGS,
 } from "../data/cities";
 import "./PropertiesFilterSheet.css";
 
@@ -104,14 +105,25 @@ export default function PropertiesFilterSheet({
               onChange={(e) => set({ property_type: e.target.value })}
             >
               <option value="">Todos</option>
-              {PROPERTY_TYPE_GROUPS.map((group) => (
-                <optgroup key={group.id} label={group.label}>
-                  {group.options.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </optgroup>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </FilterField>
+
+          <FilterField label="Inversión">
+            <select
+              className="pfs-select"
+              value={filters.investment_tag}
+              onChange={(e) => set({ investment_tag: e.target.value })}
+            >
+              <option value="">Todas</option>
+              {INVESTMENT_TAGS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </FilterField>

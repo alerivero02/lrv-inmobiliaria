@@ -7,7 +7,7 @@ import { getPublicListing } from "../api/client";
 import { formatPrice } from "../utils/format";
 import { applyListingSeo, resetListingSeo } from "../utils/seo";
 import { useScrollLock } from "../hooks/useScrollLock";
-import { TYPE_LABELS } from "../data/propertyTypes";
+import { TYPE_LABELS, getInvestmentTagLabel } from "../data/propertyTypes";
 import "./PropertyDetailPage.css";
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
@@ -107,6 +107,9 @@ export default function PropertyDetailPage() {
           <div className="detail-page__head">
             <span className="detail-page__badge">
               {TYPE_LABELS[listing.property_type]} · {OP_LABELS[listing.operation]}
+              {listing.investment_tag
+                ? ` · Inversión: ${getInvestmentTagLabel(listing.investment_tag)}`
+                : ""}
             </span>
             <h1 className="detail-page__title">{listing.title}</h1>
             <p className="detail-page__location">

@@ -6,7 +6,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import { Alert, Box, Typography } from "@mui/material";
-import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
+import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions, mergeMapOptions } from "../config/googleMaps";
 import { getProvinceByCode } from "../data/provinces";
 import { useMapPolygonDrawing } from "../hooks/useMapPolygonDrawing";
 import {
@@ -274,13 +274,13 @@ function LotBoundaryPickerInner({
             onPositionChange?.(nextLat, nextLng);
           }}
           onDblClick={handleMapDblClick}
-          options={{
+          options={mergeMapOptions({
             mapTypeControl: true,
             mapTypeId: "hybrid",
             streetViewControl: false,
             fullscreenControl: true,
             draggableCursor: isDrawing ? "crosshair" : undefined,
-          }}
+          })}
         >
           <Box
             sx={{

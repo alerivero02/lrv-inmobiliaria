@@ -21,6 +21,7 @@ import visitsRouter from "./routes/visits.js";
 import transactionsRouter from "./routes/transactions.js";
 import dashboardRouter from "./routes/dashboard.js";
 import notificationsRouter from "./routes/notifications.js";
+import reviewsRouter from "./routes/reviews.js";
 
 export function createApp() {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -144,6 +145,7 @@ export function createApp() {
   app.use("/api/users", usersApiLimiter, usersRouter);
   app.use("/api/listings", listingsRouter);
   app.use("/api/visits", visitsRouter);
+  app.use("/api/reviews", reviewsRouter);
   app.use("/api/transactions", transactionsRouter);
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/notifications", notificationsRouter);

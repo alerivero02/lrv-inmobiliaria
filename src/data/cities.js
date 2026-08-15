@@ -28,16 +28,14 @@ export const CITIES_LA_RIOJA = [
 
 export {
   PROPERTY_TYPES,
-  PROPERTY_TYPE_GROUPS,
-  PROPERTY_CATEGORY,
-  RESIDENTIAL_PROPERTY_TYPES,
-  INVESTMENT_PROPERTY_TYPES,
+  INVESTMENT_TAGS,
   TYPE_LABELS,
+  INVESTMENT_TAG_LABELS,
   ALLOWED_PROPERTY_TYPE_VALUES,
-  isInvestmentPropertyType,
-  getPropertyCategory,
-  getTypesForCategory,
-  defaultPropertyTypeForCategory,
+  ALLOWED_INVESTMENT_TAG_VALUES,
+  isLandPropertyType,
+  isInvestmentListing,
+  getInvestmentTagLabel,
 } from "./propertyTypes.js";
 
 export {

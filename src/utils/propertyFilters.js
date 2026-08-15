@@ -1,5 +1,5 @@
 import { DEFAULT_PROVINCE_CODE, OPERATION_OPTIONS } from "../data/cities";
-import { TYPE_LABELS } from "../data/propertyTypes";
+import { TYPE_LABELS, INVESTMENT_TAG_LABELS } from "../data/propertyTypes";
 import { getProvinceByCode } from "../data/provinces";
 
 export { INITIAL_PROPERTY_FILTERS } from "./propertyFiltersInitial.js";
@@ -35,6 +35,14 @@ export function buildFilterChips(filters, { hasPolygon, onClearPolygon }) {
       id: "property_type",
       label: TYPE_LABELS[filters.property_type] ?? filters.property_type,
       clear: () => ({ property_type: "" }),
+    });
+  }
+
+  if (filters.investment_tag) {
+    chips.push({
+      id: "investment_tag",
+      label: `Inversión: ${INVESTMENT_TAG_LABELS[filters.investment_tag] ?? filters.investment_tag}`,
+      clear: () => ({ investment_tag: "" }),
     });
   }
 
@@ -115,6 +123,7 @@ export function countActiveFilters(filters, { hasPolygon } = {}) {
   if (filters.search?.trim()) n += 1;
   if (filters.province_code && filters.province_code !== DEFAULT_PROVINCE_CODE) n += 1;
   if (filters.property_type) n += 1;
+  if (filters.investment_tag) n += 1;
   if (filters.operation) n += 1;
   if (filters.city) n += 1;
   if (filters.min_price) n += 1;

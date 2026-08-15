@@ -7,7 +7,7 @@ import VisitRequestForm from "./VisitRequestForm";
 import PropertyLocationMap from "./PropertyLocationMap";
 import { AGENCY_WHATSAPP, getSiteBaseUrl } from "../config/agency";
 import { useScrollLock } from "../hooks/useScrollLock";
-import { TYPE_LABELS } from "../data/propertyTypes";
+import { TYPE_LABELS, getInvestmentTagLabel } from "../data/propertyTypes";
 import "./PropertyDetailModal.css";
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
@@ -157,6 +157,9 @@ export default function PropertyDetailModal({ listingId, onClose }) {
             <div className="property-detail-modal__head">
               <span className="property-detail-modal__badge">
                 {TYPE_LABELS[listing.property_type]} · {OP_LABELS[listing.operation]}
+                {listing.investment_tag
+                  ? ` · Inversión: ${getInvestmentTagLabel(listing.investment_tag)}`
+                  : ""}
               </span>
               <h2 id="property-detail-modal-title" className="property-detail-modal__title">
                 {listing.title}

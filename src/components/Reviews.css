@@ -1,0 +1,162 @@
+.reviews {
+  background: linear-gradient(180deg, var(--white) 0%, var(--bone) 40%, var(--white) 100%);
+  border-top: 1px solid var(--bone-border);
+}
+
+.reviews__header {
+  text-align: center;
+  max-width: 36rem;
+  margin: 0 auto 2.5rem;
+}
+
+.reviews__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green-strong);
+  margin-bottom: 0.875rem;
+}
+
+.reviews__eyebrow-line {
+  display: block;
+  width: 28px;
+  height: 2px;
+  background: var(--gold-accent);
+  border-radius: 1px;
+}
+
+.reviews__title {
+  margin-bottom: 0.75rem;
+}
+
+.reviews__subtitle {
+  margin: 0;
+}
+
+.reviews__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  align-items: start;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.reviews__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.reviews__card {
+  padding: 1.25rem 1.35rem;
+  background: var(--white);
+  border: 1px solid var(--bone-border);
+}
+
+.reviews__stars {
+  display: inline-block;
+  color: var(--gold-accent);
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.reviews__stars-empty {
+  color: var(--bone-border);
+}
+
+.reviews__quote {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1.45;
+  color: var(--text);
+  text-wrap: pretty;
+}
+
+.reviews__author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.reviews__form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.35rem 1.4rem;
+  background: var(--white);
+  border: 1px solid var(--bone-border);
+}
+
+.reviews__form-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.reviews__form-lead {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.reviews__form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.reviews__form input,
+.reviews__form select,
+.reviews__form textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--bone-border);
+  background: var(--bone);
+  color: var(--text);
+  border-radius: 0;
+}
+
+.reviews__form textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.reviews__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.reviews__msg {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.reviews__msg--error {
+  color: #b42318;
+}
+
+.reviews__msg--ok {
+  color: var(--green-strong-hover);
+}
+
+@media (max-width: 840px) {
+  .reviews__layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -11,12 +11,10 @@ import {
 import { useToast } from "../../context/ToastContext";
 import {
   CITIES_LA_RIOJA,
-  PROPERTY_CATEGORY,
   STATUS_OPTIONS,
   OPERATION_OPTIONS,
-  getPropertyCategory,
-  getTypesForCategory,
-  defaultPropertyTypeForCategory,
+  PROPERTY_TYPES,
+  INVESTMENT_TAGS,
 } from "../../data/cities";
 import {
   ARGENTINA_PROVINCES,
@@ -26,7 +24,7 @@ import {
 } from "../../data/provinces";
 import MapPicker from "../../components/MapPicker";
 import LotBoundaryPicker from "../../components/LotBoundaryPicker";
-import { isLandPropertyType } from "../../data/propertyTypes";
+import { isLandPropertyType, isInvestmentListing } from "../../data/propertyTypes";
 import { AdminPageHeader } from "../../components/admin/AdminPageHeader";
 import { AdminSurface } from "../../components/admin/AdminSurface";
 import "./ListingFormPage.css";
@@ -105,6 +103,7 @@ const emptyForm = {
   extras_note: "",
   images: [],
   lot_polygon: null,
+  investment_tag: null,
   referrer_name: "",
   referrer_lastname: "",
   referrer_phone: "",
@@ -115,7 +114,7 @@ export default function ListingFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [form, setForm] = useState(emptyForm);
-  const [propertyCategory, setPropertyCategory] = useState(PROPERTY_CATEGORY.PROPIEDAD);
+  const [isInvestment, setIsInvestment] = useState(false);
   const [citySource, setCitySource] = useState("list"); // 'list' | 'manual'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -159,11 +158,12 @@ export default function ListingFormPage() {
             extras_note: data.extras_note ?? "",
             images: Array.isArray(data.images) ? data.images : [],
             lot_polygon: Array.isArray(data.lot_polygon) ? data.lot_polygon : null,
+            investment_tag: data.investment_tag ?? null,
             referrer_name: data.referrer_name ?? "",
             referrer_lastname: data.referrer_lastname ?? "",
             referrer_phone: data.referrer_phone ?? "",
           });
-          setPropertyCategory(getPropertyCategory(data.property_type ?? "casa"));
+          setIsInvestment(isInvestmentListing(data.investment_tag));
           setCitySource(data.city && CITIES_LA_RIOJA.includes(data.city) ? "list" : "manual");
         }
       })
@@ -177,16 +177,14 @@ export default function ListingFormPage() {
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
-  const handlePropertyCategoryChange = (category) => {
-    setPropertyCategory(category);
-    const types = getTypesForCategory(category);
-    const currentValid = types.some((t) => t.value === form.property_type);
-    if (!currentValid) {
-      const nextType = defaultPropertyTypeForCategory(category);
-      update("property_type", nextType);
-      if (!isLandPropertyType(nextType)) {
-        update("lot_polygon", null);
-      }
+  const handleInvestmentToggle = (checked) => {
+    setIsInvestment(checked);
+    if (!checked) {
+      update("investment_tag", null);
+      return;
+    }
+    if (!form.investment_tag) {
+      update("investment_tag", INVESTMENT_TAGS[0]?.value ?? "finca");
     }
   };
 
@@ -341,12 +339,18 @@ export default function ListingFormPage() {
       documentation: form.documentation || null,
       images: cleanedImages.length ? cleanedImages : null,
       lot_polygon: showLotBoundary && form.lot_polygon?.length ? form.lot_polygon : null,
+      investment_tag: isInvestment ? form.investment_tag || null : null,
       referrer_name: form.referrer_name?.trim() || null,
       referrer_lastname: form.referrer_lastname?.trim() || null,
       referrer_phone: form.referrer_phone?.trim() || null,
     };
     if (!payload.city) {
       setError("Indicá la ubicación (ciudad o localidad).");
+      setLoading(false);
+      return;
+    }
+    if (isInvestment && !payload.investment_tag) {
+      setError("Seleccioná la categoría de inversión.");
       setLoading(false);
       return;
     }
@@ -431,43 +435,45 @@ export default function ListingFormPage() {
             />
           </label>
           <fieldset className="listing-form__property-type">
-            <legend className="listing-form__property-type-legend">Categoría del anuncio *</legend>
-            <div className="listing-form__radio-group">
-              <label className="listing-form__radio">
-                <input
-                  type="radio"
-                  name="propertyCategory"
-                  checked={propertyCategory === PROPERTY_CATEGORY.PROPIEDAD}
-                  onChange={() => handlePropertyCategoryChange(PROPERTY_CATEGORY.PROPIEDAD)}
-                />
-                Propiedad
-              </label>
-              <label className="listing-form__radio">
-                <input
-                  type="radio"
-                  name="propertyCategory"
-                  checked={propertyCategory === PROPERTY_CATEGORY.INVERSION}
-                  onChange={() => handlePropertyCategoryChange(PROPERTY_CATEGORY.INVERSION)}
-                />
-                Oportunidad de inversión
-              </label>
-            </div>
+            <legend className="listing-form__property-type-legend">Tipo de propiedad *</legend>
             <label>
-              {propertyCategory === PROPERTY_CATEGORY.INVERSION
-                ? "Tipo de oportunidad *"
-                : "Tipo de propiedad *"}
+              Tipo
               <select
                 value={form.property_type}
                 onChange={(e) => handlePropertyTypeChange(e.target.value)}
                 required
               >
-                {getTypesForCategory(propertyCategory).map((t) => (
+                {PROPERTY_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
                   </option>
                 ))}
               </select>
             </label>
+            <label className="listing-form__checkbox">
+              <input
+                type="checkbox"
+                checked={isInvestment}
+                onChange={(e) => handleInvestmentToggle(e.target.checked)}
+              />
+              Oportunidad de inversión
+            </label>
+            {isInvestment && (
+              <label>
+                Categoría de inversión *
+                <select
+                  value={form.investment_tag || ""}
+                  onChange={(e) => update("investment_tag", e.target.value || null)}
+                  required
+                >
+                  {INVESTMENT_TAGS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </fieldset>
           <div className="listing-form__row">
             <label>

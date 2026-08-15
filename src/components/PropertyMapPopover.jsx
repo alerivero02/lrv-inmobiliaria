@@ -1,5 +1,5 @@
 import { formatPrice } from "../utils/format";
-import { TYPE_LABELS } from "../data/propertyTypes";
+import { TYPE_LABELS, getInvestmentTagLabel } from "../data/propertyTypes";
 import "./PropertyMapPopover.css";
 
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
@@ -13,6 +13,7 @@ export default function PropertyMapPopover({ listing, onOpen }) {
   const area = listing.area_sqm != null ? `${listing.area_sqm} m²` : null;
   const typeLabel = TYPE_LABELS[listing.property_type] || listing.property_type;
   const opLabel = OP_LABELS[listing.operation] || listing.operation;
+  const investmentLabel = getInvestmentTagLabel(listing.investment_tag);
 
   return (
     <button
@@ -36,6 +37,9 @@ export default function PropertyMapPopover({ listing, onOpen }) {
         <p className="map-popover__type">
           {typeLabel} · {opLabel}
         </p>
+        {investmentLabel && (
+          <p className="map-popover__investment">Inversión · {investmentLabel}</p>
+        )}
       </div>
     </button>
   );

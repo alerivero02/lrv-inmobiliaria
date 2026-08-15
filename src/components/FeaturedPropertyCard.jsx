@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/format";
-import { TYPE_LABELS } from "../data/propertyTypes";
+import { TYPE_LABELS, getInvestmentTagLabel } from "../data/propertyTypes";
 import "./PropertyCarousel.css";
 const OP_LABELS = { venta: "Venta", alquiler: "Alquiler" };
 
@@ -16,6 +16,7 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
 
   const typeLabel = TYPE_LABELS[listing.property_type] || listing.property_type;
   const opLabel = OP_LABELS[listing.operation] || listing.operation;
+  const investmentLabel = getInvestmentTagLabel(listing.investment_tag);
   const location =
     [listing.city, listing.address]
       .filter(Boolean)
@@ -72,6 +73,7 @@ export default function FeaturedPropertyCard({ listing, onSelect, isPlaceholder 
         {listing.featured && <span className="property-card__featured-badge">★ Destacada</span>}
         <span className="property-card__type">
           {typeLabel} · {opLabel}
+          {investmentLabel ? ` · ${investmentLabel}` : ""}
         </span>
         <h3 className="property-card__title">
           {isPlaceholder ? (

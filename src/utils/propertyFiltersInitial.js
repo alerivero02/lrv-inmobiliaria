@@ -3,6 +3,7 @@ import { DEFAULT_PROVINCE_CODE } from "../data/cities";
 export const INITIAL_PROPERTY_FILTERS = {
   search: "",
   property_type: "",
+  investment_tag: "",
   operation: "",
   city: "",
   province_code: DEFAULT_PROVINCE_CODE,

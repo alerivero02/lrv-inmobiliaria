@@ -63,3 +63,12 @@
   font-size: 0.75rem;
   color: var(--text-muted, #6b6560);
 }
+
+.map-popover__investment {
+  margin: 0.35rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--brand, #008f5a);
+}

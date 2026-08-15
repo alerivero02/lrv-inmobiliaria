@@ -18,6 +18,7 @@ const DashboardPage = lazyWithRetry(() => import("./pages/admin/DashboardPage"))
 const ListingsPage = lazyWithRetry(() => import("./pages/admin/ListingsPage"));
 const ListingFormPage = lazyWithRetry(() => import("./pages/admin/ListingFormPage"));
 const VisitsPage = lazyWithRetry(() => import("./pages/admin/VisitsPage"));
+const ReviewsPage = lazyWithRetry(() => import("./pages/admin/ReviewsPage"));
 const AccountingPage = lazyWithRetry(() => import("./pages/admin/AccountingPage"));
 const UsersPage = lazyWithRetry(() => import("./pages/admin/UsersPage"));
 const ActivateAccountPage = lazyWithRetry(() => import("./pages/admin/ActivateAccountPage"));
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="nuevo" element={<ListingFormPage />} />
           <Route path="editar/:id" element={<ListingFormPage />} />
           <Route path="visitas" element={<VisitsPage />} />
+          <Route path="resenas" element={<ReviewsPage />} />
           <Route path="contabilidad" element={<AccountingPage />} />
           <Route path="usuarios" element={<UsersPage />} />
         </Route>

@@ -8,6 +8,7 @@ import FeaturedPropertiesSection from "../landing/sections/FeaturedPropertiesSec
 import HeroSection from "../landing/sections/HeroSection";
 import MapSearchSection from "../landing/sections/MapSearchSection";
 import ServicesSection from "../landing/sections/ServicesSection";
+import ReviewsSection from "../landing/sections/ReviewsSection";
 import StatsSection from "../landing/sections/StatsSection";
 import { lazyWithRetry } from "../utils/lazyRetry";
 import { DEFAULT_META_DESCRIPTION } from "../utils/seo";
@@ -29,6 +30,7 @@ export default function LandingPage() {
         <FeaturedPropertiesSection onSelectListing={setSelectedListingId} />
         <AboutSection />
         <ServicesSection />
+        <ReviewsSection />
         <ContactSection />
       </main>
       <Footer />

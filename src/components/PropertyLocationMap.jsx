@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { GoogleMap, MarkerF, Polygon, useJsApiLoader } from "@react-google-maps/api";
-import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions } from "../config/googleMaps";
+import { getGoogleMapsApiKey, getSharedGoogleMapsLoaderOptions, mergeMapOptions } from "../config/googleMaps";
 import { polygonCentroid, ringToLatLngPaths } from "../utils/polygonRing";
 
 const MAP_STYLE = { width: "100%", height: "100%" };
@@ -115,13 +115,13 @@ function PropertyLocationMapInner({ lat, lng, lotPolygon, googleMapsApiKey }) {
         center={pinPosition ?? { lat: -29.41, lng: -66.85 }}
         zoom={15}
         onLoad={onMapLoad}
-        options={{
+        options={mergeMapOptions({
           gestureHandling: "cooperative",
           streetViewControl: false,
           mapTypeControl: true,
           mapTypeId: hasLotPolygon ? "hybrid" : "roadmap",
           fullscreenControl: true,
-        }}
+        })}
       >
         {hasLotPolygon && polygonPaths.length >= 3 && (
           <Polygon paths={polygonPaths} options={LOT_POLYGON_OPTIONS} />
