@@ -4,13 +4,17 @@ export const LRV_GOOGLE_MAPS_SCRIPT_ID = "lrv-google-maps-script";
 /** Array estable (referencia fija) para evitar warnings de recarga en useJsApiLoader. */
 export const LRV_GOOGLE_MAPS_LIBRARIES = ["places", "geometry"];
 
-/** Oculta POIs ajenos (negocios, etc.) y desactiva su click/hover. */
+/** POIs visibles en escala de grises (referencia del entorno), sin click/hover. */
 export const LRV_MAP_BASE_OPTIONS = {
   clickableIcons: false,
   styles: [
-    { featureType: "poi", stylers: [{ visibility: "off" }] },
-    { featureType: "poi.business", stylers: [{ visibility: "off" }] },
-    { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { featureType: "poi", stylers: [{ saturation: -100 }, { lightness: 15 }] },
+    { featureType: "poi.business", stylers: [{ saturation: -100 }, { lightness: 15 }] },
+    {
+      featureType: "transit",
+      elementType: "labels.icon",
+      stylers: [{ saturation: -100 }, { lightness: 15 }],
+    },
   ],
 };
 
@@ -28,7 +32,7 @@ export function getSharedGoogleMapsLoaderOptions() {
   };
 }
 
-/** Merge de opciones de mapa con la base anti-POI. */
+/** Merge de opciones de mapa con la base (POIs en gris, no clickeables). */
 export function mergeMapOptions(local = {}) {
   return { ...LRV_MAP_BASE_OPTIONS, ...local };
 }
